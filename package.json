@@ -8,6 +8,10 @@
     "watch": "ng build --watch --configuration development",
     "sdks": "yarn dlx @yarnpkg/sdks vscode"
   },
+  "workspaces": [
+    "*",
+    "functions!/*"
+  ],
   "private": true,
   "dependencies": {
     "@angular/animations": "^18.1.0",
