@@ -1,0 +1,21 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+{
+	"name": "Ubuntu",
+	"image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+	"features": {
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+
+	"postCreateCommand": "bash .devcontainer/setup-volta.sh",
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+					"arcanis.vscode-zipfs",
+					"biomejs.biome",
+					"github.vscode-github-actions"
+			]
+		}
+	}
+}
