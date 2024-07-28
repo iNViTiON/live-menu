@@ -24,7 +24,6 @@
             "index": "projects/admin/src/index.html",
             "browser": "projects/admin/src/main.ts",
             "polyfills": [
-              "zone.js"
             ],
             "tsConfig": "projects/admin/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
