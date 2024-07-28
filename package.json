@@ -1,0 +1,13 @@
+{
+  "name": "live-menu",
+  "version": "1.0.0",
+  "scripts": {
+  },
+  "author": "iNViTiON",
+  "license": "ISC",
+  "description": "",
+  "volta": {
+    "node": "20.16.0",
+    "yarn": "4.3.1"
+  }
+}
