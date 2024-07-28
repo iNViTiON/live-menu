@@ -4,15 +4,16 @@
     "lint": "eslint --ext .js,.ts .",
     "build": "tsc",
     "build:watch": "tsc --watch",
-    "serve": "npm run build && firebase emulators:start --only functions",
-    "shell": "npm run build && firebase functions:shell",
-    "start": "npm run shell",
+    "serve": "yarn run build && firebase emulators:start --only functions",
+    "shell": "yarn run build && firebase functions:shell",
+    "start": "yarn run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "sdks": "yarn dlx @yarnpkg/sdks vscode"
   },
   "engines": {
-    "node": "18"
+    "node": "20",
+    "yarn": ">= 4.3.1"
   },
   "main": "lib/index.js",
   "dependencies": {

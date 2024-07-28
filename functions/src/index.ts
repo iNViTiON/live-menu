@@ -1,24 +1,27 @@
-import { firestore } from 'firebase-admin';
-import * as functions from 'firebase-functions';
+import {firestore} from "firebase-admin";
+import {initializeApp} from "firebase-admin/app";
+import * as functions from "firebase-functions";
 
-export const newUser = functions.auth.user().onCreate((user) => {
+const fReg = functions.region("europe-west1");
+
+initializeApp();
+
+export const newUser = fReg.auth.user().onCreate((user) => {
   if (user.providerData.length === 0) {
     return Promise.resolve();
   }
-  return firestore().collection('users').doc('list').set({
+  return firestore().collection("users").doc("list").set({
     users: {
-      [user.uid]: {
-        email: user.email
-      }
-    }
-  }, { merge: true });
+      [user.uid]: user.email,
+    },
+  }, {merge: true});
 });
 
-export const deleteUser = functions.auth.user().onDelete((user) => {
+export const deleteUser = fReg.auth.user().onDelete((user) => {
   if (user.providerData.length === 0) {
     return Promise.resolve();
   }
-  return firestore().collection('users').doc('list').update({
-    [`users.${user.uid}`]: firestore.FieldValue.delete()
+  return firestore().collection("users").doc("list").update({
+    [`users.${user.uid}`]: firestore.FieldValue.delete(),
   });
 });

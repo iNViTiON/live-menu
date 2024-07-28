@@ -1,3 +1,6 @@
-L
-
+ {{user$ | async | json}}
+@if (!disableSignin() && (user$ | async) === null) {
+  <input #email type="email"/>
+  <button (click)="login(email.value)">Login</button>
+}
 <router-outlet />
