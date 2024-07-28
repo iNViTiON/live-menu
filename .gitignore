@@ -48,6 +48,7 @@ Thumbs.db
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+
 # Firebase
 .firebase
 *-debug.log
