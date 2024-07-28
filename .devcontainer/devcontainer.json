@@ -12,9 +12,10 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-					"arcanis.vscode-zipfs",
-					"biomejs.biome",
-					"github.vscode-github-actions"
+				"arcanis.vscode-zipfs",
+				"biomejs.biome",
+				"github.vscode-github-actions",
+				"Angular.ng-template"
 			]
 		}
 	}
