@@ -13,6 +13,8 @@
   }
   @if (isMaintainer$ | async) {
     Maintainer!<br />
+    <input #fileUpload type="file" #upload>
+    <button (click)="uploadImages(upload)">Upload</button>
   }
   @if (!(isAdmin$ | async) && !(isMaintainer$ | async)) {
     Unauthorized!

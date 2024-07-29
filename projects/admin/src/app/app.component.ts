@@ -2,9 +2,10 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { Auth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, user } from '@angular/fire/auth';
 import { Firestore, doc, docData, updateDoc, arrayUnion, arrayRemove } from '@angular/fire/firestore';
+import { ref, Storage, uploadBytes, uploadBytesResumable } from '@angular/fire/storage';
 import { AsyncPipe, JsonPipe } from '@angular/common';
 import { shareLatest } from '@invition/rxjs-sharelatest';
-import { combineLatest, map, Observable } from 'rxjs';
+import { combineLatest, from, map, mergeMap, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -18,37 +19,38 @@ import { combineLatest, map, Observable } from 'rxjs';
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
-  public auth = inject(Auth);
-  private router = inject(Router);
-  private firestore = inject(Firestore);
+  public readonly auth = inject(Auth);
+  private readonly router = inject(Router);
+  private readonly firestore = inject(Firestore);
+  private readonly storage = inject(Storage);
 
-  public user$ = user(this.auth);
-  public disableSignin = signal(true);
-  public list = doc(this.firestore, 'users/list');
-  public users$ = (docData(this.list) as Observable<{ users: { [key: string]: string } }>).pipe(
+  public readonly user$ = user(this.auth);
+  public readonly disableSignin = signal(true);
+  public readonly list = doc(this.firestore, 'users/list');
+  public readonly users$ = (docData(this.list) as Observable<{ users: { [key: string]: string } }>).pipe(
     map(data => data.users),
     shareLatest(),
   );
-  public userArray$ = this.users$.pipe(
+  public readonly userArray$ = this.users$.pipe(
     map(users => Object.entries(users)),
     shareLatest(),
   );
-  public userMap$ = this.users$.pipe(
+  public readonly userMap$ = this.users$.pipe(
     map(users => new Map(Object.entries(users))),
     shareLatest(),
   );
-  public admin = doc(this.firestore, 'users/admin');
-  public admins$ = (docData(this.admin) as Observable<{ list: string[] }>).pipe(map(data => new Set(data.list)),
+  public readonly admin = doc(this.firestore, 'users/admin');
+  public readonly admins$ = (docData(this.admin) as Observable<{ list: string[] }>).pipe(map(data => new Set(data.list)),
     shareLatest(),);
-  public maintainer = doc(this.firestore, 'users/maintainer');
-  public maintainers$ = (docData(this.maintainer) as Observable<{ list: string[] }>).pipe(map(data => new Set(data.list)),
+  public readonly maintainer = doc(this.firestore, 'users/maintainer');
+  public readonly maintainers$ = (docData(this.maintainer) as Observable<{ list: string[] }>).pipe(map(data => new Set(data.list)),
     shareLatest(),);
 
-  public isAdmin$ = combineLatest({ user: this.user$, admins: this.admins$ }).pipe(
+  public readonly isAdmin$ = combineLatest({ user: this.user$, admins: this.admins$ }).pipe(
     map(({ user, admins }) => admins.has(user?.uid)),
     shareLatest(),
   );
-  public isMaintainer$ = combineLatest({ user: this.user$, maintainers: this.maintainers$ }).pipe(
+  public readonly isMaintainer$ = combineLatest({ user: this.user$, maintainers: this.maintainers$ }).pipe(
     map(({ user, maintainers }) => maintainers.has(user?.uid)),
     shareLatest(),
   );
@@ -83,4 +85,11 @@ export class AppComponent {
         list: arrayRemove(uid),
       });
   }
+
+  public uploadImages(input: HTMLInputElement) {
+    if (!input?.files) return
+    from(input.files).pipe(
+      mergeMap(file => uploadBytes(ref(this.storage, `images/${file.name}`), file), 2),
+    ).subscribe();
+}
 }
