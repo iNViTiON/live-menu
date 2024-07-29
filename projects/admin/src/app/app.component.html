@@ -1,6 +1,20 @@
- {{user$ | async | json}}
 @if (!disableSignin() && (user$ | async) === null) {
   <input #email type="email"/>
   <button (click)="login(email.value)">Login</button>
+} @else {
+  @if (isAdmin$ | async) {
+    Admin!<br />
+    @for (user of userArray$ | async; track $index) {
+      <input type="checkbox" (change)="toggleMaintainer(user[0], $event.currentTarget)" [checked]="(maintainers$ | async)?.has(user[0])" />
+      {{ user[1] }} @if ((admins$ | async)?.has(user[0])) {
+       — Admin
+      } <br />
+    }
+  }
+  @if (isMaintainer$ | async) {
+    Maintainer!<br />
+  }
+  @if (!(isAdmin$ | async) && !(isMaintainer$ | async)) {
+    Unauthorized!
+  }
 }
-<router-outlet />
