@@ -2754,6 +2754,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@invition/rxjs-sharelatest@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "@invition/rxjs-sharelatest@npm:1.0.5"
+  dependencies:
+    rxjs: "npm:>7.5.0"
+  checksum: 10c0/d51ed41f6e0de51bf3fd2d945130ddfa493594337a321aad05d7174910f788777bff63cd46db82fb4c7df7289b175fec6973d6f595663c7b7f9f369a265afee3
+  languageName: node
+  linkType: hard
+
 "@isaacs/cliui@npm:^8.0.2":
   version: 8.0.2
   resolution: "@isaacs/cliui@npm:8.0.2"
@@ -6744,6 +6753,7 @@ __metadata:
     "@angular/platform-browser": "npm:^18.1.0"
     "@angular/platform-browser-dynamic": "npm:^18.1.0"
     "@angular/router": "npm:^18.1.0"
+    "@invition/rxjs-sharelatest": "npm:^1.0.5"
     firebase: "npm:^10.12.4"
     rxjs: "npm:~7.8.0"
     tslib: "npm:^2.3.0"
@@ -8511,7 +8521,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rxjs@npm:7.8.1, rxjs@npm:^7.5.5, rxjs@npm:~7.8.0":
+"rxjs@npm:7.8.1, rxjs@npm:>7.5.0, rxjs@npm:^7.5.5, rxjs@npm:~7.8.0":
   version: 7.8.1
   resolution: "rxjs@npm:7.8.1"
   dependencies:
