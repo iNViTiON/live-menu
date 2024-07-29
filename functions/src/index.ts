@@ -9,6 +9,7 @@ import {
   onObjectDeleted,
   onObjectFinalized,
 } from "firebase-functions/v2/storage";
+import {basename} from "path";
 
 const region = "europe-west1";
 const fReg = functions.region(region);
@@ -47,6 +48,7 @@ export const onFileUploaded = onObjectFinalized(
     await storage().bucket(event.bucket).file(event.data.name).makePublic();
     return firestore().collection("images").doc("images").set({
       [fileId]: {
+        name: basename(event.data.name),
         imageUrl: event.data.mediaLink,
         index: 0,
         time: firestore.Timestamp.now(),
