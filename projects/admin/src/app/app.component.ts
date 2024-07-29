@@ -2,10 +2,10 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { Auth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, user } from '@angular/fire/auth';
 import { Firestore, doc, docData, updateDoc, arrayUnion, arrayRemove } from '@angular/fire/firestore';
-import { ref, Storage, uploadBytes, uploadBytesResumable } from '@angular/fire/storage';
+import { deleteObject, ref, Storage, uploadBytes } from '@angular/fire/storage';
 import { AsyncPipe, JsonPipe } from '@angular/common';
 import { shareLatest } from '@invition/rxjs-sharelatest';
-import { combineLatest, from, map, mergeMap, Observable } from 'rxjs';
+import { combineLatest, from, map, mergeMap, Observable, tap } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -55,6 +55,17 @@ export class AppComponent {
     shareLatest(),
   );
 
+  public readonly images$ = (docData(doc(this.firestore, 'images/images')) as Observable<Record<string, {
+    name: string,
+    imageUrl: string,
+    index: number,
+    time: Date,
+  }>>).pipe(
+    tap(data => console.log(data)),
+    map(data => Object.entries(data).map(([id, data]) => ({id, ...data})).sort((a, b) => a.index - b.index)),
+    shareLatest(),
+  );
+
   async ngOnInit() {
     const storageEmail = window.localStorage.getItem('email');
     if (storageEmail && isSignInWithEmailLink(this.auth, window.location.href)) {
@@ -86,10 +97,14 @@ export class AppComponent {
       });
   }
 
-  public uploadImages(input: HTMLInputElement) {
+  public  uploadImages(input: HTMLInputElement) {
     if (!input?.files) return
     from(input.files).pipe(
       mergeMap(file => uploadBytes(ref(this.storage, `images/${file.name}`), file), 2),
     ).subscribe();
-}
+  }
+
+  public async deleteImage(name: string) {
+    await deleteObject(ref(this.storage, `images/${name}`));
+  }
 }

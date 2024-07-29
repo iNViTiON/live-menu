@@ -13,8 +13,14 @@
   }
   @if (isMaintainer$ | async) {
     Maintainer!<br />
-    <input #fileUpload type="file" #upload>
+    <input type="file" #fileUpload multiple #upload>
     <button (click)="uploadImages(upload)">Upload</button>
+    @for (image of images$ | async; track $index) {
+      {{image | json}}
+      <img [src]="image.imageUrl" />
+      <button (click)="deleteImage(image.name)">Delete</button>
+      <br />
+    }
   }
   @if (!(isAdmin$ | async) && !(isMaintainer$ | async)) {
     Unauthorized!
