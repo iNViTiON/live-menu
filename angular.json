@@ -53,7 +53,8 @@
                   "maximumError": "4kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "serviceWorker": "projects/admin/ngsw-config.json"
             },
             "development": {
               "optimization": false,
@@ -70,7 +71,8 @@
               "buildTarget": "admin:build:production"
             },
             "development": {
-              "buildTarget": "admin:build:development"
+              "buildTarget": "admin:build:development",
+              "host": "::"
             }
           },
           "defaultConfiguration": "development"
@@ -148,7 +150,8 @@
                   "maximumError": "4kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "serviceWorker": "projects/viewer/ngsw-config.json"
             },
             "development": {
               "optimization": false,
@@ -165,7 +168,9 @@
               "buildTarget": "viewer:build:production"
             },
             "development": {
-              "buildTarget": "viewer:build:development"
+              "buildTarget": "viewer:build:development",
+              "host": "::",
+              "port": 4201
             }
           },
           "defaultConfiguration": "development"
