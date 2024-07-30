@@ -23,7 +23,7 @@
   "hosting": [
     {
       "target": "admin",
-      "public": "dist/admin",
+      "public": "dist/admin/browser",
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -32,13 +32,13 @@
       "rewrites": [
         {
           "source": "**",
-          "destination": "browser/index.html"
+          "destination": "/index.html"
         }
       ]
     },
     {
       "target": "viewer",
-      "public": "dist/viewer",
+      "public": "dist/viewer/browser",
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -47,7 +47,7 @@
       "rewrites": [
         {
           "source": "**",
-          "destination": "browser/index.html"
+          "destination": "/index.html"
         }
       ]
     }
