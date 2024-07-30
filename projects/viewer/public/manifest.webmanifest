@@ -1,6 +1,6 @@
 {
-  "name": "viewer",
-  "short_name": "viewer",
+  "name": "Mitch Menu",
+  "short_name": "Mitch Menu",
   "theme_color": "#1976d2",
   "background_color": "#fafafa",
   "display": "standalone",
