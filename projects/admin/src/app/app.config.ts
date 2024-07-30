@@ -23,8 +23,8 @@ export const appConfig: ApplicationConfig = {
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
     provideStorage(() => getStorage()), provideServiceWorker('ngsw-worker.js', {
-            enabled: !isDevMode(),
-            registrationStrategy: 'registerWithDelay:3000'
-          }),
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWithDelay:3000'
+    }),
   ],
 };

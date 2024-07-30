@@ -14,7 +14,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideFirebaseApp(() => initializeApp({
       "projectId": "realtimemenuscreen",
-      "appId": "1:180761938918:web:5d6caee839cf3368966427",
+      "appId": "1:180761938918:web:92c3cd94d4515729966427",
       "storageBucket": "realtimemenuscreen.appspot.com",
       "apiKey": "AIzaSyA9H30R1vabNfP8XhihQKXxm5idBKmfttA",
       "authDomain": "realtimemenuscreen.firebaseapp.com",
@@ -23,8 +23,8 @@ export const appConfig: ApplicationConfig = {
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
     provideStorage(() => getStorage()), provideServiceWorker('ngsw-worker.js', {
-            enabled: !isDevMode(),
-            registrationStrategy: 'registerWithDelay:3000'
-          }),
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWithDelay:3000'
+    }),
   ],
 };

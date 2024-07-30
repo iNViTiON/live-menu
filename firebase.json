@@ -11,9 +11,48 @@
         "*.local"
       ],
       "predeploy": [
-          "yarn --cwd \"$RESOURCE_DIR\" lint",
-          "yarn --cwd \"$RESOURCE_DIR\" build"
+        "yarn --cwd \"$RESOURCE_DIR\" lint",
+        "yarn --cwd \"$RESOURCE_DIR\" build"
       ]
     }
-  ]
+  ],
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": [
+    {
+      "target": "admin",
+      "public": "dist/admin",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "browser/index.html"
+        }
+      ]
+    },
+    {
+      "target": "viewer",
+      "public": "dist/viewer",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "browser/index.html"
+        }
+      ]
+    }
+  ],
+  "storage": {
+    "rules": "storage.rules"
+  }
 }

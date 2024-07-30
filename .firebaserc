@@ -1,5 +1,19 @@
 {
   "projects": {
     "default": "realtimemenuscreen"
-  }
+  },
+  "targets": {
+    "realtimemenuscreen": {
+      "hosting": {
+        "admin": [
+          "realtimemenuscreen-admin"
+        ],
+        "viewer": [
+          "realtimemenuscreen"
+        ]
+      }
+    }
+  },
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
 }
