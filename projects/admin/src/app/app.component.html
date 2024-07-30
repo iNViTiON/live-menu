@@ -15,11 +15,16 @@
     Maintainer!<br />
     <input type="file" #fileUpload multiple #upload>
     <button (click)="uploadImages(upload)">Upload</button>
-    @for (image of images$ | async; track $index) {
-      <img [src]="image.imageUrl" />
-      <button (click)="deleteImage(image.name)">Delete</button>
-      <br />
-    }
+    <div style="display: block">
+      @for (image of images$ | async; track $index) {
+        <br />
+        <button (click)="deleteImage(image.name)">Delete V</button>
+        <br />
+        <figure style="width: intrinsic">
+          <img style="width: 50%" [src]="image.imageUrl" />
+        </figure>
+      }
+    </div>
   }
   @if (!(isAdmin$ | async) && !(isMaintainer$ | async)) {
     Unauthorized!
