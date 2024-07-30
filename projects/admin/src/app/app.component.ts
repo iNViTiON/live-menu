@@ -4,8 +4,9 @@ import { Auth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink
 import { arrayRemove, arrayUnion, doc, docData, Firestore, Timestamp, updateDoc } from '@angular/fire/firestore';
 import { deleteObject, ref, Storage, uploadBytes } from '@angular/fire/storage';
 import { Router } from '@angular/router';
+import { SwUpdate } from '@angular/service-worker';
 import { shareLatest } from '@invition/rxjs-sharelatest';
-import { combineLatest, from, map, mergeMap, Observable } from 'rxjs';
+import { combineLatest, concat, from, interval, map, mergeMap, Observable, retry, switchMap, timer } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -63,6 +64,8 @@ export class AppComponent {
     shareLatest(),
   );
 
+  #updates = inject(SwUpdate);
+  
   async ngOnInit() {
     const storageEmail = window.localStorage.getItem('email');
     if (storageEmail && isSignInWithEmailLink(this.auth, window.location.href)) {
@@ -71,6 +74,23 @@ export class AppComponent {
     } else
       this.disableSignin.set(false);
     this.router.navigate(['/']);
+    concat(
+      timer(10_000),
+      interval(300_000),
+    ).pipe(
+      switchMap(() => this.#updates.checkForUpdate().catch()),
+      retry(),
+    ).subscribe();
+    this.#updates.versionUpdates.subscribe(evt => {
+      switch (evt.type) {
+        case 'VERSION_DETECTED':
+          console.log(`Downloading new version: ${evt.version.hash}`);
+          break;
+        case 'VERSION_READY':
+          location.reload();
+          break;
+      }
+    });
   }
 
   public login(email: string) {
