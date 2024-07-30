@@ -1,11 +1,11 @@
-import { AsyncPipe, JsonPipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { Auth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, user } from '@angular/fire/auth';
 import { arrayRemove, arrayUnion, doc, docData, Firestore, Timestamp, updateDoc } from '@angular/fire/firestore';
 import { deleteObject, ref, Storage, uploadBytes } from '@angular/fire/storage';
-import { Router, RouterOutlet } from '@angular/router';
+import { Router } from '@angular/router';
 import { shareLatest } from '@invition/rxjs-sharelatest';
-import { combineLatest, from, map, mergeMap, Observable, tap } from 'rxjs';
+import { combineLatest, from, map, mergeMap, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -97,7 +97,7 @@ export class AppComponent {
   public  uploadImages(input: HTMLInputElement) {
     if (!input?.files) return
     from(input.files).pipe(
-      mergeMap(file => uploadBytes(ref(this.storage, `images/${file.name}`), file), 2),
+      mergeMap(file => uploadBytes(ref(this.storage, `images/${new Date().getTime()}-${file.name}`), file), 2),
     ).subscribe();
   }
 
