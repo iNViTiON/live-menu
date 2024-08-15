@@ -9,9 +9,15 @@ service cloud.firestore {
     match /users/maintainer {
       allow write: if isUserInAdminList();
     }
+    match /images/images{
+      allow update: if isUserInMaintainerList();
+    }
 
     function isUserInAdminList() {
       return get(/databases/$(database)/documents/users/admin).data.list.hasAny([request.auth.uid]);
+    }
+    function isUserInMaintainerList() {
+      return get(/databases/$(database)/documents/users/maintainer).data.list.hasAny([request.auth.uid]);
     }
   }
 }

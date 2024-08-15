@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { Auth, isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, user } from '@angular/fire/auth';
-import { arrayRemove, arrayUnion, doc, docData, Firestore, Timestamp, updateDoc } from '@angular/fire/firestore';
+import { arrayRemove, arrayUnion, doc, docData, Firestore, increment, setDoc, Timestamp, updateDoc } from '@angular/fire/firestore';
 import { deleteObject, ref, Storage, uploadBytes } from '@angular/fire/storage';
 import { Router } from '@angular/router';
 import { SwUpdate } from '@angular/service-worker';
@@ -60,7 +60,9 @@ export class AppComponent {
     index: number,
     time: Timestamp,
   }>>).pipe(
-    map(data => Object.entries(data).map(([id, data]) => ({id, ...data})).sort((a, b) => a.time.seconds - b.time.seconds || a.time.nanoseconds - b.time.nanoseconds),),
+    map(data => Object.entries(data).map(([id, data]) => ({id, ...data})).sort((a, b) =>
+      (a.index - b.index) || a.time?.seconds - b.time?.seconds || a.time?.nanoseconds - b.time?.nanoseconds
+    )),
     shareLatest(),
   );
 
@@ -123,5 +125,19 @@ export class AppComponent {
 
   public async deleteImage(name: string) {
     await deleteObject(ref(this.storage, `images/${name}`));
+  }
+
+  private increaseImageIndex = (id: string, diff: number) => setDoc(doc(this.firestore, 'images/images'), {
+    [id]: {
+      index: increment(diff),
+    },
+  }, { merge: true });
+
+  public async increaseIndex(id: string) {
+    await this.increaseImageIndex(id, 1);
+  }
+
+  public async decreaseIndex(id: string) {
+    await this.increaseImageIndex(id, -1);
   }
 }

@@ -22,12 +22,14 @@ export class AppComponent {
     index: number,
     time: Timestamp,
   }>>).pipe(
-    map(data => Object.entries(data).map(([id, data]) => ({id, ...data})).sort((a, b) => a.time.seconds - b.time.seconds || a.time.nanoseconds - b.time.nanoseconds),),
+    map(data => Object.entries(data).map(([id, data]) => ({ id, ...data })).sort((a, b) =>
+      (a.index - b.index) || a.time.seconds - b.time.seconds || a.time.nanoseconds - b.time.nanoseconds
+    )),
     shareLatest(),
   );
 
   #updates = inject(SwUpdate);
-  
+
   ngOnInit() {
     concat(
       timer(10_000),

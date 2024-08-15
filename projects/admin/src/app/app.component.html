@@ -19,6 +19,9 @@
       @for (image of images$ | async; track $index) {
         <br />
         <button (click)="deleteImage(image.name)">Delete V</button>
+        <button (click)="decreaseIndex(image.id)">Decrease Index (move up)</button>
+        Index {{ image.index }}
+        <button (click)="increaseIndex(image.id)">Increase Index (move down)</button>
         <br />
         <figure style="width: intrinsic">
           <img style="width: 50%" [src]="image.imageUrl" />
