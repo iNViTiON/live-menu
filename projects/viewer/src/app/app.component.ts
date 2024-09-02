@@ -1,9 +1,9 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { AsyncPipe, ViewportScroller } from '@angular/common';
+import { Component, ElementRef, inject, viewChild, ViewChild } from '@angular/core';
 import { doc, docData, Firestore, Timestamp } from '@angular/fire/firestore';
 import { SwUpdate } from '@angular/service-worker';
 import { shareLatest } from '@invition/rxjs-sharelatest';
-import { concat, interval, map, Observable, retry, switchMap, timer } from 'rxjs';
+import { concat, from, fromEvent, interval, map, mergeMap, Observable, retry, switchMap, tap, timer } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +15,8 @@ import { concat, interval, map, Observable, retry, switchMap, timer } from 'rxjs
   styleUrl: './app.component.scss'
 })
 export class AppComponent {
+  private readonly imageContainer = viewChild.required<ElementRef>('imageContainer');
+
   private readonly firestore = inject(Firestore);
   public readonly images$ = (docData(doc(this.firestore, 'images/images')) as Observable<Record<string, {
     name: string,
@@ -29,6 +31,17 @@ export class AppComponent {
   );
 
   #updates = inject(SwUpdate);
+
+  #idleReset$ = from([
+    'click',
+    'keydown',
+    'mousemove',
+    'scroll',
+    'touchstart',
+  ]).pipe(
+    mergeMap(event => fromEvent(document, event)),
+    switchMap(() => timer(60_000)),
+  );
 
   ngOnInit() {
     concat(
@@ -48,5 +61,8 @@ export class AppComponent {
           break;
       }
     });
+    this.#idleReset$.subscribe(() => 
+      this.imageContainer().nativeElement.scrollTo({top: 0, behavior:'smooth'})
+    );
   }
 }
