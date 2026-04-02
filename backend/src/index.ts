@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { HonoEnv } from './types';
 import { securityHeaders } from './middleware/security';
 import { corsMiddleware } from './middleware/cors';
+import { dbMiddleware } from './middleware/db';
 import { servicesMiddleware } from './middleware/services';
 import { authMiddleware } from './middleware/auth';
 import { authRoutes } from './routes/auth';
@@ -13,9 +14,10 @@ import { BroadcastRoom } from './do/BroadcastRoom';
 
 const app = new Hono<HonoEnv>();
 
-// Middleware — order matters: security → cors → services → auth
+// Middleware — order matters: security → cors → db → services → auth
 app.use('*', securityHeaders);
 app.use('*', corsMiddleware);
+app.use('/api/*', dbMiddleware);
 app.use('*', servicesMiddleware);
 app.use('*', authMiddleware);
 
@@ -34,8 +36,19 @@ export default {
   async fetch(request: Request, env: HonoEnv['Bindings'], ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // WebSocket upgrade → forward to BroadcastRoom Durable Object
-    if (url.pathname === '/api/sync-ws') {
+    // WebSocket upgrade → validate session then forward to BroadcastRoom Durable Object
+    if (url.pathname === '/api/sync-ws' && request.headers.get('Upgrade') === 'websocket') {
+      const wsToken = url.searchParams.get('token');
+      if (!wsToken) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+      const now = Math.floor(Date.now() / 1000);
+      const session = await env.DB.prepare(
+        'SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?'
+      ).bind(wsToken, now).first();
+      if (!session) {
+        return new Response('Unauthorized', { status: 401 });
+      }
       const id = env.BROADCAST_ROOM.idFromName('global');
       const stub = env.BROADCAST_ROOM.get(id);
       return stub.fetch(request);
@@ -43,7 +56,10 @@ export default {
 
     // Media proxy → serve from R2 with cache headers
     if (url.pathname.startsWith('/media/')) {
-      const key = url.pathname.replace('/media/', '');
+      const key = url.pathname.slice('/media/'.length);
+      if (key.includes('..') || key.startsWith('/') || !key) {
+        return new Response('Forbidden', { status: 403 });
+      }
       const object = await env.MEDIA_BUCKET.get(key);
       if (!object) {
         return new Response('Not Found', { status: 404 });
@@ -57,6 +73,15 @@ export default {
     // All /api/* routes handled by Hono; everything else → ASSETS (SvelteKit SPA)
     if (url.pathname.startsWith('/api/')) {
       return app.fetch(request, env, ctx);
+    }
+
+    // Admin SPA deep-link fallback
+    if (url.pathname.startsWith('/admin/') || url.pathname === '/admin') {
+      const assetResponse = await env.ASSETS.fetch(request);
+      if (assetResponse.status === 404) {
+        return env.ASSETS.fetch(new Request(new URL('/admin/index.html', request.url), request));
+      }
+      return assetResponse;
     }
 
     return env.ASSETS.fetch(request);

@@ -10,12 +10,10 @@ publicRoutes.get('/menu', async (c) => {
   const menuService = new MenuService(c.env.DB);
   const languageService = new LanguageService(c.env.DB, c.env.MEDIA_BUCKET);
 
-  const [allItems, languages] = await Promise.all([
-    menuService.list(),
+  const [visibleItems, languages] = await Promise.all([
+    menuService.listVisible(),
     languageService.list(),
   ]);
-
-  const visibleItems = allItems.filter((item) => item.is_visible);
 
   return c.json({
     items: visibleItems,

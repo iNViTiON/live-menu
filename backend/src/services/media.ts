@@ -17,6 +17,10 @@ export class MediaService {
   ): Promise<MediaVariant> {
     const contentType = file.type;
 
+    if (contentType === 'image/svg+xml') {
+      throw new Error('SVG uploads are not allowed');
+    }
+
     // Determine media type
     let mediaType: MediaType;
     if (contentType.startsWith('image/')) {

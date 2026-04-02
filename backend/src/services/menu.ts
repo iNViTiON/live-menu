@@ -23,6 +23,35 @@ export class MenuService {
     }));
   }
 
+  /** List only visible menu items with names and media, ordered by sort_order */
+  async listVisible(): Promise<MenuItemWithDetails[]> {
+    const items = await this.db
+      .prepare('SELECT * FROM menu_items WHERE is_visible = 1 ORDER BY sort_order')
+      .all<MenuItem>();
+
+    if (items.results.length === 0) return [];
+
+    const ids = items.results.map((item) => item.id);
+    const placeholders = ids.map(() => '?').join(',');
+
+    const [names, media] = await Promise.all([
+      this.db
+        .prepare(`SELECT * FROM menu_item_names WHERE menu_item_id IN (${placeholders})`)
+        .bind(...ids)
+        .all<MenuItemName>(),
+      this.db
+        .prepare(`SELECT * FROM media_variants WHERE menu_item_id IN (${placeholders})`)
+        .bind(...ids)
+        .all<MediaVariant>(),
+    ]);
+
+    return items.results.map((item) => ({
+      ...item,
+      names: names.results.filter((n) => n.menu_item_id === item.id),
+      media: media.results.filter((m) => m.menu_item_id === item.id),
+    }));
+  }
+
   /** Get a single item with names and media */
   async getById(id: number): Promise<MenuItemWithDetails | null> {
     const item = await this.db

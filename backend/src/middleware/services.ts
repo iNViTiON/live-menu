@@ -4,6 +4,11 @@ import { AuthService } from '../services/auth';
 import { VersionVectorService } from '../services/version-vector';
 
 export const servicesMiddleware = createMiddleware<HonoEnv>(async (c, next) => {
+  // Skip service creation for non-API routes (media proxy, assets)
+  const path = new URL(c.req.url).pathname;
+  if (!path.startsWith('/api/')) {
+    return next();
+  }
   const authService = new AuthService(
     c.env.DB,
     c.env.WEBAUTHN_RP_NAME,

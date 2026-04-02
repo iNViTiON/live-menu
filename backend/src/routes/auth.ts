@@ -78,6 +78,10 @@ auth.post('/register/verify', async (c) => {
     return c.json({ error: 'Invalid or expired challenge' }, 400);
   }
 
+  if (challengeRow.user_id !== userId) {
+    return c.json({ error: 'User ID mismatch' }, 400);
+  }
+
   await c.env.DB.prepare('DELETE FROM webauthn_challenges WHERE id = ?')
     .bind(challengeId)
     .run();
@@ -316,6 +320,28 @@ auth.delete('/registration-tokens/:token', async (c) => {
   await versionVectorService.notifyChange(['user']);
 
   return c.json({ success: true });
+});
+
+// GET /expired-challenges/count — admin only
+auth.get('/expired-challenges/count', async (c) => {
+  const user = c.get('user');
+  if (!user || user.role !== 'admin') return c.json({ error: 'Forbidden' }, 403);
+  const now = Math.floor(Date.now() / 1000);
+  const result = await c.env.DB.prepare(
+    'SELECT COUNT(*) as count FROM webauthn_challenges WHERE expires_at <= ?'
+  ).bind(now).first<{ count: number }>();
+  return c.json({ count: result?.count ?? 0 });
+});
+
+// DELETE /expired-challenges — admin only
+auth.delete('/expired-challenges', async (c) => {
+  const user = c.get('user');
+  if (!user || user.role !== 'admin') return c.json({ error: 'Forbidden' }, 403);
+  const now = Math.floor(Date.now() / 1000);
+  const result = await c.env.DB.prepare(
+    'DELETE FROM webauthn_challenges WHERE expires_at <= ?'
+  ).bind(now).run();
+  return c.json({ deleted: result.meta.changes ?? 0 });
 });
 
 export { auth as authRoutes };
