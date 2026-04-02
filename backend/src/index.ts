@@ -75,13 +75,12 @@ export default {
       return app.fetch(request, env, ctx);
     }
 
-    // Admin SPA deep-link fallback
+    // Admin SPA — static assets have file extensions, SPA routes don't
     if (url.pathname.startsWith('/admin/') || url.pathname === '/admin') {
-      const assetResponse = await env.ASSETS.fetch(request);
-      if (assetResponse.status === 404) {
-        return env.ASSETS.fetch(new Request(new URL('/admin/index.html', request.url), request));
+      if (url.pathname.match(/\.[a-z0-9]+$/i)) {
+        return env.ASSETS.fetch(request);
       }
-      return assetResponse;
+      return env.ASSETS.fetch(new Request(new URL('/admin/', request.url), request));
     }
 
     return env.ASSETS.fetch(request);

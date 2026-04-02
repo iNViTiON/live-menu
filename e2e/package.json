@@ -1,0 +1,15 @@
+{
+  "name": "e2e",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bunx playwright test",
+    "test:ui": "bunx playwright test --ui",
+    "test:headed": "bunx playwright test --headed"
+  },
+  "dependencies": {
+    "@playwright/test": "1.58.2",
+    "playwright-core": "1.58.2"
+  }
+}

@@ -19,11 +19,11 @@
 
   onMount(async () => {
     try {
-      const response = await api.get<{ valid: boolean; pre_filled_name: string | null }>(
+      const response = await api.get<{ valid: boolean; preFilledName: string | null }>(
         `/api/auth/registration/${token}`
       );
       isValid = response.valid;
-      preFilledName = response.pre_filled_name;
+      preFilledName = response.preFilledName;
     } catch (err: unknown) {
       validationError = err instanceof Error ? err.message : 'Invalid or expired registration link';
     } finally {

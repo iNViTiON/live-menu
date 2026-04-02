@@ -18,7 +18,7 @@ class LanguagesStore {
   }
 
   async addLanguage(code: string, displayName: string) {
-    const lang = await api.post<Language>('/api/languages', { code, display_name: displayName });
+    const lang = await api.post<Language>('/api/languages', { code, displayName });
     this.languages = [...this.languages, lang];
     return lang;
   }

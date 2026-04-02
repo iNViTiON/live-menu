@@ -6,7 +6,8 @@
     "shared",
     "backend",
     "frontend-menu",
-    "frontend-admin"
+    "frontend-admin",
+    "e2e"
   ],
   "scripts": {
     "dev:backend": "bun run --filter backend dev",
