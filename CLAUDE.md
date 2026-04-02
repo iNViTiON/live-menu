@@ -1,128 +1,84 @@
-# Project Instructions
+# CLAUDE.md
 
-<!-- TEMPLATE: Copy this file to your project root and customize the sections below. -->
-
-## Project Structure
-
-```
-project/
-├── backend/           # Hono API on Cloudflare Workers
-│   ├── src/
-│   │   ├── index.ts       # Hono app entry + routes
-│   │   ├── services/      # Business logic (D1 injected)
-│   │   ├── middleware/     # Auth, CORS, logging
-│   │   └── do/            # Durable Object classes
-│   ├── wrangler.toml
-│   └── vitest.config.ts
-├── frontend/          # SvelteKit 5 SPA on CF Pages
-│   ├── src/
-│   │   ├── routes/        # SvelteKit routes
-│   │   ├── lib/
-│   │   │   ├── stores/    # Svelte 5 rune stores
-│   │   │   ├── components/
-│   │   │   └── api/       # API client
-│   │   └── app.html
-│   ├── svelte.config.js
-│   └── vite.config.ts
-├── wasm/              # Rust WASM modules (optional)
-│   ├── src/lib.rs
-│   └── Cargo.toml
-├── shared/            # Shared TypeScript types
-└── package.json       # Bun workspace root
-```
-
-## Tech Stack
-
-- **Package manager:** Bun
-- **Backend:** Hono on Cloudflare Workers
-- **Database:** Cloudflare D1 (SQLite) — raw prepared statements, no ORM
-- **Realtime:** Durable Objects with Hibernation API + WebSocket
-- **Frontend:** SvelteKit 5 (runes mode) + adapter-static → CF Pages
-- **WASM:** Rust via wasm-bindgen (optional, for perf-critical code)
-- **Auth:** WebAuthn / Passkeys
-- **Testing:** Vitest + @cloudflare/vitest-pool-workers (backend), Playwright (e2e)
-- **Deploy:** Wrangler CLI
-- **Dev env:** Nix + direnv (optional)
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Commands
 
 ```bash
-# Development
-bun install                    # Install all workspace deps
-bun run --filter backend dev   # Start backend (wrangler dev)
-bun run --filter frontend dev  # Start frontend (vite dev)
+# Dev servers (Nix shell provides these as commands; otherwise use bun run scripts)
+dev-backend              # wrangler dev on :8787
+dev-menu                 # vite dev on :5173 (proxy → :8787)
+dev-admin                # vite dev on :5174 (proxy → :8787)
 
 # Testing
-bun run --filter backend test  # Vitest + CF pool
-bun run --filter frontend test # Vitest
-bun run e2e                    # Playwright
+bun run test:backend     # 54 integration tests (vitest + @cloudflare/vitest-pool-workers)
+e2e                      # 22 Playwright tests (requires Nix devShell for Chromium)
+e2e --headed             # Playwright in browser
+e2e tests/admin-menu.spec.ts   # Single test file
+cd frontend-admin && bunx svelte-check   # Type check admin
+cd frontend-menu && bunx svelte-check    # Type check menu
 
 # Database
-wrangler d1 migrations create <DB> <desc>   # New migration
-wrangler d1 migrations apply <DB> --local   # Apply locally
-wrangler d1 migrations apply <DB> --remote  # Apply to prod
+bun run db:migrate:local                  # Apply D1 migrations locally
+db execute live_menu --local --command "SQL"  # Query local D1
 
-# Deploy
-wrangler deploy --config backend/wrangler.toml  # Deploy backend
-wrangler pages deploy frontend/build            # Deploy frontend
-
-# WASM (optional)
-wasm-pack build wasm/ --target web
+# Build + Deploy
+bun run build:all        # Build both SPAs → merge into backend/dist/
+bun run deploy           # build:all + wrangler deploy
 ```
 
-## Code Standards
+## Architecture
 
-- TypeScript strict mode, no `any`
-- Functions over 30 lines should be split
-- Every endpoint needs at least one integration test
-- Handle errors explicitly — no swallowed exceptions
+Single Cloudflare Worker (`backend/src/index.ts`) handles all routing:
+
+1. `/api/sync-ws` + WebSocket upgrade → validate session → forward to `BroadcastRoom` Durable Object
+2. `/media/*` → R2 proxy with immutable cache headers
+3. `/api/*` → Hono app (middleware chain: security → cors → db PRAGMA → services → auth)
+4. `/admin/*` → ASSETS binding with SPA fallback to `/admin/index.html`
+5. `/*` → ASSETS binding (menu SPA)
+
+Both SPAs are built as static files and merged into `backend/dist/` via `scripts/merge-dist.mjs`. The Worker serves them through the `ASSETS` binding with `run_worker_first` for API/media/admin paths.
+
+### Key type: `HonoEnv`
+
+All Hono middleware and routes use `HonoEnv` from `backend/src/types.ts`:
+- `Bindings`: `DB` (D1), `MEDIA_BUCKET` (R2), `BROADCAST_ROOM` (DO), `ASSETS` (Fetcher), plus WebAuthn vars
+- `Variables`: `user` (AuthUser), `authService` (AuthService), `versionVectorService` (VersionVectorService)
+
+Access via `c.env.DB`, `c.get('user')`, `c.get('authService')`, etc.
+
+### Service pattern
+
+Services are classes with D1/R2 injected via constructor, instantiated per-request in `middleware/services.ts`:
+- `AuthService` — WebAuthn, sessions, registration tokens
+- `MenuService` — menu item CRUD, names, reorder
+- `MediaService` — R2 upload/delete, variant management
+- `LanguageService` — language CRUD with R2 cascade cleanup
+- `VersionVectorService` — notify BroadcastRoom DO of changes
+
+### Realtime sync
+
+`BroadcastRoom` DO (Hibernation API) manages WebSocket connections. Auth-first: client sends `{type:"auth", token}` as first message. On mutations, backend calls `versionVectorService.notifyChange(['menuItem', 'media', ...])` which POSTs to the DO's internal `/update` endpoint, broadcasting version vectors to authenticated clients.
+
+### Frontend stores
+
+Both SPAs use Svelte 5 rune-based class stores (e.g., `class MenuStore { items = $state.raw<...>([]) }`). The admin's `version-sync.svelte.ts` subscribes to WebSocket updates and triggers store refreshes when resources are stale.
 
 ## Conventions
 
-- **SvelteKit 5:** MUST use runes (`$state`, `$derived`, `$effect`, `$props`), NEVER legacy stores
-- **Hono:** typed bindings via generics, service classes with D1 injection
-- **D1:** prepared statements only, never string interpolation in queries
-- **Durable Objects:** ALWAYS use Hibernation API (`this.ctx.acceptWebSocket`)
-- **Secrets:** use `wrangler secret put`, never commit to `wrangler.toml`
-- **Conventional commits:** `feat:`, `fix:`, `chore:`, `docs:`, `test:`
-- Always use Context7 MCP to verify framework APIs before implementing
+- **Package manager**: `bun` / `bunx` only — never npm, npx, yarn, pnpm
+- **SvelteKit 5**: runes only (`$state`, `$derived`, `$effect`, `$props`) — never legacy `writable`/`readable` stores
+- **D1**: prepared statements with `.bind()` only — never string interpolation. `PRAGMA foreign_keys = ON` is enforced per-connection via `middleware/db.ts`
+- **Durable Objects**: Hibernation API (`this.ctx.acceptWebSocket`) — never `ws.accept()`
+- **Shared types**: `@live-menu/shared` package — both frontends and backend import from it
+- **Commits**: conventional format (`feat:`, `fix:`, `chore:`, `docs:`, `test:`)
+- **Roles**: `admin` and `staff` only (no viewer). Staff can manage menu content; admin can also manage users and languages
+- **Base language**: GB (English UK) — always exists, cannot be deleted, used as fallback
 
 ## Agent Team Conventions
 
-### Git Worktree Isolation
-
-Backend and Frontend agents work in separate worktrees to avoid file conflicts:
-
-```
-.claude/worktrees/backend/   <- branch: agent/backend
-.claude/worktrees/frontend/  <- branch: agent/frontend
-.claude/worktrees/realtime/  <- branch: agent/realtime
-```
-
-Lead merges worktrees back to the feature branch when all complete (order: backend → realtime → frontend).
-
-### Communication Protocol
-
-- Prefix messages with your role: `[Lead]`, `[Backend]`, `[Frontend]`, `[QA]`, `[Realtime]`, `[WASM]`, `[Infra]`, `[Security]`, `[Performance]`, `[TestCoverage]`, `[Migration]`, `[Writer]`, `[Reviewer]`
-- Bug reports from QA go directly to the responsible agent, not through Lead
-- Review findings use structured format: Severity / File / Line / Issue / Fix
-
-### Human-in-the-Loop Checkpoints
-
-Lead pauses for human approval at:
-
-1. After planning — before starting implementation
-2. After code review — which non-critical findings to fix vs defer
-3. After migration — before running on real data
-4. After QA — ship or fix
-
-### Patterns Reference
-
-| Pattern | Used In | Description |
-|---------|---------|-------------|
-| API Spec as Contract | Build, Add Feature | Backend writes spec first; everyone builds against it |
-| Structured Output | Code Review | Findings use severity/file/line/issue/fix format |
-| Phased Execution | Add Feature | Tasks with hard dependencies execute in phases |
-| Rolling Review | Documentation | Reviewer starts checking as soon as any writer submits |
-| Competing Hypotheses | Debug | Investigators form hypotheses, then challenge each other |
-| CHANGELOG as Contract | Cross-Repo | Library publishes CHANGELOG; consumers migrate from it |
+- Use `@lead` to orchestrate multi-agent workflows
+- Agents work in git worktrees to avoid file conflicts
+- Prefix messages with role: `[Lead]`, `[Backend]`, `[Frontend]`, `[QA]`, etc.
+- Review findings use structured format: `Severity / File / Line / Issue / Fix`
+- Verify framework APIs via Context7 MCP before implementing
