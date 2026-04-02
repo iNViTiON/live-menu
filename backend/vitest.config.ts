@@ -30,6 +30,12 @@ export default defineWorkersConfig(async () => {
           },
         },
       },
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'lcov'],
+        include: ['src/**/*.ts'],
+        exclude: ['src/__tests__/**'],
+      },
     },
   };
 });

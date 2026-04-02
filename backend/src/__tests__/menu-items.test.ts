@@ -125,5 +125,53 @@ describe('Menu Items CRUD', () => {
       }),
     });
     expect(res.status).toBe(200);
+
+    // Verify reorder persisted
+    const listRes = await SELF.fetch('http://localhost/api/menu-items', {
+      headers: authHeader(adminToken),
+    });
+    const items = await listRes.json<Array<{ id: number; sort_order: number }>>();
+    const reorderedItem1 = items.find((i) => i.id === item1.id);
+    const reorderedItem2 = items.find((i) => i.id === item2.id);
+    expect(reorderedItem1?.sort_order).toBe(1);
+    expect(reorderedItem2?.sort_order).toBe(0);
+  });
+
+  it('GET /api/menu-items/99999 returns 404 for non-existent item', async () => {
+    const res = await SELF.fetch('http://localhost/api/menu-items/99999', {
+      headers: authHeader(adminToken),
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('DELETE /:id/names/:lang removes the name', async () => {
+    // Create item
+    const createRes = await SELF.fetch('http://localhost/api/menu-items', {
+      method: 'POST',
+      headers: authHeader(adminToken),
+    });
+    const created = await createRes.json<{ id: number }>();
+
+    // Set name
+    await SELF.fetch(`http://localhost/api/menu-items/${created.id}/names/GB`, {
+      method: 'PUT',
+      headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'To Be Deleted' }),
+    });
+
+    // Delete name
+    const delRes = await SELF.fetch(`http://localhost/api/menu-items/${created.id}/names/GB`, {
+      method: 'DELETE',
+      headers: authHeader(adminToken),
+    });
+    expect(delRes.status).toBe(200);
+
+    // Verify name is gone — get the item and check names
+    const getRes = await SELF.fetch(`http://localhost/api/menu-items/${created.id}`, {
+      headers: authHeader(adminToken),
+    });
+    const item = await getRes.json<{ names: Array<{ language_code: string }> }>();
+    const gbName = item.names?.find((n) => n.language_code === 'GB');
+    expect(gbName).toBeUndefined();
   });
 });

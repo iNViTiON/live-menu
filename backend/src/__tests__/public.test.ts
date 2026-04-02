@@ -44,6 +44,9 @@ describe('Public routes', () => {
       version: number;
     }>();
 
+    // Must have at least one visible item
+    expect(body.items.length).toBeGreaterThan(0);
+
     // All returned items should be visible
     for (const item of body.items) {
       expect(item.is_visible).toBe(1);
@@ -52,6 +55,12 @@ describe('Public routes', () => {
     // Languages should include GB
     const gb = body.languages.find((l) => l.code === 'GB');
     expect(gb).toBeDefined();
+
+    // Hidden item must not appear
+    const hiddenItem = body.items.find(
+      (item: { is_visible: number }) => item.is_visible === 0
+    );
+    expect(hiddenItem).toBeUndefined();
 
     // Version should be a recent timestamp
     expect(body.version).toBeGreaterThan(0);
