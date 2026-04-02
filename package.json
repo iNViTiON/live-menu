@@ -1,0 +1,27 @@
+{
+  "name": "live-menu-cf",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend-menu",
+    "frontend-admin"
+  ],
+  "scripts": {
+    "dev:backend": "bun run --filter backend dev",
+    "dev:menu": "bun run --filter frontend-menu dev",
+    "dev:admin": "bun run --filter frontend-admin dev",
+    "build:menu": "bun run --filter frontend-menu build",
+    "build:admin": "bun run --filter frontend-admin build",
+    "build:merge": "node scripts/merge-dist.mjs",
+    "build:all": "bun run build:menu && bun run build:admin && bun run build:merge",
+    "test:backend": "bun run --filter backend test",
+    "test:menu": "bun run --filter frontend-menu test",
+    "test:admin": "bun run --filter frontend-admin test",
+    "e2e": "bun run --filter e2e test",
+    "db:migrate:local": "cd backend && bunx wrangler d1 migrations apply live_menu --local",
+    "db:migrate:remote": "cd backend && bunx wrangler d1 migrations apply live_menu --remote",
+    "deploy": "cd backend && bunx wrangler deploy"
+  }
+}

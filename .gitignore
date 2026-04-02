@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+.wrangler/
+.svelte-kit/
+.env
+.dev.vars
+*.local
+.DS_Store
+.turbo
