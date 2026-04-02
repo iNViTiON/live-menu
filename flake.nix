@@ -23,71 +23,62 @@
         browsers =
           (builtins.fromJSON (builtins.readFile "${pkgs.playwright-driver}/browsers.json")).browsers;
         chromium-rev = (builtins.head (builtins.filter (x: x.name == "chromium") browsers)).revision;
+        # Wrapper scripts that work with both `nix develop` and direnv
+        dev-backend = pkgs.writeShellScriptBin "dev-backend" ''
+          cd "''${LIVE_MENU_ROOT:-$PWD}/backend" && ${pkgs.bun}/bin/bun run dev
+        '';
+        dev-menu = pkgs.writeShellScriptBin "dev-menu" ''
+          cd "''${LIVE_MENU_ROOT:-$PWD}/frontend-menu" && ${pkgs.bun}/bin/bun run dev
+        '';
+        dev-admin = pkgs.writeShellScriptBin "dev-admin" ''
+          cd "''${LIVE_MENU_ROOT:-$PWD}/frontend-admin" && ${pkgs.bun}/bin/bun run dev
+        '';
+        e2e = pkgs.writeShellScriptBin "e2e" ''
+          cd "''${LIVE_MENU_ROOT:-$PWD}/e2e" && ${pkgs.bun}/bin/bunx playwright test "$@"
+        '';
+        db = pkgs.writeShellScriptBin "db" ''
+          export PATH="''${LIVE_MENU_ROOT:-$PWD}/node_modules/.bin:$PATH"
+          wrangler d1 "$@"
+        '';
       in
       {
         devShells.default = pkgs.mkShell {
           name = "live-menu-cf";
 
-          buildInputs = with pkgs; [
+          buildInputs = [
             # Core runtime
-            bun              # JavaScript runtime and package manager
-            nodejs           # Node.js (required by some tools)
+            pkgs.bun              # JavaScript runtime and package manager
+            pkgs.nodejs           # Node.js (required by some tools)
 
             # Playwright browsers (for e2e tests)
-            playwright-driver.browsers
+            pkgs.playwright-driver.browsers
 
-            # Cloudflare tools
-            # wrangler is managed via package.json (node_modules/.bin)
+            # Project commands (work with direnv, unlike aliases)
+            dev-backend
+            dev-menu
+            dev-admin
+            e2e
+            db
 
             # Development tools
-            git              # Version control
-            openssl          # Crypto utilities
-            curl             # API testing
-            jq               # JSON processing
+            pkgs.git              # Version control
+            pkgs.openssl          # Crypto utilities
+            pkgs.curl             # API testing
+            pkgs.jq               # JSON processing
 
             # Database inspection
-            sqlite           # D1 local database inspection
+            pkgs.sqlite           # D1 local database inspection
           ];
 
           shellHook = ''
+            # Anchor project root for wrapper scripts (works from any subdirectory)
+            export LIVE_MENU_ROOT="$PWD"
+
             # Use project-local wrangler (keeps version in sync with package.json)
             export PATH="$PWD/node_modules/.bin:$PATH"
 
             # Playwright: point to the Nix-managed Chromium binary
             export PLAYWRIGHT_LAUNCH_OPTIONS_EXECUTABLE_PATH="${pkgs.playwright-driver.browsers}/chromium-${chromium-rev}/chrome-linux64/chrome"
-
-            echo "Live Menu CF — Development Environment"
-            echo "======================================="
-            echo ""
-            echo "Available tools:"
-            echo "  bun      $(bun --version)"
-            echo "  node     $(node --version)"
-            echo "  wrangler $(wrangler --version 2>/dev/null || echo '(run: bun install)')"
-            echo "  sqlite3  $(sqlite3 --version)"
-            echo "  curl     $(curl --version | head -1)"
-            echo "  jq       $(jq --version)"
-            echo ""
-            echo "Quick start:"
-            echo "  1. bun install              Install all workspace dependencies"
-            echo "  2. dev-backend              Start the Hono API worker"
-            echo "  3. dev-menu                 Start the menu frontend"
-            echo "  4. dev-admin                Start the admin frontend"
-            echo "  5. e2e                      Run Playwright tests"
-            echo ""
-            echo "Aliases:"
-            echo "  dev-backend    cd backend && bun run dev"
-            echo "  dev-menu       cd frontend-menu && bun run dev"
-            echo "  dev-admin      cd frontend-admin && bun run dev"
-            echo "  db             wrangler d1 <subcommand>"
-            echo "  e2e            cd e2e && bunx playwright test"
-            echo ""
-
-            # Project-specific aliases
-            alias dev-backend="cd $PWD/backend && bun run dev"
-            alias dev-menu="cd $PWD/frontend-menu && bun run dev"
-            alias dev-admin="cd $PWD/frontend-admin && bun run dev"
-            alias db="wrangler d1"
-            alias e2e="cd $PWD/e2e && bunx playwright test"
           '';
 
           # Prevent npm from being used accidentally
