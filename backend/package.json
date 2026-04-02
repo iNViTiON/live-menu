@@ -15,7 +15,7 @@
     "zod": "^3"
   },
   "devDependencies": {
-    "wrangler": "^4",
+    "wrangler": "^4.59.1",
     "@cloudflare/vitest-pool-workers": "^0.8",
     "@cloudflare/workers-types": "^4",
     "vitest": "^3",

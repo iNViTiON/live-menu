@@ -6,7 +6,7 @@ const backendDist = resolve(root, 'backend/dist');
 const menuBuild = resolve(root, 'frontend-menu/build');
 const adminBuild = resolve(root, 'frontend-admin/build');
 
-// Clean backend/dist (except .gitkeep)
+// Clean backend/dist
 rmSync(backendDist, { recursive: true, force: true });
 mkdirSync(backendDist, { recursive: true });
 

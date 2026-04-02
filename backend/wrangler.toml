@@ -9,10 +9,12 @@ not_found_handling = "single-page-application"
 binding = "ASSETS"
 run_worker_first = ["/api/*", "/media/*"]
 
+# Run: bunx wrangler d1 create live_menu
+# Then paste the database_id here
 [[d1_databases]]
 binding = "DB"
 database_name = "live_menu"
-database_id = "placeholder-replace-after-create"
+database_id = "TODO-run-wrangler-d1-create-live_menu"
 migrations_dir = "src/db/migrations"
 
 [[r2_buckets]]

@@ -18,14 +18,14 @@
         "@cloudflare/workers-types": "^4",
         "typescript": "^5",
         "vitest": "^3",
-        "wrangler": "^4",
+        "wrangler": "^4.59.1",
       },
     },
     "frontend-admin": {
       "name": "frontend-admin",
       "version": "0.0.1",
       "dependencies": {
-        "@live-menu/shared": "*",
+        "@live-menu/shared": "workspace:*",
         "@simplewebauthn/browser": "^13",
       },
       "devDependencies": {

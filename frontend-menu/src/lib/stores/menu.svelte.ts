@@ -1,8 +1,8 @@
 import type { MenuItemWithDetails, Language, PublicMenuResponse } from '@live-menu/shared';
 
 class MenuStore {
-  items = $state<MenuItemWithDetails[]>([]);
-  languages = $state<Language[]>([]);
+  items = $state.raw<MenuItemWithDetails[]>([]);
+  languages = $state.raw<Language[]>([]);
   version = $state(0);
   selectedLanguage = $state('GB');
   isLoading = $state(true);

@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@live-menu/shared": "*",
+    "@live-menu/shared": "workspace:*",
     "@simplewebauthn/browser": "^13"
   },
   "devDependencies": {

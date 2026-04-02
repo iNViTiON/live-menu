@@ -14,7 +14,7 @@
     "dev:admin": "bun run --filter frontend-admin dev",
     "build:menu": "bun run --filter frontend-menu build",
     "build:admin": "bun run --filter frontend-admin build",
-    "build:merge": "node scripts/merge-dist.mjs",
+    "build:merge": "bun scripts/merge-dist.mjs",
     "build:all": "bun run build:menu && bun run build:admin && bun run build:merge",
     "test:backend": "bun run --filter backend test",
     "test:menu": "bun run --filter frontend-menu test",
@@ -22,6 +22,6 @@
     "e2e": "bun run --filter e2e test",
     "db:migrate:local": "cd backend && bunx wrangler d1 migrations apply live_menu --local",
     "db:migrate:remote": "cd backend && bunx wrangler d1 migrations apply live_menu --remote",
-    "deploy": "cd backend && bunx wrangler deploy"
+    "deploy": "bun run build:all && cd backend && bunx wrangler deploy"
   }
 }
