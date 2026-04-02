@@ -1,4 +1,3 @@
-import type { D1Database } from '@cloudflare/workers-types';
 import type { MenuItem, MenuItemName, MediaVariant, MenuItemWithDetails } from '@live-menu/shared';
 
 export class MenuService {

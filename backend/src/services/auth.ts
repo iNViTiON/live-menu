@@ -1,4 +1,3 @@
-import type { D1Database } from '@cloudflare/workers-types';
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
@@ -40,7 +39,9 @@ export class AuthService {
       type: 'public-key' as const,
     }));
 
-    const userIdBuffer = new TextEncoder().encode(userId.toString());
+    const encoded = new TextEncoder().encode(userId.toString());
+    const userIdBuffer = new Uint8Array(encoded.length);
+    userIdBuffer.set(encoded);
 
     return generateRegistrationOptions({
       rpName: this.rpName,
@@ -74,17 +75,19 @@ export class AuthService {
   async saveCredential(
     userId: number,
     credentialId: string,
-    publicKey: string,
+    publicKey: Uint8Array,
     counter: number,
     deviceName?: string
   ) {
+    // Encode Uint8Array as base64 for storage
+    const publicKeyB64 = btoa(String.fromCharCode(...publicKey));
     const now = Math.floor(Date.now() / 1000);
     await this.db
       .prepare(
         `INSERT INTO passkey_credentials (credential_id, user_id, public_key, counter, device_name, created_at)
          VALUES (?, ?, ?, ?, ?, ?)`
       )
-      .bind(credentialId, userId, publicKey, counter, deviceName ?? null, now)
+      .bind(credentialId, userId, publicKeyB64, counter, deviceName ?? null, now)
       .run();
   }
 
@@ -125,14 +128,17 @@ export class AuthService {
       throw new Error('Credential not found');
     }
 
+    // Decode base64 public key back to Uint8Array
+    const publicKeyBytes = Uint8Array.from(atob(credentialRecord.public_key), (c) => c.charCodeAt(0));
+
     const verification = await verifyAuthenticationResponse({
       response,
       expectedChallenge,
       expectedOrigin: this.origin,
       expectedRPID: this.rpId,
-      authenticator: {
-        credentialID: response.rawId,
-        credentialPublicKey: credentialRecord.public_key,
+      credential: {
+        id: response.rawId,
+        publicKey: publicKeyBytes,
         counter: credentialRecord.counter,
       },
     });

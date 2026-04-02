@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import type { HonoEnv } from '../types';
 import { MenuService } from '../services/menu';
 import { MediaService } from '../services/media';
@@ -6,17 +7,10 @@ import { menuItemUpdateSchema, reorderSchema, menuItemNameSchema } from '../vali
 
 const menuItems = new Hono<HonoEnv>();
 
-// All menu-item routes require authentication (staff+)
-function requireAuth(c: Parameters<Parameters<typeof menuItems.use>[1]>[0]) {
-  const user = c.get('user');
-  if (!user) return c.json({ error: 'Unauthorized' }, 401);
-  return null;
-}
-
 // GET / — list all items (including hidden)
 menuItems.get('/', async (c) => {
-  const authError = requireAuth(c);
-  if (authError) return authError;
+  const user = c.get('user');
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const service = new MenuService(c.env.DB);
   const items = await service.list();

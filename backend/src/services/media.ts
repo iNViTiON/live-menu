@@ -1,4 +1,3 @@
-import type { D1Database, R2Bucket, R2ObjectBody } from '@cloudflare/workers-types';
 import type { MediaVariant, MediaType } from '@live-menu/shared';
 
 export class MediaService {

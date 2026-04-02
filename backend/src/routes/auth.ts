@@ -94,9 +94,9 @@ auth.post('/register/verify', async (c) => {
 
   await authService.saveCredential(
     userId,
-    verification.registrationInfo.credentialID,
-    verification.registrationInfo.credentialPublicKey,
-    verification.registrationInfo.counter,
+    verification.registrationInfo.credential.id,
+    verification.registrationInfo.credential.publicKey,
+    verification.registrationInfo.credential.counter,
     deviceName
   );
 

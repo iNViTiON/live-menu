@@ -1,4 +1,3 @@
-import type { DurableObjectNamespace } from '@cloudflare/workers-types';
 import type { ResourceKey } from '@live-menu/shared';
 
 export class VersionVectorService {
