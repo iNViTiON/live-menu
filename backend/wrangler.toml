@@ -1,0 +1,34 @@
+name = "live-menu-api"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./dist/"
+not_found_handling = "single-page-application"
+binding = "ASSETS"
+run_worker_first = ["/api/*", "/media/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "live_menu"
+database_id = "placeholder-replace-after-create"
+migrations_dir = "src/db/migrations"
+
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "live-menu-media"
+
+[[durable_objects.bindings]]
+name = "BROADCAST_ROOM"
+class_name = "BroadcastRoom"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["BroadcastRoom"]
+
+[vars]
+FRONTEND_URL = "https://menu.mitch.ee"
+WEBAUTHN_RP_ID = "mitch.ee"
+WEBAUTHN_RP_NAME = "Live Menu"
+WEBAUTHN_ORIGIN = "https://menu.mitch.ee"

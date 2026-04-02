@@ -1,0 +1,24 @@
+{
+  "name": "backend",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "hono": "^4",
+    "@simplewebauthn/server": "^13",
+    "zod": "^3"
+  },
+  "devDependencies": {
+    "wrangler": "^4",
+    "@cloudflare/vitest-pool-workers": "^0.8",
+    "@cloudflare/workers-types": "^4",
+    "vitest": "^3",
+    "typescript": "^5"
+  }
+}
