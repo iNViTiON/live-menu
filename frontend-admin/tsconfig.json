@@ -8,8 +8,6 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "sourceMap": true,
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext"
+    "sourceMap": true
   }
 }

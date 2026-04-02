@@ -32,7 +32,7 @@
   });
 
   async function handleRegister() {
-    if (!preFilledName?.trim()) return;
+    if (!token || !preFilledName?.trim()) return;
 
     isRegistering = true;
     registerError = null;
