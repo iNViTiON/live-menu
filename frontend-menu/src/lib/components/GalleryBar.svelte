@@ -63,7 +63,11 @@
             activeId = items[i].id;
           }
         },
-        { threshold: 0 }
+        {
+          // Shrink the observation zone to a thin strip at the vertical center so
+          // an item is only "intersecting" when it crosses the center of the viewport
+          rootMargin: '-49.9% 0px -49.9% 0px'
+        }
       );
       observer.observe(el);
       observers.push(observer);
