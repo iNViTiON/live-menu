@@ -21,18 +21,54 @@
   let savingLang = $state<string | null>(null);
   let saveError = $state<string | null>(null);
 
+  // "Last known server value" per language — used to detect whether the
+  // user has an unsaved local edit.  Stored separately from nameInputs so
+  // incoming realtime updates can be applied to unmodified fields without
+  // touching fields the user is actively editing.
+  let serverNames = $state<Record<string, string>>({});
+
+  // Track the item ID we last initialised inputs for, so we only reset
+  // form state when a genuinely different item is opened — not on every
+  // loadItems() call that replaces the array with fresh object references.
+  let initialisedForId = $state<number | null>(null);
+
   $effect(() => {
-    // Sync name inputs from item
-    const inputs: Record<string, string> = {};
-    for (const lang of languages) {
-      const existing = item.names.find(n => n.language_code === lang.code);
-      inputs[lang.code] = existing?.name ?? '';
+    if (initialisedForId !== item.id) {
+      // Editor just opened for a new item — hard reset all inputs.
+      initialisedForId = item.id;
+      const inputs: Record<string, string> = {};
+      const server: Record<string, string> = {};
+      for (const lang of languages) {
+        const value = item.names.find(n => n.language_code === lang.code)?.name ?? '';
+        inputs[lang.code] = value;
+        server[lang.code] = value;
+      }
+      nameInputs = inputs;
+      serverNames = server;
+      return;
     }
-    nameInputs = inputs;
+
+    // Same item, but item prop was replaced (loadItems after a save or
+    // realtime update).  Only update inputs for languages where the user
+    // has NOT made a local edit (i.e. their current value still matches
+    // the previous server value).
+    for (const lang of languages) {
+      const newServerValue = item.names.find(n => n.language_code === lang.code)?.name ?? '';
+      const prev = serverNames[lang.code] ?? '';
+      if (newServerValue !== prev) {
+        // Server data changed for this language.
+        const userEdited = nameInputs[lang.code] !== prev;
+        if (!userEdited) {
+          // Safe to apply — user hasn't touched this field.
+          nameInputs[lang.code] = newServerValue;
+        }
+        serverNames[lang.code] = newServerValue;
+      }
+    }
   });
 
   async function saveName(lang: string) {
-    const name = nameInputs[lang]?.trim();
+    const name = nameInputs[lang]?.trim() ?? '';
     savingLang = lang;
     saveError = null;
 
@@ -42,6 +78,10 @@
       } else {
         await menuStore.deleteName(item.id, lang);
       }
+      // Record the saved value as the new server baseline so that the
+      // subsequent loadItems() re-render doesn't treat this field as
+      // having an unsaved local edit.
+      serverNames[lang] = name;
     } catch (err: unknown) {
       saveError = err instanceof Error ? err.message : 'Failed to save name';
     } finally {
