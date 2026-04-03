@@ -46,8 +46,8 @@
     top: 1rem;
     right: 1rem;
     display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+    flex-direction: row;
+    gap: 0.5rem;
     z-index: 100;
   }
 

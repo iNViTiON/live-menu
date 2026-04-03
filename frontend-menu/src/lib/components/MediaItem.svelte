@@ -63,7 +63,6 @@
     align-items: center;
     justify-content: center;
     height: 100dvh;
-    scroll-snap-align: start;
   }
 
   .media-content {

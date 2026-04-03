@@ -5,6 +5,28 @@
   let { items }: { items: MenuItemWithDetails[] } = $props();
 
   let activeId = $state<number | null>(null);
+  let visible = $state(true);
+  let hideTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function resetTimer() {
+    visible = true;
+    if (hideTimer !== null) clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      visible = false;
+    }, 3000);
+  }
+
+  $effect(() => {
+    resetTimer();
+
+    const events = ['touchstart', 'scroll', 'click', 'mousemove'] as const;
+    events.forEach((e) => document.addEventListener(e, resetTimer, { passive: true }));
+
+    return () => {
+      if (hideTimer !== null) clearTimeout(hideTimer);
+      events.forEach((e) => document.removeEventListener(e, resetTimer));
+    };
+  });
 
   $effect(() => {
     if (activeId === null && items.length > 0) {
@@ -40,7 +62,11 @@
   });
 </script>
 
-<nav class="gallery-bar" aria-label="Menu navigation">
+<nav
+  class="gallery-bar"
+  class:hidden={!visible}
+  aria-label="Menu navigation"
+>
   {#each items as item (item.id)}
     {@const media = menuStore.getMediaVariant(item)}
     {@const name = menuStore.getName(item)}
@@ -90,6 +116,12 @@
     padding: 0.4rem 0.5rem;
     z-index: 50;
     scrollbar-width: none;
+    transform: translateY(0);
+    transition: transform 300ms ease;
+  }
+
+  .gallery-bar.hidden {
+    transform: translateY(100%);
   }
 
   .gallery-bar::-webkit-scrollbar {
@@ -99,26 +131,24 @@
   .thumb-btn {
     flex-shrink: 0;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 0.2rem;
-    background: none;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.08);
     border: 2px solid transparent;
     border-radius: 0.4rem;
     cursor: pointer;
-    padding: 0.2rem;
-    color: #aaa;
+    padding: 0.3rem 0.5rem;
+    color: #fff;
     transition: border-color 0.15s, color 0.15s;
   }
 
   .thumb-btn:hover {
     border-color: rgba(255, 255, 255, 0.4);
-    color: #fff;
   }
 
   .thumb-btn.active {
     border-color: #fff;
-    color: #fff;
   }
 
   .thumb-media {
@@ -127,6 +157,7 @@
     overflow: hidden;
     border-radius: 0.25rem;
     background: #222;
+    flex-shrink: 0;
   }
 
   .thumb-content {
@@ -143,11 +174,8 @@
   }
 
   .thumb-name {
-    font-size: 0.55rem;
-    max-width: 3.2rem;
+    font-size: 0.8rem;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: center;
+    color: #fff;
   }
 </style>
