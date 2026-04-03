@@ -132,7 +132,7 @@
     flex-shrink: 0;
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.5rem;
     background: rgba(255, 255, 255, 0.08);
     border: 2px solid transparent;
@@ -174,7 +174,7 @@
   }
 
   .thumb-name {
-    font-size: 0.8rem;
+    font-size: 1.6rem;
     white-space: nowrap;
     color: #fff;
   }
