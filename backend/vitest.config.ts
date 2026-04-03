@@ -31,7 +31,7 @@ export default defineWorkersConfig(async () => {
         },
       },
       coverage: {
-        provider: 'v8',
+        provider: 'istanbul',
         reporter: ['text', 'lcov'],
         include: ['src/**/*.ts'],
         exclude: ['src/__tests__/**'],

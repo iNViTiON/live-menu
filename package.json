@@ -24,5 +24,8 @@
     "db:migrate:local": "cd backend && bunx wrangler d1 migrations apply live_menu --local",
     "db:migrate:remote": "cd backend && bunx wrangler d1 migrations apply live_menu --remote",
     "deploy": "bun run build:all && cd backend && bunx wrangler deploy"
+  },
+  "devDependencies": {
+    "@vitest/coverage-istanbul": "^3.2.4"
   }
 }
