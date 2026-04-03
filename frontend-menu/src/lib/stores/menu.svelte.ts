@@ -38,7 +38,9 @@ class MenuStore {
 
   async load() {
     try {
-      this.isLoading = true;
+      // Only show loading spinner on initial load — refreshes must not
+      // destroy the scroll-container (which resets scrollTop to 0).
+      if (this.items.length === 0) this.isLoading = true;
       this.error = null;
       const res = await fetch('/api/public/menu');
       if (!res.ok) throw new Error('Failed to load menu');

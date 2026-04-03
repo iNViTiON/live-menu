@@ -9,7 +9,9 @@ class MenuStore {
   private mutatingTimer: ReturnType<typeof setTimeout> | null = null;
 
   async loadItems() {
-    this.isLoading = true;
+    // Only show loading on initial load — refreshes must not destroy
+    // the MenuItemList component tree (which resets expandedId).
+    if (this.items.length === 0) this.isLoading = true;
     try {
       this.items = await api.get<MenuItemWithDetails[]>('/api/menu-items');
     } catch (error) {
