@@ -17,6 +17,12 @@ database_name = "live_menu"
 database_id = "TODO-run-wrangler-d1-create-live_menu"
 migrations_dir = "src/db/migrations"
 
+# R2 bucket for media uploads (images, videos).
+# Lifecycle rules (e.g. delete objects older than N days with no references) must be
+# configured in the Cloudflare dashboard under R2 → live-menu-media → Settings →
+# Lifecycle rules — there is no Wrangler CLI equivalent.
+# No CORS policy is needed: all media is served through the Worker (/media/* proxy),
+# so browsers never access the bucket directly.
 [[r2_buckets]]
 binding = "MEDIA_BUCKET"
 bucket_name = "live-menu-media"
