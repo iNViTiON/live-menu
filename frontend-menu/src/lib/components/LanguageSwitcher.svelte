@@ -63,18 +63,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.6;
-    transition: opacity 0.15s, transform 0.15s;
+    transition: transform 0.15s;
     padding: 0;
   }
 
   .lang-btn:hover {
-    opacity: 0.9;
     transform: scale(1.1);
   }
 
   .lang-btn.active {
-    opacity: 1;
     box-shadow: 0 0 0 2px #fff;
   }
 </style>
