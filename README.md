@@ -122,25 +122,17 @@ bun run dev:admin     # vite dev on :5174
 
 ### Bootstrap the first admin user
 
-There is no seed user. Insert one directly and generate a registration link:
+There is no seed user. Run this single command from the project root to create one and get a registration link:
 
 ```bash
-cd backend
-
-# 1. Insert user row
+cd backend && \
 bunx wrangler d1 execute live_menu --local \
-  --command "INSERT INTO users (name, role, is_active, has_passkey, created_at, updated_at) VALUES ('Admin', 'admin', 1, 0, unixepoch(), unixepoch())"
-
-# 2. Get the user ID
+  --command "INSERT INTO users (name, role, is_active, has_passkey, created_at, updated_at) VALUES ('Admin', 'admin', 1, 0, unixepoch(), unixepoch())" && \
 bunx wrangler d1 execute live_menu --local \
-  --command "SELECT id FROM users WHERE name = 'Admin'"
-
-# 3. Insert a registration token (replace <user_id> with the id from step 2)
-bunx wrangler d1 execute live_menu --local \
-  --command "INSERT INTO registration_tokens (token, user_id, pre_filled_name, role, expires_at, created_by, created_at) VALUES ('setup-token', <user_id>, 'Admin', 'admin', unixepoch()+21600, <user_id>, unixepoch())"
+  --command "INSERT INTO registration_tokens (token, user_id, pre_filled_name, role, expires_at, created_by, created_at) VALUES ('setup-token', (SELECT id FROM users WHERE name = 'Admin' AND role = 'admin'), 'Admin', 'admin', unixepoch()+21600, (SELECT id FROM users WHERE name = 'Admin' AND role = 'admin'), unixepoch())"
 ```
 
-Then open `http://localhost:5174/admin/register/setup-token` to complete passkey registration.
+Then open `http://localhost:5174/admin/register/setup-token` to complete passkey registration. The token expires in 6 hours.
 
 ---
 
