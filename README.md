@@ -125,12 +125,17 @@ bun run dev:admin     # vite dev on :5174
 There is no seed user. Insert one directly and generate a registration link:
 
 ```bash
-# 1. Insert user row
 cd backend
+
+# 1. Insert user row
 bunx wrangler d1 execute live_menu --local \
   --command "INSERT INTO users (name, role, is_active, has_passkey, created_at, updated_at) VALUES ('Admin', 'admin', 1, 0, unixepoch(), unixepoch())"
 
-# 2. Insert a registration token (replace <user_id> with the id from step 1)
+# 2. Get the user ID
+bunx wrangler d1 execute live_menu --local \
+  --command "SELECT id FROM users WHERE name = 'Admin'"
+
+# 3. Insert a registration token (replace <user_id> with the id from step 2)
 bunx wrangler d1 execute live_menu --local \
   --command "INSERT INTO registration_tokens (token, user_id, pre_filled_name, role, expires_at, created_by, created_at) VALUES ('setup-token', <user_id>, 'Admin', 'admin', unixepoch()+21600, <user_id>, unixepoch())"
 ```
