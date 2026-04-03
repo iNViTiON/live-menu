@@ -43,9 +43,17 @@ class MenuStore {
       const res = await fetch('/api/public/menu');
       if (!res.ok) throw new Error('Failed to load menu');
       const data: PublicMenuResponse = await res.json();
+
+      const scrollEl = document.querySelector('.scroll-container');
+      const savedScroll = scrollEl?.scrollTop ?? 0;
+
       this.items = data.items;
       this.languages = data.languages;
       this.version = data.version;
+
+      requestAnimationFrame(() => {
+        if (scrollEl) (scrollEl as HTMLElement).scrollTop = savedScroll;
+      });
     } catch (err: unknown) {
       this.error = err instanceof Error ? err.message : 'Unknown error';
       console.error('Failed to load menu:', err);
