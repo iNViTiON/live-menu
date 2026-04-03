@@ -90,7 +90,7 @@ describe('Media routes', () => {
       );
       expect(res.status).toBe(400);
       const body = await res.json<{ error: string }>();
-      expect(body.error).toContain('SVG');
+      expect(body.error).toContain('Unsupported file type');
     });
   });
 
