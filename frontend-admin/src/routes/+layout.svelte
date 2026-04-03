@@ -39,7 +39,10 @@
 
     const unsubscribe = versionSync.onChange((staleResources) => {
       if (staleResources.includes('menuItem') || staleResources.includes('media')) {
-        menuStore.loadItems();
+        // Skip if a local mutation is in flight — it will load fresh data itself
+        if (!menuStore.mutating) {
+          menuStore.loadItems();
+        }
       }
       if (staleResources.includes('language')) {
         languagesStore.loadLanguages();

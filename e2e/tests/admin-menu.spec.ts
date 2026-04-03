@@ -17,6 +17,8 @@ test.describe('Admin Menu Management', () => {
     await expect(page.locator('h1')).toHaveText('Menu');
     // Wait for items to load (should show empty state)
     await expect(page.locator('.empty')).toBeVisible({ timeout: 10_000 });
+    // Let WS-triggered reloads settle before interacting
+    await page.waitForLoadState('networkidle');
   });
 
   test('create menu item and set name', async ({ page }) => {
