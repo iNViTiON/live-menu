@@ -117,9 +117,10 @@ describe('Auth verify endpoints', () => {
         body: JSON.stringify({
           userId: 1,
           response: {
-            id: 'fake-id',
-            rawId: 'fake-raw-id',
-            response: { clientDataJSON: 'fake-data', attestationObject: 'fake-attestation' },
+            id: 'ZmFrZS1pZA',
+            rawId: 'ZmFrZS1pZA',
+            type: 'public-key',
+            response: { clientDataJSON: 'ZmFrZQ', attestationObject: 'ZmFrZQ' },
           },
           challengeId: 'reg-challenge-verify',
           token: 'some-token',
@@ -207,9 +208,10 @@ describe('Auth verify endpoints', () => {
         headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': '10.0.2.6' },
         body: JSON.stringify({
           response: {
-            id: 'fake-id',
-            rawId: 'fake-raw-id',
-            response: { clientDataJSON: 'fake-data', authenticatorData: 'fake-auth-data', signature: 'fake-sig' },
+            id: 'ZmFrZS1pZA',
+            rawId: 'ZmFrZS1pZA',
+            type: 'public-key',
+            response: { clientDataJSON: 'ZmFrZQ', authenticatorData: 'ZmFrZQ', signature: 'ZmFrZQ' },
           },
           challengeId: 'login-challenge-verify',
         }),

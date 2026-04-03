@@ -63,12 +63,16 @@ export class AuthService {
     response: any,
     expectedChallenge: string
   ): Promise<VerifiedRegistrationResponse> {
-    return verifyRegistrationResponse({
+    const p = verifyRegistrationResponse({
       response,
       expectedChallenge,
       expectedOrigin: this.origin,
       expectedRPID: this.rpId,
     });
+    // Prevent workerd from treating synchronous throws as unhandled rejections;
+    // callers must still await this method and handle the rejection themselves.
+    p.catch(() => {});
+    return p;
   }
 
   /** Save credential to database */

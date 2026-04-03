@@ -42,6 +42,15 @@ export async function setupTestEnv(): Promise<{ adminToken: string; staffToken: 
     'INSERT OR IGNORE INTO sessions (id, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)'
   ).bind(staffToken, 2, expiresAt, now).run();
 
+  // Seed extra languages needed by tests
+  await env.DB.prepare(
+    'INSERT OR IGNORE INTO languages (code, display_name, is_base, sort_order, created_at) VALUES (?, ?, 0, ?, ?)'
+  ).bind('FR', 'French', 1, now).run();
+
+  await env.DB.prepare(
+    'INSERT OR IGNORE INTO languages (code, display_name, is_base, sort_order, created_at) VALUES (?, ?, 0, ?, ?)'
+  ).bind('DE', 'German', 2, now).run();
+
   initialized = true;
   return { adminToken, staffToken };
 }
