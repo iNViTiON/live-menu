@@ -86,11 +86,17 @@ auth.post('/register/verify', async (c) => {
     .bind(challengeId)
     .run();
 
-  const verification = await authService.verifyRegistrationResponse(
-    userId,
-    response,
-    challengeRow.challenge
-  );
+  let verification;
+  try {
+    verification = await authService.verifyRegistrationResponse(
+      userId,
+      response,
+      challengeRow.challenge
+    );
+  } catch (error: any) {
+    console.error('Registration verification error:', error);
+    return c.json({ error: error.message || 'Verification failed' }, 400);
+  }
 
   if (!verification.verified) {
     return c.json({ error: 'Verification failed' }, 400);
@@ -168,17 +174,25 @@ auth.post('/login/verify', async (c) => {
     .bind(challengeId)
     .run();
 
-  const { userId, verified } = await authService.verifyAuthenticationResponse(
-    response,
-    challengeRow.challenge
-  );
+  let loginResult;
+  try {
+    loginResult = await authService.verifyAuthenticationResponse(
+      response,
+      challengeRow.challenge
+    );
+  } catch (error: any) {
+    console.error('Login verification error:', error);
+    return c.json({ error: error.message || 'Verification failed' }, 400);
+  }
+
+  const { userId: loginUserId, verified } = loginResult;
 
   if (!verified) {
     return c.json({ error: 'Verification failed' }, 400);
   }
 
-  const sessionToken = await authService.createSession(userId);
-  const user = await authService.getUserById(userId);
+  const sessionToken = await authService.createSession(loginUserId);
+  const user = await authService.getUserById(loginUserId);
 
   return c.json({ user, token: sessionToken });
 });
