@@ -1,5 +1,5 @@
 import type { VersionVector, VersionVectorMessage, ResourceKey } from '@live-menu/shared';
-import { browser } from '$app/environment';
+import { browser, dev } from '$app/environment';
 
 const STORAGE_KEY = 'version_vector';
 
@@ -37,9 +37,13 @@ class VersionSyncService {
   private connect() {
     if (!browser) return;
 
+    const token = localStorage.getItem('auth_token');
+    if (!token) return; // Can't connect without auth
+
     try {
       const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      const wsUrl = `${proto}://${window.location.host}/api/sync-ws`;
+      const host = dev ? 'localhost:8787' : window.location.host;
+      const wsUrl = `${proto}://${host}/api/sync-ws?token=${encodeURIComponent(token)}`;
 
       this.ws = new WebSocket(wsUrl);
 
@@ -47,8 +51,8 @@ class VersionSyncService {
         console.log('[VersionSync] Connected');
         this.clearReconnectTimeout();
         this.reconnectDelay = 1000;
-        const token = localStorage.getItem('auth_token');
-        if (token && this.ws) {
+        // Send auth message for BroadcastRoom DO to mark socket as authenticated
+        if (this.ws) {
           this.ws.send(JSON.stringify({ type: 'auth', token }));
         }
       };

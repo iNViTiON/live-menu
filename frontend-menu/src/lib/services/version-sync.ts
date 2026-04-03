@@ -12,7 +12,8 @@ class MenuVersionSync {
   connect() {
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/api/public/sync-ws`;
+      const host = import.meta.env.DEV ? 'localhost:8787' : window.location.host;
+      const wsUrl = `${protocol}//${host}/api/public/sync-ws`;
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
