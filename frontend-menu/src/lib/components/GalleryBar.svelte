@@ -7,6 +7,7 @@
   let activeId = $state<number | null>(null);
   let visible = $state(true);
   let hideTimer: ReturnType<typeof setTimeout> | null = null;
+  let navEl = $state<HTMLElement | null>(null);
 
   function resetTimer() {
     visible = true;
@@ -19,12 +20,24 @@
   $effect(() => {
     resetTimer();
 
-    const events = ['touchstart', 'scroll', 'click', 'mousemove'] as const;
-    events.forEach((e) => document.addEventListener(e, resetTimer, { passive: true }));
+    // These events bubble to document normally
+    const docEvents = ['touchstart', 'click', 'mousemove'] as const;
+    docEvents.forEach((e) => document.addEventListener(e, resetTimer, { passive: true }));
+
+    // Scroll does NOT bubble from .scroll-container — listen directly on it
+    const scrollContainer = document.querySelector('.scroll-container');
+    scrollContainer?.addEventListener('scroll', resetTimer, { passive: true });
+
+    // Also reset timer when the user interacts with the gallery bar itself
+    navEl?.addEventListener('touchstart', resetTimer, { passive: true });
+    navEl?.addEventListener('click', resetTimer, { passive: true });
 
     return () => {
       if (hideTimer !== null) clearTimeout(hideTimer);
-      events.forEach((e) => document.removeEventListener(e, resetTimer));
+      docEvents.forEach((e) => document.removeEventListener(e, resetTimer));
+      scrollContainer?.removeEventListener('scroll', resetTimer);
+      navEl?.removeEventListener('touchstart', resetTimer);
+      navEl?.removeEventListener('click', resetTimer);
     };
   });
 
@@ -50,7 +63,7 @@
             activeId = items[i].id;
           }
         },
-        { threshold: 0.5 }
+        { threshold: 0 }
       );
       observer.observe(el);
       observers.push(observer);
@@ -63,6 +76,7 @@
 </script>
 
 <nav
+  bind:this={navEl}
   class="gallery-bar"
   class:hidden={!visible}
   aria-label="Menu navigation"
