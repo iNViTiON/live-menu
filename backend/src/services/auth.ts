@@ -296,6 +296,26 @@ export class AuthService {
       .run();
   }
 
+  /** Count expired sessions */
+  async getExpiredSessionCount(): Promise<number> {
+    const now = Math.floor(Date.now() / 1000);
+    const result = await this.db
+      .prepare('SELECT COUNT(*) as count FROM sessions WHERE expires_at < ?')
+      .bind(now)
+      .first<{ count: number }>();
+    return result?.count ?? 0;
+  }
+
+  /** Delete expired sessions, returns number deleted */
+  async deleteExpiredSessions(): Promise<number> {
+    const now = Math.floor(Date.now() / 1000);
+    const result = await this.db
+      .prepare('DELETE FROM sessions WHERE expires_at < ?')
+      .bind(now)
+      .run();
+    return result.meta.changes ?? 0;
+  }
+
   /** Create user — no color column in this project */
   async createUser(name: string, role: UserRole): Promise<number> {
     const now = Math.floor(Date.now() / 1000);

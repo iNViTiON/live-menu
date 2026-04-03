@@ -5,6 +5,7 @@
   import UserManagement from '$lib/components/admin/UserManagement.svelte';
   import RegistrationLinkGenerator from '$lib/components/admin/RegistrationLinkGenerator.svelte';
   import RegistrationTokenList from '$lib/components/admin/RegistrationTokenList.svelte';
+  import ExpiredSessionCleanup from '$lib/components/admin/ExpiredSessionCleanup.svelte';
 
   // Redirect non-admins
   $effect(() => {
@@ -28,6 +29,7 @@
       <section class="section">
         <RegistrationLinkGenerator />
         <RegistrationTokenList />
+        <ExpiredSessionCleanup />
       </section>
     </div>
   </div>

@@ -2,7 +2,7 @@ import type { MenuItemWithDetails } from '@live-menu/shared';
 import { api } from '$lib/api/client';
 
 class MenuStore {
-  items = $state<MenuItemWithDetails[]>([]);
+  items = $state.raw<MenuItemWithDetails[]>([]);
   isLoading = $state(false);
   /** True while a local mutation is in flight — suppresses WS-triggered reloads */
   mutating = false;

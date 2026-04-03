@@ -337,6 +337,24 @@ auth.delete('/registration-tokens/:token', async (c) => {
   return c.json({ success: true });
 });
 
+// GET /sessions/expired/count — admin only
+auth.get('/sessions/expired/count', async (c) => {
+  const user = c.get('user');
+  if (!user || user.role !== 'admin') return c.json({ error: 'Forbidden' }, 403);
+  const authService = c.get('authService');
+  const count = await authService.getExpiredSessionCount();
+  return c.json({ count });
+});
+
+// DELETE /sessions/expired — admin only
+auth.delete('/sessions/expired', async (c) => {
+  const user = c.get('user');
+  if (!user || user.role !== 'admin') return c.json({ error: 'Forbidden' }, 403);
+  const authService = c.get('authService');
+  const deleted = await authService.deleteExpiredSessions();
+  return c.json({ deleted });
+});
+
 // GET /expired-challenges/count — admin only
 auth.get('/expired-challenges/count', async (c) => {
   const user = c.get('user');
