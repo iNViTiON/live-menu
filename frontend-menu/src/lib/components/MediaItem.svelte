@@ -12,23 +12,27 @@
   const mediaUrl = $derived(media ? `/media/${media.r2_key}` : null);
   const isVideo = $derived(media?.media_type === 'video');
 
+  // Track visibility only — play/pause is handled by the effect below
   $effect(() => {
     if (!element) return;
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        isVisible = entry.isIntersecting;
-        if (isVideo && videoEl) {
-          if (entry.isIntersecting) {
-            videoEl.play().catch(() => {});
-          } else {
-            videoEl.pause();
-          }
-        }
-      },
+      ([entry]) => { isVisible = entry.isIntersecting; },
       { threshold: 0.5 }
     );
     observer.observe(element);
     return () => observer.disconnect();
+  });
+
+  // Play/pause when visibility OR video element readiness changes.
+  // This covers the first item on initial load (observer fires before
+  // videoEl is bound, but this effect re-runs once videoEl is ready).
+  $effect(() => {
+    if (!isVideo || !videoEl) return;
+    if (isVisible) {
+      videoEl.play().catch(() => {});
+    } else {
+      videoEl.pause();
+    }
   });
 </script>
 
