@@ -25,35 +25,43 @@
 
   // Manage video source changes seamlessly (handles initial load + language switches)
   let loadedSrc: string | null = null;
+  let loadedEl: HTMLVideoElement | null = null;
   $effect(() => {
     if (!videoEl || !isVideo || !mediaUrl) return;
+    // Reset if this is a new video element (e.g., after video→image→video switch)
+    if (videoEl !== loadedEl) {
+      loadedSrc = null;
+      loadedEl = videoEl;
+    }
     if (mediaUrl === loadedSrc) return;
 
-    const savedTime = videoEl.currentTime || 0;
+    // Capture local ref so cleanup works even if Svelte nulls the binding
+    const el = videoEl;
+    const savedTime = el.currentTime || 0;
 
     // On language switch (not initial load), capture current frame as poster to prevent blink
     if (loadedSrc) {
       try {
         const canvas = document.createElement('canvas');
-        canvas.width = videoEl.videoWidth || videoEl.clientWidth;
-        canvas.height = videoEl.videoHeight || videoEl.clientHeight;
-        canvas.getContext('2d')!.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-        videoEl.poster = canvas.toDataURL('image/jpeg', 0.8);
+        canvas.width = el.videoWidth || el.clientWidth;
+        canvas.height = el.videoHeight || el.clientHeight;
+        canvas.getContext('2d')!.drawImage(el, 0, 0, canvas.width, canvas.height);
+        el.poster = canvas.toDataURL('image/jpeg', 0.8);
       } catch {}
     }
 
     loadedSrc = mediaUrl;
-    videoEl.src = mediaUrl;
+    el.src = mediaUrl;
 
     const onReady = () => {
-      if (savedTime > 0) videoEl.currentTime = savedTime;
-      if (isVisible) videoEl.play().catch(() => {});
-      videoEl.poster = '';
-      videoEl.removeEventListener('loadeddata', onReady);
+      if (savedTime > 0) el.currentTime = savedTime;
+      if (isVisible) el.play().catch(() => {});
+      el.poster = '';
+      el.removeEventListener('loadeddata', onReady);
     };
-    videoEl.addEventListener('loadeddata', onReady);
+    el.addEventListener('loadeddata', onReady);
 
-    return () => videoEl.removeEventListener('loadeddata', onReady);
+    return () => el.removeEventListener('loadeddata', onReady);
   });
 
   // Play/pause based on visibility
@@ -69,17 +77,20 @@
 
 <div bind:this={element} class="media-item" id="item-{item.id}">
   {#if mediaUrl}
-    {#if isVideo}
-      <video
-        bind:this={videoEl}
-        muted
-        loop
-        playsinline
-        class="media-content"
-      ></video>
-    {:else}
-      <img src={mediaUrl} alt={menuStore.getName(item)} class="media-content" />
-    {/if}
+    <video
+      bind:this={videoEl}
+      muted
+      loop
+      playsinline
+      class="media-content"
+      class:hidden={!isVideo}
+    ></video>
+    <img
+      src={isVideo ? undefined : mediaUrl}
+      alt={menuStore.getName(item)}
+      class="media-content"
+      class:hidden={isVideo}
+    />
   {:else}
     <div class="placeholder">
       <span>{menuStore.getName(item) || 'No media'}</span>
@@ -99,6 +110,10 @@
     width: 100%;
     height: auto;
     display: block;
+  }
+
+  .media-content.hidden {
+    display: none;
   }
 
   .placeholder {
