@@ -16,9 +16,17 @@ export class BroadcastRoom extends DurableObject {
       // CRITICAL: Use acceptWebSocket for hibernation
       this.ctx.acceptWebSocket(server);
 
-      // #15: Do NOT send version vector yet — wait for auth message first.
-      // Mark socket as unauthenticated via attachment.
-      server.serializeAttachment({ authenticated: false });
+      const isPublic = request.headers.get('X-Public-Client') === '1';
+
+      if (isPublic) {
+        server.serializeAttachment({ authenticated: false, public: true });
+        // Send current vector immediately — no auth wait for public clients
+        const currentVector = await this.getVersionVector();
+        server.send(JSON.stringify({ type: 'version_update', vector: currentVector } as VersionVectorMessage));
+      } else {
+        // #15: Do NOT send version vector yet — wait for auth message first.
+        server.serializeAttachment({ authenticated: false, public: false });
+      }
 
       return new Response(null, {
         status: 101,
@@ -40,6 +48,8 @@ export class BroadcastRoom extends DurableObject {
   // WebSocket lifecycle handlers (required by Hibernation API)
   async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) {
     if (typeof message !== 'string') return;
+    const attachment = ws.deserializeAttachment() as { authenticated: boolean; public?: boolean } | null;
+    if (attachment?.public) return; // Public clients are read-only
 
     try {
       const data = JSON.parse(message);
@@ -114,10 +124,7 @@ export class BroadcastRoom extends DurableObject {
     const connections = this.ctx.getWebSockets();
     for (const ws of connections) {
       try {
-        const attachment = ws.deserializeAttachment() as { authenticated: boolean } | null;
-        if (attachment?.authenticated) {
-          ws.send(message);
-        }
+        ws.send(message); // Broadcast to all connections (public + authenticated)
       } catch (error) {
         console.error('Failed to send to WebSocket:', error);
       }

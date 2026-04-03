@@ -36,6 +36,15 @@ export default {
   async fetch(request: Request, env: HonoEnv['Bindings'], ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
+    // Public WebSocket for menu clients (no auth required)
+    if (url.pathname === '/api/public/sync-ws' && request.headers.get('Upgrade') === 'websocket') {
+      const id = env.BROADCAST_ROOM.idFromName('global');
+      const stub = env.BROADCAST_ROOM.get(id);
+      const publicReq = new Request(request.url, request);
+      publicReq.headers.set('X-Public-Client', '1');
+      return stub.fetch(publicReq);
+    }
+
     // WebSocket upgrade → validate session then forward to BroadcastRoom Durable Object
     if (url.pathname === '/api/sync-ws' && request.headers.get('Upgrade') === 'websocket') {
       const wsToken = url.searchParams.get('token');
