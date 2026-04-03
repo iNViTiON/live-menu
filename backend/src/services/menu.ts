@@ -16,10 +16,12 @@ export class MenuService {
       this.db.prepare('SELECT * FROM media_variants').all<MediaVariant>(),
     ]);
 
+    const namesByItem = Map.groupBy(names.results, (n: MenuItemName) => n.menu_item_id);
+    const mediaByItem = Map.groupBy(media.results, (m: MediaVariant) => m.menu_item_id);
     return items.results.map((item) => ({
       ...item,
-      names: names.results.filter((n) => n.menu_item_id === item.id),
-      media: media.results.filter((m) => m.menu_item_id === item.id),
+      names: namesByItem.get(item.id) ?? [],
+      media: mediaByItem.get(item.id) ?? [],
     }));
   }
 

@@ -17,19 +17,11 @@ export class MediaService {
   ): Promise<MediaVariant> {
     const contentType = file.type;
 
-    if (contentType === 'image/svg+xml') {
-      throw new Error('SVG uploads are not allowed');
-    }
+    const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm']);
+    if (!ALLOWED_TYPES.has(contentType)) throw new Error('Unsupported file type');
 
     // Determine media type
-    let mediaType: MediaType;
-    if (contentType.startsWith('image/')) {
-      mediaType = 'image';
-    } else if (contentType.startsWith('video/')) {
-      mediaType = 'video';
-    } else {
-      throw new Error(`Unsupported content type: ${contentType}`);
-    }
+    const mediaType: MediaType = contentType.startsWith('video/') ? 'video' : 'image';
 
     // Derive extension from content type
     const ext = contentType.split('/')[1]?.split(';')[0] ?? 'bin';
@@ -52,7 +44,7 @@ export class MediaService {
     }
 
     // Upload to R2
-    await this.bucket.put(r2Key, await file.arrayBuffer(), {
+    await this.bucket.put(r2Key, file.stream(), {
       httpMetadata: { contentType },
     });
 

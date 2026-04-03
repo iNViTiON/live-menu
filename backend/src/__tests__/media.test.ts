@@ -68,7 +68,7 @@ describe('Media routes', () => {
       );
       expect(res.status).toBe(400);
       const body = await res.json<{ error: string }>();
-      expect(body.error).toContain('Unsupported content type');
+      expect(body.error).toContain('Unsupported file type');
     });
 
     it('rejects SVG uploads', async () => {

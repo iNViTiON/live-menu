@@ -182,6 +182,12 @@ menuItems.post('/:id/media/:lang', async (c) => {
     return c.json({ error: 'Missing file field in multipart body' }, 400);
   }
 
+  const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+  const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+  const contentType = file.type;
+  const maxSize = contentType.startsWith('video/') ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+  if (file.size > maxSize) return c.json({ error: 'File too large' }, 413);
+
   const service = new MediaService(c.env.DB, c.env.MEDIA_BUCKET);
 
   try {

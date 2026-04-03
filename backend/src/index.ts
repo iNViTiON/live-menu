@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { csrf } from 'hono/csrf';
 import type { HonoEnv } from './types';
 import { securityHeaders } from './middleware/security';
 import { corsMiddleware } from './middleware/cors';
