@@ -64,6 +64,14 @@
     return () => el.removeEventListener('loadeddata', onReady);
   });
 
+  // Keep video visible during video→image transition until image loads
+  let imageReady = $state(true);
+  let wasVideo = false;
+  $effect(() => {
+    if (wasVideo && !isVideo) imageReady = false;
+    wasVideo = isVideo;
+  });
+
   // Play/pause based on visibility
   $effect(() => {
     if (!isVideo || !videoEl) return;
@@ -83,13 +91,14 @@
       loop
       playsinline
       class="media-content"
-      class:hidden={!isVideo}
+      class:hidden={!isVideo && imageReady}
     ></video>
     <img
       src={isVideo ? undefined : mediaUrl}
       alt={menuStore.getName(item)}
       class="media-content"
       class:hidden={isVideo}
+      onload={() => { imageReady = true; }}
     />
   {:else}
     <div class="placeholder">

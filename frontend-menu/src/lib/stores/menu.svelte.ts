@@ -1,3 +1,4 @@
+import { tick } from 'svelte';
 import type { MenuItemWithDetails, Language, PublicMenuResponse } from '@live-menu/shared';
 
 class MenuStore {
@@ -64,8 +65,24 @@ class MenuStore {
     }
   }
 
-  setLanguage(code: string) {
+  async setLanguage(code: string) {
+    const scrollEl = document.querySelector('.scroll-container') as HTMLElement | null;
+    const savedScroll = scrollEl?.scrollTop ?? 0;
+
+    // Lock each media item's height to prevent collapse while new images load
+    const items = document.querySelectorAll<HTMLElement>('.media-item');
+    items.forEach((el) => { el.style.minHeight = `${el.offsetHeight}px`; });
+
     this.selectedLanguage = code;
+
+    // tick() resolves after Svelte DOM update but before browser paint
+    await tick();
+    if (scrollEl) scrollEl.scrollTop = savedScroll;
+
+    // Release height locks after images have loaded
+    setTimeout(() => {
+      items.forEach((el) => { el.style.minHeight = ''; });
+    }, 500);
   }
 
   resetToDefault() {
