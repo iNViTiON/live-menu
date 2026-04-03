@@ -6,11 +6,12 @@ import {
   registerVerifySchema,
   loginVerifySchema,
 } from '../validation/schemas';
+import { authRateLimit } from '../middleware/rate-limit';
 
 const auth = new Hono<HonoEnv>();
 
 // POST /register/challenge — start passkey registration
-auth.post('/register/challenge', async (c) => {
+auth.post('/register/challenge', authRateLimit, async (c) => {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -50,7 +51,7 @@ auth.post('/register/challenge', async (c) => {
 });
 
 // POST /register/verify — complete passkey registration
-auth.post('/register/verify', async (c) => {
+auth.post('/register/verify', authRateLimit, async (c) => {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -121,7 +122,7 @@ auth.post('/register/verify', async (c) => {
 });
 
 // POST /login/challenge — start passkey login
-auth.post('/login/challenge', async (c) => {
+auth.post('/login/challenge', authRateLimit, async (c) => {
   try {
     const authService = c.get('authService');
     const options = await authService.generateAuthenticationOptions();
@@ -143,7 +144,7 @@ auth.post('/login/challenge', async (c) => {
 });
 
 // POST /login/verify — complete passkey login
-auth.post('/login/verify', async (c) => {
+auth.post('/login/verify', authRateLimit, async (c) => {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -153,7 +154,7 @@ auth.post('/login/verify', async (c) => {
 
   const parsed = loginVerifySchema.safeParse(body);
   if (!parsed.success) {
-    return c.json({ error: parsed.error.issues[0]?.message ?? 'Validation error' }, 400);
+    return c.json({ error: 'Validation error' }, 400);
   }
 
   const { response, challengeId } = parsed.data;
