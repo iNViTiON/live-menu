@@ -123,8 +123,10 @@ export class BroadcastRoom extends DurableObject {
 
     const connections = this.ctx.getWebSockets();
     for (const ws of connections) {
+      const meta = ws.deserializeAttachment() as { authenticated: boolean; public?: boolean } | null;
+      if (!meta?.authenticated && !meta?.public) continue;
       try {
-        ws.send(message); // Broadcast to all connections (public + authenticated)
+        ws.send(message);
       } catch (error) {
         console.error('Failed to send to WebSocket:', error);
       }

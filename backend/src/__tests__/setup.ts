@@ -46,7 +46,7 @@ export async function setupTestEnv(): Promise<{ adminToken: string; staffToken: 
   return { adminToken, staffToken };
 }
 
-/** Auth header helper */
+/** Auth header helper — includes Origin to satisfy CSRF middleware in tests */
 export function authHeader(token: string): Record<string, string> {
-  return { Authorization: `Bearer ${token}` };
+  return { Authorization: `Bearer ${token}`, Origin: 'http://localhost:5173' };
 }

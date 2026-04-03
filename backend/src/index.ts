@@ -15,9 +15,15 @@ import { BroadcastRoom } from './do/BroadcastRoom';
 
 const app = new Hono<HonoEnv>();
 
-// Middleware — order matters: security → cors → db → services → auth
+// Middleware — order matters: security → cors → csrf → db → services → auth
 app.use('*', securityHeaders);
 app.use('*', corsMiddleware);
+app.use('/api/*', csrf({
+  origin: (origin, c) => {
+    const frontendUrl = (c.env as HonoEnv['Bindings']).FRONTEND_URL;
+    return origin === frontendUrl || origin === new URL(c.req.url).origin;
+  },
+}));
 app.use('/api/*', dbMiddleware);
 app.use('*', servicesMiddleware);
 app.use('*', authMiddleware);
@@ -46,19 +52,8 @@ export default {
       return stub.fetch(publicReq);
     }
 
-    // WebSocket upgrade → validate session then forward to BroadcastRoom Durable Object
+    // Admin WebSocket — forward to BroadcastRoom DO; auth handled via {type:"auth",token} message
     if (url.pathname === '/api/sync-ws' && request.headers.get('Upgrade') === 'websocket') {
-      const wsToken = url.searchParams.get('token');
-      if (!wsToken) {
-        return new Response('Unauthorized', { status: 401 });
-      }
-      const now = Math.floor(Date.now() / 1000);
-      const session = await env.DB.prepare(
-        'SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?'
-      ).bind(wsToken, now).first();
-      if (!session) {
-        return new Response('Unauthorized', { status: 401 });
-      }
       const id = env.BROADCAST_ROOM.idFromName('global');
       const stub = env.BROADCAST_ROOM.get(id);
       return stub.fetch(request);
