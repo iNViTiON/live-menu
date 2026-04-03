@@ -87,8 +87,8 @@ export class BroadcastRoom extends DurableObject {
     }
   }
 
-  async webSocketClose(ws: WebSocket, code: number, reason: string, wasClean: boolean) {
-    console.log('WebSocket closed', { code, reason, wasClean });
+  async webSocketClose(_ws: WebSocket, _code: number, _reason: string, _wasClean: boolean) {
+    // no-op
   }
 
   async webSocketError(ws: WebSocket, error: Error) {
