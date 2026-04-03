@@ -2,18 +2,24 @@
   import { onMount } from 'svelte';
   import { menuStore } from '$lib/stores/menu.svelte';
   import { createIdleTimer } from '$lib/services/idle-timer';
+  import { menuSync } from '$lib/services/version-sync';
   import MediaItem from '$lib/components/MediaItem.svelte';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
   import GalleryBar from '$lib/components/GalleryBar.svelte';
 
   onMount(() => {
     menuStore.load();
+    menuSync.connect();
 
     const idle = createIdleTimer(60_000, () => {
       menuStore.resetToDefault();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-    return idle.start();
+    const stopIdle = idle.start();
+    return () => {
+      stopIdle();
+      menuSync.disconnect();
+    };
   });
 </script>
 
@@ -51,7 +57,6 @@
     width: 100%;
     height: 100dvh;
     overflow-y: scroll;
-    scroll-snap-type: y mandatory;
     scrollbar-width: none;
     /* leave room for the gallery bar */
     padding-bottom: 5rem;
