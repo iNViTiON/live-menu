@@ -137,9 +137,8 @@ auth.post('/login/challenge', authRateLimit, async (c) => {
 
     return c.json({ options, challengeId });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal error';
     console.error('Login challenge error:', error);
-    return c.json({ error: message }, 500);
+    return c.json({ error: 'Authentication failed' }, 500);
   }
 });
 
@@ -261,8 +260,8 @@ auth.post('/registration-links', async (c) => {
       expiresAt: Math.floor(Date.now() / 1000) + 6 * 60 * 60,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal error';
-    return c.json({ error: message }, 400);
+    console.error('Registration link error:', error);
+    return c.json({ error: 'Registration failed' }, 400);
   }
 });
 

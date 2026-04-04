@@ -14,7 +14,7 @@ INSERT INTO menu_items_new (id, sort_order, is_visible, base_price, created_at, 
   SELECT id, sort_order, is_visible, CAST(ROUND(base_price * 100) AS INTEGER), created_at, updated_at FROM menu_items;
 DROP TABLE menu_items;
 ALTER TABLE menu_items_new RENAME TO menu_items;
-CREATE INDEX idx_menu_items_order ON menu_items(sort_order);
+CREATE INDEX IF NOT EXISTS idx_menu_items_order ON menu_items(sort_order);
 
 -- options recreation
 CREATE TABLE options_new (
@@ -29,5 +29,5 @@ INSERT INTO options_new (id, option_group_id, price_delta, sort_order, created_a
   SELECT id, option_group_id, CAST(ROUND(price_delta * 100) AS INTEGER), sort_order, created_at, updated_at FROM options;
 DROP TABLE options;
 ALTER TABLE options_new RENAME TO options;
-CREATE INDEX idx_options_group ON options(option_group_id);
-CREATE INDEX idx_options_group_order ON options(option_group_id, sort_order);
+CREATE INDEX IF NOT EXISTS idx_options_group ON options(option_group_id);
+CREATE INDEX IF NOT EXISTS idx_options_group_order ON options(option_group_id, sort_order);

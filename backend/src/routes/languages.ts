@@ -38,8 +38,8 @@ languages.post('/', async (c) => {
     await versionVectorService.notifyChange(['language']);
     return c.json(lang, 201);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal error';
-    return c.json({ error: message }, 400);
+    console.error('Language add error:', error);
+    return c.json({ error: 'Language operation failed' }, 400);
   }
 });
 
@@ -58,8 +58,8 @@ languages.delete('/:code', async (c) => {
     await versionVectorService.notifyChange(['language', 'menuItem', 'media']);
     return c.json({ success: true });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal error';
-    return c.json({ error: message }, 400);
+    console.error('Language delete error:', error);
+    return c.json({ error: 'Language operation failed' }, 400);
   }
 });
 

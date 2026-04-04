@@ -20,6 +20,9 @@ settings.put('/:key', async (c) => {
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
 
   const key = c.req.param('key');
+  if (!/^[a-z0-9:_-]{1,100}$/.test(key)) {
+    return c.json({ error: 'Invalid settings key' }, 400);
+  }
 
   let body: unknown;
   try { body = await c.req.json(); } catch { return c.json({ error: 'Invalid JSON' }, 400); }

@@ -65,9 +65,17 @@ export default {
 
     // Admin WebSocket — forward to BroadcastRoom DO; auth handled via {type:"auth",token} message
     if (url.pathname === '/api/sync-ws' && request.headers.get('Upgrade') === 'websocket') {
+      const origin = request.headers.get('Origin');
+      const frontendUrl = env.FRONTEND_URL;
+      if (origin && origin !== frontendUrl) {
+        return new Response('Forbidden', { status: 403 });
+      }
       const id = env.BROADCAST_ROOM.idFromName('global');
       const stub = env.BROADCAST_ROOM.get(id);
-      return stub.fetch(request);
+      const wsHeaders = new Headers(request.headers);
+      wsHeaders.delete('X-Public-Client');
+      const cleanRequest = new Request(request.url, { ...request, headers: wsHeaders });
+      return stub.fetch(cleanRequest);
     }
 
     // Media proxy → serve from R2 with cache headers

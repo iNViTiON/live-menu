@@ -195,8 +195,8 @@ menuItems.post('/:id/media/:lang', async (c) => {
     await versionVectorService.notifyChange(['media']);
     return c.json(variant, 201);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Internal error';
-    return c.json({ error: message }, 400);
+    console.error('Media upload error:', error);
+    return c.json({ error: 'Upload failed' }, 400);
   }
 });
 
