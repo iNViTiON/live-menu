@@ -1,9 +1,11 @@
 import { tick } from 'svelte';
-import type { MenuItemWithDetails, Language, PublicMenuResponse } from '@live-menu/shared';
+import type { MenuItemWithDetails, Language, PublicMenuResponse, TraitGroupWithDetails, OptionGroupWithDetails } from '@live-menu/shared';
 
 class MenuStore {
   items = $state.raw<MenuItemWithDetails[]>([]);
   languages = $state.raw<Language[]>([]);
+  traitGroups = $state.raw<TraitGroupWithDetails[]>([]);
+  optionGroups = $state.raw<OptionGroupWithDetails[]>([]);
   settings = $state.raw<Record<string, string>>({});
   version = $state(0);
   selectedLanguage = $state('GB');
@@ -53,6 +55,8 @@ class MenuStore {
 
       this.items = data.items;
       this.languages = data.languages;
+      this.traitGroups = data.traitGroups;
+      this.optionGroups = data.optionGroups;
       this.settings = data.settings ?? {};
       this.version = data.version;
 

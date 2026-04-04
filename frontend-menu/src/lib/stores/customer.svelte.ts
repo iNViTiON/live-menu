@@ -1,5 +1,13 @@
 import type { PublicMenuResponse } from '@live-menu/shared';
 import { menuStore } from './menu.svelte';
+import {
+  filterItems,
+  getName as getNameUtil,
+  getDescription as getDescriptionUtil,
+  formatPrice as formatPriceUtil,
+  formatDelta as formatDeltaUtil,
+  toggleTrait as toggleTraitUtil,
+} from './customer-utils';
 
 class CustomerStore {
   data = $state.raw<PublicMenuResponse | null>(null);
@@ -12,11 +20,7 @@ class CustomerStore {
 
   filteredItems = $derived.by(() => {
     if (!this.data) return [];
-    const selected = [...this.selectedTraits.values()];
-    if (selected.length === 0) return this.data.items;
-    return this.data.items.filter((item) =>
-      selected.every((traitId) => item.traits.some((t) => t.id === traitId))
-    );
+    return filterItems(this.data.items, this.selectedTraits);
   });
 
   currency = $derived(this.data?.settings?.currency ?? '€');
@@ -25,9 +29,17 @@ class CustomerStore {
     try {
       if (!this.data) this.isLoading = true;
       this.error = null;
-      const res = await fetch('/api/public/menu');
-      if (!res.ok) throw new Error('Failed to load menu');
-      this.data = (await res.json()) as PublicMenuResponse;
+      if (menuStore.items.length === 0) {
+        await menuStore.load();
+      }
+      this.data = {
+        items: menuStore.items,
+        languages: menuStore.languages,
+        traitGroups: menuStore.traitGroups,
+        optionGroups: menuStore.optionGroups,
+        settings: menuStore.settings,
+        version: menuStore.version,
+      };
     } catch (err) {
       this.error = err instanceof Error ? err.message : 'Unknown error';
     } finally {
@@ -86,14 +98,13 @@ class CustomerStore {
     return m?.description ?? null;
   }
 
-  formatPrice(amount: number): string {
-    return `${this.currency}${amount.toFixed(2)}`;
+  formatPrice(cents: number): string {
+    return `${this.currency}${(cents / 100).toFixed(2)}`;
   }
 
-  formatDelta(delta: number): string {
-    if (delta === 0) return '';
-    const abs = Math.abs(delta).toFixed(2);
-    return `${delta > 0 ? '+' : '-'}${this.currency}${abs}`;
+  formatDelta(cents: number): string | null {
+    if (cents === 0) return null;
+    return `+${this.currency}${(cents / 100).toFixed(2)}`;
   }
 }
 

@@ -279,7 +279,7 @@
     const n = opt.names.find(x => x.language_code === editingLang);
     optEditName = n?.name ?? '';
     optEditDesc = n?.description ?? '';
-    optEditPrice = String(opt.price_delta);
+    optEditPrice = String(opt.price_delta / 100);
   }
 
   $effect(() => {
@@ -413,7 +413,7 @@
     if (isNaN(price)) { showToast('Invalid price', true); return; }
     savingOptPrice = true;
     try {
-      await optionGroupStore.updateOption(expandedOption, { price_delta: price });
+      await optionGroupStore.updateOption(expandedOption, { price_delta: Math.round(price * 100) });
       showToast('Saved');
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Failed', true);
@@ -443,7 +443,7 @@
   function openMenuItem(item: MenuItemWithDetails) {
     expandedMenuItem = item.id;
     if (!(item.id in itemPriceEdit)) {
-      itemPriceEdit = { ...itemPriceEdit, [item.id]: String(item.base_price) };
+      itemPriceEdit = { ...itemPriceEdit, [item.id]: String(item.base_price / 100) };
     }
   }
 
@@ -452,7 +452,7 @@
     if (isNaN(price)) { showToast('Invalid price', true); return; }
     savingItemPrice = item.id;
     try {
-      await menuStore.updateItem(item.id, { base_price: price });
+      await menuStore.updateItem(item.id, { base_price: Math.round(price * 100) });
       showToast('Price saved');
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Failed', true);
@@ -859,7 +859,7 @@
                         <div class="item-row">
                           <div class="item-info">
                             <span class="item-name">{displayName(opt.names, editingLang)}</span>
-                            <span class="item-id">Δ {opt.price_delta}</span>
+                            <span class="item-id">Δ {(opt.price_delta / 100).toFixed(2)}</span>
                           </div>
                           <div class="item-actions">
                             <button class="btn-icon" onclick={() => moveOption(group, oi, -1)} disabled={oi === 0} title="Move up">↑</button>

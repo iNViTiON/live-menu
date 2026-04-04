@@ -1,10 +1,19 @@
-import { cpSync, rmSync, mkdirSync } from 'node:fs';
+import { cpSync, rmSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const backendDist = resolve(root, 'backend/dist');
 const menuBuild = resolve(root, 'frontend-menu/build');
 const adminBuild = resolve(root, 'frontend-admin/build');
+
+if (!existsSync(menuBuild)) {
+  console.error(`ERROR: ${menuBuild} not found — run "bun run build:menu" first`);
+  process.exit(1);
+}
+if (!existsSync(adminBuild)) {
+  console.error(`ERROR: ${adminBuild} not found — run "bun run build:admin" first`);
+  process.exit(1);
+}
 
 // Clean backend/dist
 rmSync(backendDist, { recursive: true, force: true });

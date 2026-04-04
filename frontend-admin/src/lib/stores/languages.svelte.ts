@@ -2,7 +2,7 @@ import type { Language } from '@live-menu/shared';
 import { api } from '$lib/api/client';
 
 class LanguagesStore {
-  languages = $state<Language[]>([]);
+  languages = $state.raw<Language[]>([]);
   isLoading = $state(false);
 
   async loadLanguages() {
