@@ -18,12 +18,15 @@ class CustomerStore {
   selectedTraits = $state<Map<number, number>>(new Map());
   expandedItemId = $state<number | null>(null);
 
+  // All is_visible items — schedule does NOT apply on the customer/product page
+  visibleItems = $derived(menuStore.items.filter((i) => i.is_visible));
+
   filteredItems = $derived.by(() => {
     if (!this.data) return [];
-    return filterItems(menuStore.visibleItems, this.selectedTraits);
+    return filterItems(this.visibleItems, this.selectedTraits);
   });
 
-  scheduleVisibleCount = $derived(menuStore.visibleItems.length);
+  totalItemCount = $derived(this.visibleItems.length);
 
   currency = $derived(this.data?.settings?.currency ?? '€');
 

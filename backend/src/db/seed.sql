@@ -225,47 +225,55 @@ INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, update
 INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (18, 18, 1, 1775277641, 1775277641, 550, NULL, NULL);
 INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (19, 19, 1, 1775277641, 1775277641, 550, NULL, NULL);
 
--- menu_item_names
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (187, 1, 'GB', 'Clear Matcha', 1775277641, 1775277641, 'Matcha with water, no milk');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (188, 1, 'EE', 'Puhas Matcha', 1775277641, 1775277641, 'Matcha veega, ilma piimata');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (189, 2, 'GB', 'matcha latte', 1775277641, 1775277641, 'matcha with milk');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (190, 2, 'EE', 'matcha latte', 1775277641, 1775277641, 'matcha piimaga');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (191, 3, 'GB', 'Matcha strawberry milk', 1775277641, 1775277641, 'Our homemade strawberry purée');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (192, 3, 'EE', 'Matcha maasikapiim', 1775277641, 1775277641, 'Meie kodune maasikapüree');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (193, 4, 'GB', 'Matcha mango milk', 1775277641, 1775277641, 'Our homemade mango purée');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (194, 4, 'EE', 'Matcha mangopiim', 1775277641, 1775277641, 'Meie kodune mangopüree');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (195, 5, 'EE', 'Matcha pruuni suhkru piim', 1775277641, 1775277641, 'Meie kodune muscovado siirup');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (196, 5, 'GB', 'Matcha brown sugar milk', 1775277641, 1775277641, 'Our homemade brown sugar syrup');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (197, 6, 'EE', 'Matcha mango-ja maasika-piim', 1775277641, 1775277641, 'Meie kodune mango-ja maasikapüree');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (198, 6, 'GB', 'Matcha mango strawberry milk', 1775277641, 1775277641, 'Our homemade mango and strawberry purée');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (199, 7, 'GB', 'Matcha Yuzu', 1775277641, 1775277641, 'Yuzu is a Japanese citrus fruit with a bright, refreshing tartness and a unique aromatic flavor');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (200, 7, 'EE', 'Matcha Yuzu', 1775277641, 1775277641, 'Yuzu on Jaapani tsitrusvili ereda ja värskendava hapususega');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (201, 8, 'EE', 'Matcha ananassimuhlaga', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (202, 8, 'GB', 'Matcha pineapple juice', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (203, 9, 'GB', 'BOLD MATCHA LATTE', 1775277641, 1775277641, 'MATCHA×2 made only with milk—no water
-BOLD flavour—only recommended for seasoned matcha lovers');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (204, 9, 'EE', 'BOLD MATCHA LATTE', 1775277641, 1775277641, 'MATCHA×2 ainult piimaga—ilma veeta
-BOLD maitse—soovitatav vaid kogenud matcha-armastajatele');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (205, 10, 'GB', 'Matcha Honey Lemon', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (206, 10, 'EE', 'Matcha mee ja sidruniga', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (207, 11, 'GB', 'Hojicha latte', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (208, 11, 'EE', 'Hojicha latte', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (209, 12, 'GB', 'Hojicha strawberry milk', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (210, 12, 'EE', 'Hojicha maasikapiim', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (211, 13, 'GB', 'Genmaicha latte', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (212, 13, 'EE', 'Genmaicha latte', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (213, 14, 'EE', 'Tai piimatee', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (214, 14, 'GB', 'Thai milk tea', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (215, 15, 'GB', 'Brown sugar milk', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (216, 15, 'EE', 'Pruuni suhkru piim', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (217, 16, 'GB', 'Cocoa latte', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (218, 16, 'EE', 'Kakao latte', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (219, 17, 'EE', 'Maasikapiim', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (220, 17, 'GB', 'Strawberry milk', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (221, 18, 'EE', 'Mangopiim', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (222, 18, 'GB', 'Mango milk', 1775277641, 1775277641, NULL);
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (223, 19, 'GB', 'Es Yen (coffee)', 1775277641, 1775277641, 'Thai iced milk coffee');
-INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (224, 19, 'EE', 'Es Yen (kohv)', 1775277641, 1775277641, 'Tai jääkohv piimaga');
+-- menu_item_names (category names for gallery pages)
+-- Items 1-2: Classic matcha
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (187, 1, 'GB', 'Matcha', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (188, 1, 'EE', 'Matcha', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (189, 2, 'GB', 'Matcha Latte', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (190, 2, 'EE', 'Matcha Latte', 1775277641, 1775277641, NULL);
+-- Items 3-6: Matcha fruit milk
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (191, 3, 'GB', 'Matcha Fruit', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (192, 3, 'EE', 'Matcha Viljad', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (193, 4, 'GB', 'Matcha Fruit', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (194, 4, 'EE', 'Matcha Viljad', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (195, 5, 'EE', 'Matcha Viljad', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (196, 5, 'GB', 'Matcha Fruit', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (197, 6, 'EE', 'Matcha Viljad', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (198, 6, 'GB', 'Matcha Fruit', 1775277641, 1775277641, NULL);
+-- Items 7-8: Matcha citrus
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (199, 7, 'GB', 'Matcha Citrus', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (200, 7, 'EE', 'Matcha Tsitrus', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (201, 8, 'EE', 'Matcha Tsitrus', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (202, 8, 'GB', 'Matcha Citrus', 1775277641, 1775277641, NULL);
+-- Item 9: Bold matcha
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (203, 9, 'GB', 'Bold Matcha', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (204, 9, 'EE', 'Bold Matcha', 1775277641, 1775277641, NULL);
+-- Item 10: Matcha citrus
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (205, 10, 'GB', 'Matcha Citrus', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (206, 10, 'EE', 'Matcha Tsitrus', 1775277641, 1775277641, NULL);
+-- Items 11-12: Hojicha
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (207, 11, 'GB', 'Hojicha', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (208, 11, 'EE', 'Hojicha', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (209, 12, 'GB', 'Hojicha', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (210, 12, 'EE', 'Hojicha', 1775277641, 1775277641, NULL);
+-- Item 13: Genmaicha
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (211, 13, 'GB', 'Genmaicha', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (212, 13, 'EE', 'Genmaicha', 1775277641, 1775277641, NULL);
+-- Item 14: Thai tea
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (213, 14, 'EE', 'Tai Tee', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (214, 14, 'GB', 'Thai Tea', 1775277641, 1775277641, NULL);
+-- Items 15-18: Milk drinks
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (215, 15, 'GB', 'Milk Drinks', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (216, 15, 'EE', 'Piimajoogid', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (217, 16, 'GB', 'Milk Drinks', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (218, 16, 'EE', 'Piimajoogid', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (219, 17, 'EE', 'Piimajoogid', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (220, 17, 'GB', 'Milk Drinks', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (221, 18, 'EE', 'Piimajoogid', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (222, 18, 'GB', 'Milk Drinks', 1775277641, 1775277641, NULL);
+-- Item 19: Coffee
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (223, 19, 'GB', 'Coffee', 1775277641, 1775277641, NULL);
+INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (224, 19, 'EE', 'Kohv', 1775277641, 1775277641, NULL);
 
 -- menu_item_traits
 INSERT OR IGNORE INTO menu_item_traits (menu_item_id, trait_id) VALUES (1, 1);
@@ -394,6 +402,3 @@ INSERT OR IGNORE INTO menu_item_option_groups (menu_item_id, option_group_id) VA
 INSERT OR IGNORE INTO menu_item_option_groups (menu_item_id, option_group_id) VALUES (19, 6);
 INSERT OR IGNORE INTO menu_item_option_groups (menu_item_id, option_group_id) VALUES (19, 2);
 
--- menu_item_availability_rules (sample: item 1 weekdays 09:00-17:00)
-INSERT OR IGNORE INTO menu_item_availability_rules (id, menu_item_id, start_time, end_time, day_mon, day_tue, day_wed, day_thu, day_fri)
-VALUES (1, 1, '09:00', '17:00', 1, 1, 1, 1, 1);

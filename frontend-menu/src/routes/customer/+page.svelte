@@ -109,9 +109,9 @@
       <section class="items">
         <p class="items-count">
           {#if customerStore.selectedTraits.size > 0}
-            {customerStore.filteredItems.length} {getUiText(customerStore.data.settings, 'of', menuStore.selectedLanguage)} {customerStore.scheduleVisibleCount} {getUiText(customerStore.data.settings, 'drinks', menuStore.selectedLanguage)}
+            {customerStore.filteredItems.length} {getUiText(customerStore.data.settings, 'of', menuStore.selectedLanguage)} {customerStore.totalItemCount} {getUiText(customerStore.data.settings, 'drinks', menuStore.selectedLanguage)}
           {:else}
-            {customerStore.scheduleVisibleCount} {getUiText(customerStore.data.settings, 'drinks', menuStore.selectedLanguage)}
+            {customerStore.totalItemCount} {getUiText(customerStore.data.settings, 'drinks', menuStore.selectedLanguage)}
           {/if}
         </p>
 
