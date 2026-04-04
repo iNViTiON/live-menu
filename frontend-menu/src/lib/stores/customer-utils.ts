@@ -45,19 +45,39 @@ export function getDescription(
   return m?.description ?? null;
 }
 
-/**
- * Format price from integer cents to display string (e.g. 650 -> "€6.50").
- */
-export function formatPrice(cents: number, currency: string): string {
-  return `${currency}${(cents / 100).toFixed(2)}`;
+const localeMap: Record<string, string> = { GB: 'en-GB', EE: 'et-EE' };
+const currencyMap: Record<string, string> = { '€': 'EUR', '$': 'USD' };
+
+function resolveLocale(locale: string): string {
+  return localeMap[locale] ?? locale;
+}
+
+function resolveCurrency(currency: string): string {
+  return currencyMap[currency] ?? 'EUR';
 }
 
 /**
- * Format price delta from integer cents (e.g. 50 -> "+€0.50", 0 -> null).
+ * Format price from integer cents using Intl.NumberFormat for locale-aware display.
  */
-export function formatDelta(cents: number, currency: string): string | null {
+export function formatPrice(cents: number, currency: string, locale: string = 'en-GB'): string {
+  return new Intl.NumberFormat(resolveLocale(locale), {
+    style: 'currency',
+    currency: resolveCurrency(currency),
+    minimumFractionDigits: 2,
+  }).format(cents / 100);
+}
+
+/**
+ * Format price delta from integer cents using Intl.NumberFormat (e.g. 50 -> "+€0.50", 0 -> null).
+ */
+export function formatDelta(cents: number, currency: string, locale: string = 'en-GB'): string | null {
   if (cents === 0) return null;
-  return `+${currency}${(cents / 100).toFixed(2)}`;
+  return new Intl.NumberFormat(resolveLocale(locale), {
+    style: 'currency',
+    currency: resolveCurrency(currency),
+    minimumFractionDigits: 2,
+    signDisplay: 'always',
+  }).format(cents / 100);
 }
 
 /**

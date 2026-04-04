@@ -84,8 +84,10 @@ class MenuStore {
   }
 
   async deleteMedia(itemId: number, lang: string) {
-    await api.delete(`/api/menu-items/${itemId}/media/${lang}`);
-    await this.loadItems();
+    await this.mutate(async () => {
+      await api.delete(`/api/menu-items/${itemId}/media/${lang}`);
+      await this.loadItems();
+    });
   }
 
   async assignTrait(itemId: number, traitId: number) {

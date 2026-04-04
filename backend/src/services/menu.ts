@@ -13,6 +13,8 @@ import type {
   OptionGroupWithDetails,
   Option,
   OptionName,
+  Language,
+  Setting,
 } from '@live-menu/shared';
 
 export class MenuService {
@@ -70,21 +72,30 @@ export class MenuService {
 
   /**
    * Fetch all data needed for the public menu endpoint in 2 round-trips.
-   * Returns items, traitGroups, and optionGroups — eliminating duplicate queries
-   * that would otherwise occur when calling listVisible() + traitGroupService.list()
-   * + optionGroupService.list() separately.
+   * Returns items, traitGroups, optionGroups, languages, and settings —
+   * eliminating the separate language and settings queries from the route.
    */
   async listPublicMenu(): Promise<{
     items: MenuItemWithDetails[];
     traitGroups: TraitGroupWithDetails[];
     optionGroups: OptionGroupWithDetails[];
+    languages: Language[];
+    settings: Record<string, string>;
   }> {
     const visibleResult = await this.db
       .prepare('SELECT * FROM menu_items WHERE is_visible = 1 ORDER BY sort_order')
       .all<MenuItem>();
 
     if (visibleResult.results.length === 0) {
-      return { items: [], traitGroups: [], optionGroups: [] };
+      const [langResult, settingResult] = await this.db.batch([
+        this.db.prepare('SELECT * FROM languages ORDER BY sort_order'),
+        this.db.prepare('SELECT * FROM settings'),
+      ]);
+      const languages = langResult.results as Language[];
+      const settings = Object.fromEntries(
+        (settingResult.results as Setting[]).map((r) => [r.key, r.value])
+      );
+      return { items: [], traitGroups: [], optionGroups: [], languages, settings };
     }
 
     const ids = visibleResult.results.map((item) => item.id);
@@ -104,6 +115,8 @@ export class MenuService {
       this.db.prepare('SELECT * FROM option_group_names'),
       this.db.prepare('SELECT * FROM options ORDER BY sort_order'),
       this.db.prepare('SELECT * FROM option_names'),
+      this.db.prepare('SELECT * FROM languages ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM settings'),
     ]);
 
     const allTraits = batchResults[4].results as Trait[];
@@ -112,6 +125,10 @@ export class MenuService {
     const allOptionGroupNames = batchResults[10].results as OptionGroupName[];
     const allOptions = batchResults[11].results as Option[];
     const allOptionNames = batchResults[12].results as OptionName[];
+    const languages = batchResults[13].results as Language[];
+    const settings = Object.fromEntries(
+      (batchResults[14].results as Setting[]).map((r) => [r.key, r.value])
+    );
 
     const items = this._assemble(
       visibleResult.results,
@@ -159,7 +176,7 @@ export class MenuService {
       })),
     }));
 
-    return { items, traitGroups, optionGroups };
+    return { items, traitGroups, optionGroups, languages, settings };
   }
 
   /** Get a single item with names, media, traits, and option groups */

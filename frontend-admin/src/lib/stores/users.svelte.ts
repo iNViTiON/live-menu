@@ -2,7 +2,7 @@ import type { User } from '@live-menu/shared';
 import { api } from '$lib/api/client';
 
 class UsersStore {
-  users = $state<User[]>([]);
+  users = $state.raw<User[]>([]);
   isLoading = $state(false);
 
   async loadUsers() {

@@ -84,11 +84,11 @@ class CustomerStore {
   }
 
   formatPrice(cents: number): string {
-    return formatPriceUtil(cents, this.currency);
+    return formatPriceUtil(cents, this.currency, menuStore.selectedLanguage);
   }
 
   formatDelta(cents: number): string | null {
-    return formatDeltaUtil(cents, this.currency);
+    return formatDeltaUtil(cents, this.currency, menuStore.selectedLanguage);
   }
 }
 

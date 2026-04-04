@@ -162,7 +162,7 @@ describe('formatPrice', () => {
   });
 
   it('works with different currency symbols', () => {
-    expect(formatPrice(999, '$')).toBe('$9.99');
+    expect(formatPrice(999, '$')).toBe('US$9.99');
   });
 
   it('formats single cent', () => {
@@ -186,7 +186,7 @@ describe('formatDelta', () => {
   });
 
   it('formats with different currency', () => {
-    expect(formatDelta(250, '$')).toBe('+$2.50');
+    expect(formatDelta(250, '$')).toBe('+US$2.50');
   });
 });
 
