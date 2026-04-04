@@ -41,6 +41,9 @@
 
     <LanguageSwitcher languages={menuStore.languages} />
     <GalleryBar items={menuStore.items} />
+    <a href="/customer" class="customer-mode-btn" aria-label="Interactive menu">
+      <span>Find your drink</span>
+    </a>
   {/if}
 </main>
 
@@ -78,5 +81,30 @@
 
   .error {
     color: #f66;
+  }
+
+  .customer-mode-btn {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 99px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .customer-mode-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+    border-color: rgba(255, 255, 255, 0.4);
   }
 </style>

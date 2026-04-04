@@ -1,7 +1,9 @@
 import type { VersionVector, VersionVectorMessage, ResourceKey } from '@live-menu/shared';
 import { menuStore } from '$lib/stores/menu.svelte';
+import { customerStore } from '$lib/stores/customer.svelte';
 
-const RESOURCES_TO_WATCH: ResourceKey[] = ['menuItem', 'media', 'language'];
+const MENU_RESOURCES: ResourceKey[] = ['menuItem', 'media', 'language'];
+const CUSTOMER_RESOURCES: ResourceKey[] = ['trait', 'traitGroup', 'option', 'optionGroup', 'setting'];
 
 class MenuVersionSync {
   private ws: WebSocket | null = null;
@@ -25,13 +27,20 @@ class MenuVersionSync {
         try {
           const msg: VersionVectorMessage = JSON.parse(event.data);
           if (msg.type === 'version_update') {
-            const stale = RESOURCES_TO_WATCH.some(
-              key => (msg.vector[key] || 0) > (this.localVector[key] || 0)
+            const staleMenu = MENU_RESOURCES.some(
+              (key) => (msg.vector[key] || 0) > (this.localVector[key] || 0)
+            );
+            const staleCustomer = CUSTOMER_RESOURCES.some(
+              (key) => (msg.vector[key] || 0) > (this.localVector[key] || 0)
             );
             this.localVector = { ...msg.vector };
-            if (stale) {
+            if (staleMenu) {
               console.log('[MenuSync] Menu data changed, refreshing...');
               menuStore.load();
+            }
+            if ((staleMenu || staleCustomer) && customerStore.data) {
+              console.log('[MenuSync] Customer data changed, refreshing...');
+              customerStore.load();
             }
           }
         } catch {}

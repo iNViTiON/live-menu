@@ -111,7 +111,7 @@ class VersionSyncService {
 
   private compareVectors(receivedVector: VersionVector): ResourceKey[] {
     const staleResources: ResourceKey[] = [];
-    const keys: ResourceKey[] = ['menuItem', 'media', 'language', 'user'];
+    const keys: ResourceKey[] = ['menuItem', 'media', 'language', 'user', 'trait', 'traitGroup', 'option', 'optionGroup', 'setting'];
 
     for (const key of keys) {
       const receivedTime = receivedVector[key] || 0;

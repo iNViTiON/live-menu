@@ -40,7 +40,7 @@ class MenuStore {
     });
   }
 
-  async updateItem(id: number, data: { is_visible?: boolean }) {
+  async updateItem(id: number, data: { is_visible?: boolean; base_price?: number }) {
     await this.mutate(async () => {
       await api.patch(`/api/menu-items/${id}`, data);
       await this.loadItems();
@@ -62,9 +62,9 @@ class MenuStore {
     });
   }
 
-  async setName(itemId: number, lang: string, name: string) {
+  async setName(itemId: number, lang: string, name: string, description?: string) {
     await this.mutate(async () => {
-      await api.put(`/api/menu-items/${itemId}/names/${lang}`, { name });
+      await api.put(`/api/menu-items/${itemId}/names/${lang}`, { name, description });
       await this.loadItems();
     });
   }
@@ -86,6 +86,34 @@ class MenuStore {
   async deleteMedia(itemId: number, lang: string) {
     await api.delete(`/api/menu-items/${itemId}/media/${lang}`);
     await this.loadItems();
+  }
+
+  async assignTrait(itemId: number, traitId: number) {
+    await this.mutate(async () => {
+      await api.put(`/api/menu-items/${itemId}/traits/${traitId}`);
+      await this.loadItems();
+    });
+  }
+
+  async removeTrait(itemId: number, traitId: number) {
+    await this.mutate(async () => {
+      await api.delete(`/api/menu-items/${itemId}/traits/${traitId}`);
+      await this.loadItems();
+    });
+  }
+
+  async assignOptionGroup(itemId: number, groupId: number) {
+    await this.mutate(async () => {
+      await api.put(`/api/menu-items/${itemId}/option-groups/${groupId}`);
+      await this.loadItems();
+    });
+  }
+
+  async removeOptionGroup(itemId: number, groupId: number) {
+    await this.mutate(async () => {
+      await api.delete(`/api/menu-items/${itemId}/option-groups/${groupId}`);
+      await this.loadItems();
+    });
   }
 }
 

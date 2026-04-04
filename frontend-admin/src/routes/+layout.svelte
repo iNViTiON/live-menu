@@ -8,6 +8,10 @@
   import { menuStore } from '$lib/stores/menu.svelte';
   import { languagesStore } from '$lib/stores/languages.svelte';
   import { usersStore } from '$lib/stores/users.svelte';
+  import { traitStore } from '$lib/stores/traits.svelte';
+  import { traitGroupStore } from '$lib/stores/trait-groups.svelte';
+  import { optionGroupStore } from '$lib/stores/option-groups.svelte';
+  import { settingsStore } from '$lib/stores/settings.svelte';
 
   interface Props {
     children: import('svelte').Snippet;
@@ -50,6 +54,18 @@
       if (staleResources.includes('user')) {
         usersStore.loadUsers();
       }
+      if (staleResources.includes('trait')) {
+        traitStore.load();
+      }
+      if (staleResources.includes('traitGroup')) {
+        traitGroupStore.load();
+      }
+      if (staleResources.includes('option') || staleResources.includes('optionGroup')) {
+        optionGroupStore.load();
+      }
+      if (staleResources.includes('setting')) {
+        settingsStore.load();
+      }
     });
 
     return () => unsubscribe();
@@ -82,6 +98,11 @@
         <li>
           <a href="{base}/languages" class:active={currentPath === base + '/languages'}>
             Languages
+          </a>
+        </li>
+        <li>
+          <a href="{base}/customer-menu" class:active={currentPath === base + '/customer-menu'}>
+            Customer Menu
           </a>
         </li>
         {#if isAdmin}
