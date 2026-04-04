@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import type { Context } from 'hono';
 import type { HonoEnv } from '../types';
 import { MenuService } from '../services/menu';
 import { MediaService } from '../services/media';
@@ -72,7 +71,7 @@ menuItems.get('/:id', async (c) => {
   return c.json(item);
 });
 
-// PATCH /:id — update is_visible
+// PATCH /:id — update is_visible and/or base_price
 menuItems.patch('/:id', async (c) => {
   const user = c.get('user');
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
@@ -121,7 +120,7 @@ menuItems.delete('/:id', async (c) => {
   return c.json({ success: true });
 });
 
-// PUT /:id/names/:lang — set name
+// PUT /:id/names/:lang — set name + description
 menuItems.put('/:id/names/:lang', async (c) => {
   const user = c.get('user');
   if (!user) return c.json({ error: 'Unauthorized' }, 401);
@@ -142,7 +141,7 @@ menuItems.put('/:id/names/:lang', async (c) => {
   }
 
   const service = new MenuService(c.env.DB);
-  const name = await service.setName(id, c.req.param('lang'), parsed.data.name);
+  const name = await service.setName(id, c.req.param('lang'), parsed.data.name, parsed.data.description ?? null);
 
   const versionVectorService = c.get('versionVectorService');
   await versionVectorService.notifyChange(['menuItem']);
@@ -214,6 +213,78 @@ menuItems.delete('/:id/media/:lang', async (c) => {
 
   const versionVectorService = c.get('versionVectorService');
   await versionVectorService.notifyChange(['media']);
+
+  return c.json({ success: true });
+});
+
+// PUT /:id/traits/:traitId — assign trait to menu item
+menuItems.put('/:id/traits/:traitId', async (c) => {
+  const user = c.get('user');
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const id = parseInt(c.req.param('id'), 10);
+  const traitId = parseInt(c.req.param('traitId'), 10);
+  if (isNaN(id) || isNaN(traitId)) return c.json({ error: 'Invalid id' }, 400);
+
+  const service = new MenuService(c.env.DB);
+  await service.addTrait(id, traitId);
+
+  const versionVectorService = c.get('versionVectorService');
+  await versionVectorService.notifyChange(['menuItem']);
+
+  return c.json({ success: true });
+});
+
+// DELETE /:id/traits/:traitId — remove trait from menu item
+menuItems.delete('/:id/traits/:traitId', async (c) => {
+  const user = c.get('user');
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const id = parseInt(c.req.param('id'), 10);
+  const traitId = parseInt(c.req.param('traitId'), 10);
+  if (isNaN(id) || isNaN(traitId)) return c.json({ error: 'Invalid id' }, 400);
+
+  const service = new MenuService(c.env.DB);
+  await service.removeTrait(id, traitId);
+
+  const versionVectorService = c.get('versionVectorService');
+  await versionVectorService.notifyChange(['menuItem']);
+
+  return c.json({ success: true });
+});
+
+// PUT /:id/option-groups/:groupId — assign option group to menu item
+menuItems.put('/:id/option-groups/:groupId', async (c) => {
+  const user = c.get('user');
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const id = parseInt(c.req.param('id'), 10);
+  const groupId = parseInt(c.req.param('groupId'), 10);
+  if (isNaN(id) || isNaN(groupId)) return c.json({ error: 'Invalid id' }, 400);
+
+  const service = new MenuService(c.env.DB);
+  await service.addOptionGroup(id, groupId);
+
+  const versionVectorService = c.get('versionVectorService');
+  await versionVectorService.notifyChange(['menuItem']);
+
+  return c.json({ success: true });
+});
+
+// DELETE /:id/option-groups/:groupId — remove option group from menu item
+menuItems.delete('/:id/option-groups/:groupId', async (c) => {
+  const user = c.get('user');
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const id = parseInt(c.req.param('id'), 10);
+  const groupId = parseInt(c.req.param('groupId'), 10);
+  if (isNaN(id) || isNaN(groupId)) return c.json({ error: 'Invalid id' }, 400);
+
+  const service = new MenuService(c.env.DB);
+  await service.removeOptionGroup(id, groupId);
+
+  const versionVectorService = c.get('versionVectorService');
+  await versionVectorService.notifyChange(['menuItem']);
 
   return c.json({ success: true });
 });

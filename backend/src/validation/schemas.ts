@@ -58,6 +58,7 @@ export const languageCreateSchema = z.object({
 
 export const menuItemUpdateSchema = z.object({
   is_visible: z.boolean().optional(),
+  base_price: z.number().min(0).optional(),
 });
 
 export const reorderSchema = z.object({
@@ -71,4 +72,32 @@ export const reorderSchema = z.object({
 
 export const menuItemNameSchema = z.object({
   name: z.string().min(1).max(500),
+  description: z.string().max(2000).nullish(),
+});
+
+// Shared schema for name + optional description (traits, option groups, options)
+export const nameWithDescriptionSchema = z.object({
+  name: z.string().min(1).max(500),
+  description: z.string().max(2000).nullish(),
+});
+
+// Option group flags update
+export const optionGroupUpdateSchema = z.object({
+  multi_select: z.number().int().min(0).max(1).optional(),
+  required: z.number().int().min(0).max(1).optional(),
+});
+
+// Create an option — must specify which group it belongs to
+export const optionCreateSchema = z.object({
+  option_group_id: z.number().int().positive(),
+});
+
+// Update option price
+export const optionUpdateSchema = z.object({
+  price_delta: z.number().optional(),
+});
+
+// Upsert a setting value
+export const settingValueSchema = z.object({
+  value: z.string().max(10000),
 });
