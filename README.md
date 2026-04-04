@@ -170,6 +170,9 @@ Expired sessions and authentication challenges are cleaned up automatically ever
 **Locale-aware pricing**
 Prices are displayed using `Intl.NumberFormat` for locale-appropriate formatting (e.g., en-GB, et-EE).
 
+**Menu scheduling**
+Menu items can have optional time-based visibility schedules. A date window (start/end datetime) limits the item to a date range, and availability rules define time-of-day + day-of-week windows (OR'd together). Schedules are evaluated client-side every 60 seconds in the `Europe/Tallinn` timezone. Items without schedules are always visible.
+
 **Non-destructive hide**
 Menu items can be toggled visible/hidden without deleting them. The public API only returns visible items; the admin API returns all.
 

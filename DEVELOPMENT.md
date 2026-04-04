@@ -90,7 +90,7 @@ bun run db:migrate:local
 cd backend && bunx wrangler d1 execute live_menu --local --file=src/db/seed.sql
 ```
 
-The seed file inserts GB + EE languages before FK-dependent rows (traits, options, UI translations). Migrations must be applied first.
+The seed file inserts GB + EE languages before FK-dependent rows (traits, options, UI translations). Migrations must be applied first. The seed data does not include scheduling — menu items are created without schedule constraints (always visible).
 
 ### Query the local database
 
@@ -125,7 +125,7 @@ bunx wrangler d1 create live_menu
 
 ## Testing
 
-### Backend integration tests (195 tests)
+### Backend integration tests (216 tests)
 
 ```bash
 bun run test:backend

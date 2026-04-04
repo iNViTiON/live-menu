@@ -11,7 +11,7 @@ dev-menu                 # vite dev on :5173 (proxy → :8787)
 dev-admin                # vite dev on :5174 (proxy → :8787)
 
 # Testing
-bun run test:backend     # 195 integration tests (vitest + @cloudflare/vitest-pool-workers)
+bun run test:backend     # 216 integration tests (vitest + @cloudflare/vitest-pool-workers)
 e2e                      # 22 Playwright tests (requires Nix devShell for Chromium)
 e2e --headed             # Playwright in browser
 e2e tests/admin-menu.spec.ts   # Single test file
@@ -52,7 +52,7 @@ Access via `c.env.DB`, `c.get('user')`, `c.get('authService')`, etc.
 
 Services are classes with D1/R2 injected via constructor, instantiated per-request in `middleware/services.ts`:
 - `AuthService` — WebAuthn, sessions, registration tokens
-- `MenuService` — menu item CRUD, names, reorder, trait/option-group assignments, base price
+- `MenuService` — menu item CRUD, names, reorder, trait/option-group assignments, base price, scheduling
 - `MediaService` — R2 upload/delete, variant management
 - `LanguageService` — language CRUD with R2 cascade cleanup
 - `TraitService` — trait CRUD, multilingual names
@@ -88,6 +88,15 @@ Trait-based interactive menu filtering. Admin manages traits, trait groups, opti
 
 **Page transitions**: Menu ↔ Customer pages slide side-by-side using Svelte `fly`-style `translateX` transition (600ms, no opacity fade).
 
+### Menu scheduling
+
+Menu items support optional time-based visibility scheduling evaluated in `Europe/Tallinn` timezone:
+- **Date window**: optional `schedule_start`/`schedule_end` datetime columns on `menu_items` (ISO 8601 local time, either bound nullable)
+- **Availability rules**: `menu_item_availability_rules` table — time-of-day ranges (`HH:MM`, no midnight crossing) + day-of-week toggles (Sun–Sat). Multiple rules OR'd together.
+- **Visibility logic**: date window AND (any rule matches). No rules = visible all day within the date window. No schedule fields = always visible.
+- **Frontend-only enforcement**: backend serves schedule data via the public menu API; the menu SPA evaluates `isScheduleVisible()` every 60 seconds and removes hidden items from the DOM. All media is pre-cached regardless of schedule state.
+- **Admin**: `ScheduleEditor` component in the menu item editor for managing date windows and availability rules.
+
 ## Conventions
 
 - **Package manager**: `bun` / `bunx` only — never npm, npx, yarn, pnpm
@@ -99,6 +108,7 @@ Trait-based interactive menu filtering. Admin manages traits, trait groups, opti
 - **Roles**: `admin` and `staff` only (no viewer). Staff can manage menu content; admin can also manage users and languages
 - **Base language**: GB (English UK) — always exists, cannot be deleted, used as fallback
 - **Settings keys**: must match `/^[a-z0-9:_-]{1,100}$/`
+- **Timezone**: `Europe/Tallinn` (EET/EEST) — used for all schedule evaluation, DST handled automatically
 
 ## Agent Team Conventions
 

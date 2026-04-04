@@ -11,6 +11,7 @@
 - [Trait Groups](#trait-groups)
 - [Option Groups](#option-groups)
 - [Options](#options)
+- [Availability Rules](#availability-rules)
 - [Settings](#settings)
 - [Public Menu](#public-menu)
 - [Media Proxy](#media-proxy)
@@ -892,6 +893,8 @@ All menu item endpoints require authentication. Any authenticated user (admin or
 - [DELETE /api/menu-items/:id/traits/:traitId](#delete-apimenu-itemsidtraitstraitid)
 - [PUT /api/menu-items/:id/option-groups/:groupId](#put-apimenu-itemsidoption-groupsgroupid)
 - [DELETE /api/menu-items/:id/option-groups/:groupId](#delete-apimenu-itemsidoption-groupsgroupid)
+- [GET /api/menu-items/:id/availability-rules](#get-apimenu-itemsidavailability-rules)
+- [POST /api/menu-items/:id/availability-rules](#post-apimenu-itemsidavailability-rules)
 
 ---
 
@@ -1024,7 +1027,7 @@ curl https://api.example.com/api/menu-items/1 \
 
 ### PATCH /api/menu-items/:id
 
-Updates a menu item's visibility and/or base price.
+Updates a menu item's visibility, base price, and/or schedule window.
 
 **Authentication:** Required
 
@@ -1037,13 +1040,15 @@ Updates a menu item's visibility and/or base price.
 **Request body:**
 
 ```json
-{ "is_visible": true, "base_price": 4.50 }
+{ "is_visible": true, "base_price": 4.50, "schedule_start": "2026-06-01T09:00:00", "schedule_end": null }
 ```
 
-| Field        | Type    | Required | Description              |
-|--------------|---------|----------|--------------------------|
-| `is_visible` | boolean | No       | Show or hide the item    |
-| `base_price` | number  | No       | Base price in cents (integer, ≥ 0) |
+| Field            | Type            | Required | Description                                                   |
+|------------------|-----------------|----------|---------------------------------------------------------------|
+| `is_visible`     | boolean         | No       | Show or hide the item                                         |
+| `base_price`     | number          | No       | Base price in cents (integer, ≥ 0)                            |
+| `schedule_start` | string \| null  | No       | Start of date window (ISO 8601 local datetime), `null` to clear |
+| `schedule_end`   | string \| null  | No       | End of date window (ISO 8601 local datetime), `null` to clear   |
 
 **Success response — 200:** Returns the updated menu item with names and media.
 
@@ -1462,6 +1467,215 @@ Removes an option group from a menu item.
 
 ```bash
 curl -X DELETE https://api.example.com/api/menu-items/1/option-groups/2 \
+  -H "Authorization: Bearer <session-token>"
+```
+
+---
+
+### GET /api/menu-items/:id/availability-rules
+
+Lists all availability rules for a menu item.
+
+**Authentication:** Required
+
+**Path parameters:**
+
+| Parameter | Type    | Description  |
+|-----------|---------|--------------|
+| `id`      | integer | Menu item ID |
+
+**Success response — 200:**
+
+```json
+[
+  {
+    "id": 1,
+    "menu_item_id": 1,
+    "start_time": "08:00",
+    "end_time": "14:00",
+    "day_sun": 0,
+    "day_mon": 1,
+    "day_tue": 1,
+    "day_wed": 1,
+    "day_thu": 1,
+    "day_fri": 1,
+    "day_sat": 0,
+    "created_at": "2026-04-01T12:00:00.000Z",
+    "updated_at": "2026-04-01T12:00:00.000Z"
+  }
+]
+```
+
+**Error responses:**
+
+```json
+{ "error": "Unauthorized" }
+{ "error": "Invalid id" }
+```
+
+**curl example:**
+
+```bash
+curl https://api.example.com/api/menu-items/1/availability-rules \
+  -H "Authorization: Bearer <session-token>"
+```
+
+---
+
+### POST /api/menu-items/:id/availability-rules
+
+Creates an availability rule for a menu item. The rule defines a time-of-day range and day-of-week toggles. Multiple rules per item are OR'd together.
+
+**Authentication:** Required
+
+**Path parameters:**
+
+| Parameter | Type    | Description  |
+|-----------|---------|--------------|
+| `id`      | integer | Menu item ID |
+
+**Request body:**
+
+```json
+{
+  "start_time": "08:00",
+  "end_time": "14:00",
+  "day_sun": 0,
+  "day_mon": 1,
+  "day_tue": 1,
+  "day_wed": 1,
+  "day_thu": 1,
+  "day_fri": 1,
+  "day_sat": 0
+}
+```
+
+| Field        | Type           | Required | Description                                          |
+|--------------|----------------|----------|------------------------------------------------------|
+| `start_time` | string (HH:MM) | Yes      | Start of time window (no midnight crossing)          |
+| `end_time`   | string (HH:MM) | Yes      | End of time window (must be after start_time)        |
+| `day_sun`    | integer (0/1)  | Yes      | Active on Sunday                                     |
+| `day_mon`    | integer (0/1)  | Yes      | Active on Monday                                     |
+| `day_tue`    | integer (0/1)  | Yes      | Active on Tuesday                                    |
+| `day_wed`    | integer (0/1)  | Yes      | Active on Wednesday                                  |
+| `day_thu`    | integer (0/1)  | Yes      | Active on Thursday                                   |
+| `day_fri`    | integer (0/1)  | Yes      | Active on Friday                                     |
+| `day_sat`    | integer (0/1)  | Yes      | Active on Saturday                                   |
+
+**Success response — 201:** Returns the created rule (same shape as GET list elements).
+
+**Error responses:**
+
+```json
+{ "error": "Unauthorized" }
+{ "error": "Invalid id" }
+{ "error": "end_time must be after start_time (no midnight crossing)" }
+```
+
+**curl example:**
+
+```bash
+curl -X POST https://api.example.com/api/menu-items/1/availability-rules \
+  -H "Authorization: Bearer <session-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"start_time":"08:00","end_time":"14:00","day_sun":0,"day_mon":1,"day_tue":1,"day_wed":1,"day_thu":1,"day_fri":1,"day_sat":0}'
+```
+
+---
+
+## Availability Rules
+
+Standalone endpoints for updating and deleting individual availability rules (created via `POST /api/menu-items/:id/availability-rules`).
+
+### Table of Contents
+
+- [PATCH /api/availability-rules/:id](#patch-apiavailability-rulesid)
+- [DELETE /api/availability-rules/:id](#delete-apiavailability-rulesid)
+
+---
+
+### PATCH /api/availability-rules/:id
+
+Updates an existing availability rule. All fields are optional.
+
+**Authentication:** Required
+
+**Path parameters:**
+
+| Parameter | Type    | Description           |
+|-----------|---------|------------------------|
+| `id`      | integer | Availability rule ID   |
+
+**Request body (all fields optional):**
+
+```json
+{ "start_time": "09:00", "end_time": "17:00", "day_sat": 1 }
+```
+
+| Field        | Type           | Required | Description                                          |
+|--------------|----------------|----------|------------------------------------------------------|
+| `start_time` | string (HH:MM) | No       | Start of time window                                 |
+| `end_time`   | string (HH:MM) | No       | End of time window (must be after start_time)        |
+| `day_sun`    | integer (0/1)  | No       | Active on Sunday                                     |
+| `day_mon`    | integer (0/1)  | No       | Active on Monday                                     |
+| `day_tue`    | integer (0/1)  | No       | Active on Tuesday                                    |
+| `day_wed`    | integer (0/1)  | No       | Active on Wednesday                                  |
+| `day_thu`    | integer (0/1)  | No       | Active on Thursday                                   |
+| `day_fri`    | integer (0/1)  | No       | Active on Friday                                     |
+| `day_sat`    | integer (0/1)  | No       | Active on Saturday                                   |
+
+**Success response — 200:** Returns the updated rule.
+
+**Error responses:**
+
+```json
+{ "error": "Unauthorized" }
+{ "error": "Invalid id" }
+{ "error": "Not found" }
+{ "error": "end_time must be after start_time (no midnight crossing)" }
+```
+
+**curl example:**
+
+```bash
+curl -X PATCH https://api.example.com/api/availability-rules/1 \
+  -H "Authorization: Bearer <session-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"start_time": "09:00", "end_time": "17:00"}'
+```
+
+---
+
+### DELETE /api/availability-rules/:id
+
+Deletes an availability rule.
+
+**Authentication:** Required
+
+**Path parameters:**
+
+| Parameter | Type    | Description           |
+|-----------|---------|------------------------|
+| `id`      | integer | Availability rule ID   |
+
+**Success response — 200:**
+
+```json
+{ "success": true }
+```
+
+**Error responses:**
+
+```json
+{ "error": "Unauthorized" }
+{ "error": "Invalid id" }
+{ "error": "Not found" }
+```
+
+**curl example:**
+
+```bash
+curl -X DELETE https://api.example.com/api/availability-rules/1 \
   -H "Authorization: Bearer <session-token>"
 ```
 
@@ -2613,7 +2827,7 @@ curl -X PUT https://api.example.com/api/settings/currency \
 
 ### GET /api/public/menu
 
-Returns the full menu for public display: only visible items, all configured languages, trait groups, option groups, settings, and a version timestamp for cache diffing.
+Returns the full menu for public display: only visible items (including their scheduling data), all configured languages, trait groups, option groups, settings, and a version timestamp for cache diffing. Schedule-based visibility is evaluated client-side.
 
 **Authentication:** None
 
@@ -2626,6 +2840,8 @@ Returns the full menu for public display: only visible items, all configured lan
       "id": 1,
       "sort_order": 0,
       "is_visible": true,
+      "schedule_start": "2026-06-01T09:00:00",
+      "schedule_end": null,
       "created_at": 1700000000,
       "updated_at": 1700000000,
       "names": [
@@ -2639,7 +2855,24 @@ Returns the full menu for public display: only visible items, all configured lan
           "updated_at": 1700000000
         }
       ],
-      "media": [ ... ]
+      "media": [ ... ],
+      "availabilityRules": [
+        {
+          "id": 1,
+          "menu_item_id": 1,
+          "start_time": "08:00",
+          "end_time": "14:00",
+          "day_sun": 0,
+          "day_mon": 1,
+          "day_tue": 1,
+          "day_wed": 1,
+          "day_thu": 1,
+          "day_fri": 1,
+          "day_sat": 0,
+          "created_at": "2026-04-01T12:00:00.000Z",
+          "updated_at": "2026-04-01T12:00:00.000Z"
+        }
+      ]
     }
   ],
   "languages": [

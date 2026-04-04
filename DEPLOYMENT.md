@@ -64,9 +64,10 @@ Run all migrations against the remote D1 database:
 bun run db:migrate:remote
 ```
 
-This runs both migration files in order:
+This runs all migration files in order, including:
 - `backend/src/db/migrations/0001_initial_schema.sql` — creates all tables and seeds the base language (`GB` / English UK)
 - `backend/src/db/migrations/0002_review_fixes.sql` — adds indexes, fixes foreign key constraints, adds passkey sync triggers
+- `backend/src/db/migrations/0008_menu_scheduling.sql` — adds `schedule_start`/`schedule_end` columns on `menu_items` and creates the `menu_item_availability_rules` table
 
 ### Step 2.5: Seed Menu Data (optional)
 
