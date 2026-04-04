@@ -98,6 +98,17 @@ describe('User routes', () => {
       });
       expect(res.status).toBe(403);
     });
+
+    // L9: Staff cannot set is_active on themselves
+    it('staff cannot set is_active on own user', async () => {
+      const res = await SELF.fetch('http://localhost/api/users/2', {
+        method: 'PATCH',
+        headers: { ...authHeader(staffToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: false }),
+      });
+      // Staff can only update their name — is_active is forbidden
+      expect(res.status).toBe(403);
+    });
   });
 
   // H6: Passkey management tests

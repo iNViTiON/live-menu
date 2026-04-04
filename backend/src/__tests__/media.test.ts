@@ -127,6 +127,49 @@ describe('Media routes', () => {
     });
   });
 
+  // M9: File upload size limit test
+  describe('POST /api/menu-items/:id/media/:lang — size limits', () => {
+    it('rejects image file > 10MB with 413', async () => {
+      const formData = new FormData();
+      // Create a buffer just over 10MB
+      const oversized = new Uint8Array(10 * 1024 * 1024 + 1);
+      const file = new File([oversized], 'huge.png', { type: 'image/png' });
+      formData.append('file', file);
+
+      const res = await SELF.fetch(
+        `http://localhost/api/menu-items/${menuItemId}/media/GB`,
+        {
+          method: 'POST',
+          headers: authHeader(adminToken),
+          body: formData,
+        }
+      );
+      expect(res.status).toBe(413);
+      const body = await res.json<{ error: string }>();
+      expect(body.error).toContain('too large');
+    });
+
+    it('rejects video file > 50MB with 413', async () => {
+      const formData = new FormData();
+      // Create a buffer just over 50MB
+      const oversized = new Uint8Array(50 * 1024 * 1024 + 1);
+      const file = new File([oversized], 'huge.mp4', { type: 'video/mp4' });
+      formData.append('file', file);
+
+      const res = await SELF.fetch(
+        `http://localhost/api/menu-items/${menuItemId}/media/GB`,
+        {
+          method: 'POST',
+          headers: authHeader(adminToken),
+          body: formData,
+        }
+      );
+      expect(res.status).toBe(413);
+      const body = await res.json<{ error: string }>();
+      expect(body.error).toContain('too large');
+    });
+  });
+
   describe('GET /media/:key — R2 proxy', () => {
     it('returns uploaded media object', async () => {
       // Upload an image

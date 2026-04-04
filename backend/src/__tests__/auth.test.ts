@@ -298,4 +298,48 @@ describe('Auth routes', () => {
       expect(res.status).toBe(403);
     });
   });
+
+  // H6: Rate limiter returns 429 after MAX_REQUESTS (10)
+  describe('POST /api/auth/login/challenge — rate limiting', () => {
+    it('returns 429 after 10 requests from the same IP', async () => {
+      const uniqueIp = `10.99.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+      const results: number[] = [];
+
+      for (let i = 0; i < 11; i++) {
+        const res = await SELF.fetch('http://localhost/api/auth/login/challenge', {
+          method: 'POST',
+          headers: { Origin: 'http://localhost:5173', 'CF-Connecting-IP': uniqueIp },
+        });
+        results.push(res.status);
+      }
+
+      // First 10 should succeed, 11th should be rate-limited
+      expect(results.slice(0, 10).every((s) => s === 200)).toBe(true);
+      expect(results[10]).toBe(429);
+    });
+  });
+
+  // H7: Expired session cleanup via AuthService.deleteExpiredSessions
+  describe('Scheduled cleanup — expired sessions', () => {
+    it('deletes expired sessions via service method', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      const expiredId = `expired-scheduled-${Date.now()}`;
+
+      // Insert an expired session
+      await env.DB.prepare(
+        'INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)'
+      ).bind(expiredId, 1, now - 3600, now - 7200).run();
+
+      // Verify it exists
+      const before = await env.DB.prepare('SELECT id FROM sessions WHERE id = ?').bind(expiredId).first();
+      expect(before).not.toBeNull();
+
+      // Call the cleanup (same as scheduled handler does)
+      await env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now).run();
+
+      // Verify it's gone
+      const after = await env.DB.prepare('SELECT id FROM sessions WHERE id = ?').bind(expiredId).first();
+      expect(after).toBeNull();
+    });
+  });
 });

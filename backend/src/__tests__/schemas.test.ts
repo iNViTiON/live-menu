@@ -10,6 +10,8 @@ import {
   nameWithDescriptionSchema,
   settingValueSchema,
   loginVerifySchema,
+  languageCreateSchema,
+  optionGroupUpdateSchema,
 } from '../validation/schemas';
 
 describe('Zod schema edge cases', () => {
@@ -181,6 +183,42 @@ describe('Zod schema edge cases', () => {
 
     it('accepts name at max length', () => {
       const result = nameWithDescriptionSchema.safeParse({ name: 'a'.repeat(500) });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // M10: languageCreateSchema edge cases
+  describe('languageCreateSchema', () => {
+    it('rejects 1-char code', () => {
+      const result = languageCreateSchema.safeParse({ code: 'A', displayName: 'Test' });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects 3-char code', () => {
+      const result = languageCreateSchema.safeParse({ code: 'ABC', displayName: 'Test' });
+      expect(result.success).toBe(false);
+    });
+
+    it('accepts 2-char code', () => {
+      const result = languageCreateSchema.safeParse({ code: 'FR', displayName: 'French' });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // M10: optionGroupUpdateSchema edge cases
+  describe('optionGroupUpdateSchema', () => {
+    it('rejects multi_select=2', () => {
+      const result = optionGroupUpdateSchema.safeParse({ multi_select: 2 });
+      expect(result.success).toBe(false);
+    });
+
+    it('accepts multi_select=0', () => {
+      const result = optionGroupUpdateSchema.safeParse({ multi_select: 0 });
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts multi_select=1', () => {
+      const result = optionGroupUpdateSchema.safeParse({ multi_select: 1 });
       expect(result.success).toBe(true);
     });
   });

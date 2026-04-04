@@ -247,8 +247,8 @@ describe('Menu Items — Customer Interaction', () => {
         method: 'PUT',
         headers: authHeader(adminToken),
       });
-      // With PRAGMA foreign_keys=ON, INSERT OR IGNORE still throws FK error → 500
-      expect(res.status).toBeGreaterThanOrEqual(400);
+      // PRAGMA foreign_keys=ON causes FK constraint violation → 500 internal server error
+      expect(res.status).toBe(500);
     });
   });
 
