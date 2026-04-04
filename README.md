@@ -115,6 +115,14 @@ bunx wrangler d1 create live_menu
 bun run db:migrate:local
 ```
 
+### Seed menu data (optional)
+
+Populates the database with the default drink menu (items, traits, options, UI translations, languages):
+
+```bash
+cd backend && bunx wrangler d1 execute live_menu --local --file=src/db/seed.sql
+```
+
 ### Start dev servers
 
 Open three terminals (or use a process manager):
