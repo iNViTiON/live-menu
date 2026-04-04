@@ -108,15 +108,15 @@
       <section class="items">
         <p class="items-count">
           {#if customerStore.selectedTraits.size > 0}
-            {customerStore.filteredItems.length} of {customerStore.data.items.length} drinks
+            {customerStore.filteredItems.length} {getUiText(customerStore.data.settings, 'of', menuStore.selectedLanguage)} {customerStore.data.items.length} {getUiText(customerStore.data.settings, 'drinks', menuStore.selectedLanguage)}
           {:else}
-            {customerStore.data.items.length} drinks
+            {customerStore.data.items.length} {getUiText(customerStore.data.settings, 'drinks', menuStore.selectedLanguage)}
           {/if}
         </p>
 
         {#if customerStore.filteredItems.length === 0}
           <div class="no-results" in:fly={{ y: 10, duration: 250 }}>
-            No drinks match your selection — try clearing a filter.
+            {getUiText(customerStore.data.settings, 'no_results', menuStore.selectedLanguage)}
           </div>
         {/if}
 
@@ -149,7 +149,7 @@
             {#if isExpanded}
               <div class="option-groups" transition:slide={{ duration: 300 }}>
                 {#if item.optionGroups.length === 0}
-                  <p class="no-options">No customisation options</p>
+                  <p class="no-options">{getUiText(customerStore.data.settings, 'no_options', menuStore.selectedLanguage)}</p>
                 {:else}
                   {#each item.optionGroups as og (og.id)}
                     {@const ogName = customerStore.getName(og.names)}
