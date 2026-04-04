@@ -2,7 +2,6 @@
   import { onMount } from 'svelte';
   import { beforeNavigate } from '$app/navigation';
   import { page } from '$app/state';
-  import { fly } from 'svelte/transition';
   import { registerServiceWorker } from '$lib/services/sw-bridge';
 
   let { children } = $props();
@@ -19,14 +18,28 @@
     if (fromPath === '/' && toPath === '/customer') direction = 1;
     else if (fromPath === '/customer' && toPath === '/') direction = -1;
   });
+
+  // Pure translateX slide — no opacity, pages appear connected side-by-side
+  function slideX(_node: Element, { x, duration }: { x: number; duration: number }) {
+    return {
+      duration,
+      css: (t: number) => {
+        // Custom cubic-bezier(0.77, 0, 0.175, 1) approximation
+        const ease = t < 0.5
+          ? 4 * t * t * t
+          : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        return `transform: translateX(${(1 - ease) * x}%)`;
+      }
+    };
+  }
 </script>
 
 <div class="app-shell">
   {#key page.url.pathname}
     <div
       class="page-wrapper"
-      in:fly={{ x: direction * 400, duration: 600, delay: 50 }}
-      out:fly={{ x: direction * -400, duration: 600 }}
+      in:slideX={{ x: direction * 100, duration: 600 }}
+      out:slideX={{ x: direction * -100, duration: 600 }}
     >
       {@render children()}
     </div>
