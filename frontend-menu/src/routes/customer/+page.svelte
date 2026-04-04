@@ -17,6 +17,7 @@
     menuSync.connect();
 
     const idle = createIdleTimer(60_000, () => {
+      menuStore.resetToDefault();
       goto('/');
     });
     const stopIdle = idle.start();
