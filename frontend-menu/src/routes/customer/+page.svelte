@@ -1,14 +1,34 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { fly, slide } from 'svelte/transition';
+  import { goto } from '$app/navigation';
   import { customerStore } from '$lib/stores/customer.svelte';
+  import { menuStore } from '$lib/stores/menu.svelte';
   import { menuSync } from '$lib/services/version-sync';
+  import { createIdleTimer } from '$lib/services/idle-timer';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+
+  function getUiText(settings: Record<string, string>, key: string, lang: string): string {
+    return settings[`ui:${key}:${lang}`] || settings[`ui:${key}:GB`] || key;
+  }
 
   onMount(() => {
     customerStore.load();
     menuSync.connect();
-    return () => menuSync.disconnect();
+
+    const idle = createIdleTimer(60_000, () => {
+      goto('/');
+    });
+    const stopIdle = idle.start();
+
+    return () => {
+      stopIdle();
+      menuSync.disconnect();
+    };
+  });
+
+  onDestroy(() => {
+    customerStore.reset();
   });
 </script>
 
@@ -25,8 +45,8 @@
     <div class="scroll-container">
 
       <header class="page-header">
-        <a href="/" class="back-btn" aria-label="Back to gallery">
-          <span class="back-icon">‹</span> Gallery
+        <a href="/" class="back-btn" aria-label="Back to menu">
+          <span class="back-icon">‹</span> {getUiText(customerStore.data.settings, 'menu', menuStore.selectedLanguage)}
         </a>
         <h1 class="page-title">Find your drink</h1>
       </header>
@@ -393,6 +413,14 @@
     margin-bottom: 0.75rem;
     overflow: hidden;
     border: 1px solid #e8dfd0;
+    border-left: 3px solid transparent;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+
+  .item-card:has(.item-header[aria-expanded="true"]) {
+    border-left-color: #7c5c2e;
+    box-shadow: 0 4px 16px rgba(124, 92, 46, 0.18);
+    background: #fdf8f2;
   }
 
   .item-header {

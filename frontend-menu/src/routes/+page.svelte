@@ -13,7 +13,8 @@
 
     const idle = createIdleTimer(60_000, () => {
       menuStore.resetToDefault();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const scrollEl = document.querySelector('.scroll-container');
+      if (scrollEl) scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
     });
     const stopIdle = idle.start();
     return () => {
@@ -42,7 +43,7 @@
     <LanguageSwitcher languages={menuStore.languages} />
     <GalleryBar items={menuStore.items} />
     <a href="/customer" class="customer-mode-btn" aria-label="Interactive menu">
-      <span>Find your drink</span>
+      <span>{menuStore.settings[`ui:find_your_drink:${menuStore.selectedLanguage}`] || menuStore.settings['ui:find_your_drink:GB'] || 'Find your drink'}</span>
     </a>
   {/if}
 </main>

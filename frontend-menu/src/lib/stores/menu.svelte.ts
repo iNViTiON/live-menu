@@ -4,6 +4,7 @@ import type { MenuItemWithDetails, Language, PublicMenuResponse } from '@live-me
 class MenuStore {
   items = $state.raw<MenuItemWithDetails[]>([]);
   languages = $state.raw<Language[]>([]);
+  settings = $state.raw<Record<string, string>>({});
   version = $state(0);
   selectedLanguage = $state('GB');
   isLoading = $state(true);
@@ -52,6 +53,7 @@ class MenuStore {
 
       this.items = data.items;
       this.languages = data.languages;
+      this.settings = data.settings ?? {};
       this.version = data.version;
 
       requestAnimationFrame(() => {
