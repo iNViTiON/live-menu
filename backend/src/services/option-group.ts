@@ -11,11 +11,11 @@ export class OptionGroupService {
 
     if (groups.results.length === 0) return [];
 
-    const [names, options, optionNames] = await Promise.all([
-      this.db.prepare('SELECT * FROM option_group_names').all<OptionGroupName>(),
-      this.db.prepare('SELECT * FROM options ORDER BY sort_order').all<Option>(),
-      this.db.prepare('SELECT * FROM option_names').all<OptionName>(),
-    ]);
+    const [names, options, optionNames] = await this.db.batch([
+      this.db.prepare('SELECT * FROM option_group_names'),
+      this.db.prepare('SELECT * FROM options ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM option_names'),
+    ]) as [D1Result<OptionGroupName>, D1Result<Option>, D1Result<OptionName>];
 
     const namesByGroup = Map.groupBy(names.results, (n: OptionGroupName) => n.option_group_id);
     const optionsByGroup = Map.groupBy(options.results, (o: Option) => o.option_group_id);

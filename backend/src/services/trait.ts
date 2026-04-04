@@ -5,15 +5,12 @@ export class TraitService {
 
   /** List all traits with names, ordered by sort_order */
   async list(): Promise<TraitWithDetails[]> {
-    const traits = await this.db
-      .prepare('SELECT * FROM traits ORDER BY sort_order')
-      .all<Trait>();
+    const [traits, names] = await this.db.batch([
+      this.db.prepare('SELECT * FROM traits ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM trait_names'),
+    ]) as [D1Result<Trait>, D1Result<TraitName>];
 
     if (traits.results.length === 0) return [];
-
-    const names = await this.db
-      .prepare('SELECT * FROM trait_names')
-      .all<TraitName>();
 
     const namesByTrait = Map.groupBy(names.results, (n: TraitName) => n.trait_id);
     return traits.results.map((t) => ({
