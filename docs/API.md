@@ -40,7 +40,7 @@ Session tokens are returned by `POST /api/auth/register/verify` and `POST /api/a
 
 ### Error Responses
 
-All errors return JSON with an `error` field:
+All errors return JSON with an `error` field. Error messages are generic and do not expose internal details:
 
 ```json
 { "error": "Description of the error" }
@@ -1043,7 +1043,7 @@ Updates a menu item's visibility and/or base price.
 | Field        | Type    | Required | Description              |
 |--------------|---------|----------|--------------------------|
 | `is_visible` | boolean | No       | Show or hide the item    |
-| `base_price` | number  | No       | Base price (≥ 0)         |
+| `base_price` | number  | No       | Base price in cents (integer, ≥ 0) |
 
 **Success response — 200:** Returns the updated menu item with names and media.
 
@@ -2540,6 +2540,8 @@ curl -X DELETE https://api.example.com/api/options/3/names/FR \
 ## Settings
 
 Key-value settings store (currency symbol, UI translations, etc.). All endpoints require authentication.
+
+Setting keys must match the pattern `/^[a-z0-9:_-]{1,100}$/` (lowercase alphanumeric, colons, underscores, hyphens; max 100 chars).
 
 ### Table of Contents
 

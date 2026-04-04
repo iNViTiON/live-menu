@@ -74,7 +74,7 @@ This runs both migration files in order:
 cd backend && bunx wrangler d1 execute live_menu --remote --file=src/db/seed.sql
 ```
 
-This populates the menu with the default drink menu including traits, options, and UI translations.
+This populates the menu with the default drink menu including traits, options, and UI translations. The seed file inserts GB + EE languages before FK-dependent rows.
 
 ---
 
@@ -87,6 +87,8 @@ bun run deploy
 ```
 
 This runs `build:all` (menu build → admin build → dist merge) followed by `bunx wrangler deploy` from the `backend/` directory.
+
+The deployment includes a cron trigger configured in `backend/wrangler.toml` that runs the `scheduled` handler every Sunday at midnight UTC to clean up expired sessions and challenges.
 
 ---
 

@@ -90,6 +90,8 @@ bun run db:migrate:local
 cd backend && bunx wrangler d1 execute live_menu --local --file=src/db/seed.sql
 ```
 
+The seed file inserts GB + EE languages before FK-dependent rows (traits, options, UI translations). Migrations must be applied first.
+
 ### Query the local database
 
 ```bash
@@ -123,7 +125,7 @@ bunx wrangler d1 create live_menu
 
 ## Testing
 
-### Backend integration tests (137 tests)
+### Backend integration tests (195 tests)
 
 ```bash
 bun run test:backend
@@ -153,6 +155,10 @@ e2e tests/admin-menu.spec.ts           # Run a single test file
 ```
 
 E2E tests use `baseURL: http://localhost:8787` and require the backend dev server to be running. The Playwright Chromium binary is provided by the Nix devShell via `PLAYWRIGHT_LAUNCH_OPTIONS_EXECUTABLE_PATH`. Running Playwright outside the Nix devShell requires a separately installed Chromium.
+
+### Scheduled handler
+
+The Worker has a `scheduled` handler (cron trigger) that cleans up expired sessions and challenges every Sunday at midnight UTC. In development, you can trigger it manually via the wrangler dev dashboard or `curl http://localhost:8787/__scheduled`.
 
 ---
 

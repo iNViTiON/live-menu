@@ -164,6 +164,12 @@ Admin and staff users authenticate with device passkeys — no passwords. Regist
 **Realtime sync via Durable Objects**
 When the admin changes menu content, a version-vector update is broadcast over WebSocket to all connected menu clients. Clients re-fetch only if their version is stale.
 
+**Scheduled cleanup**
+Expired sessions and authentication challenges are cleaned up automatically every Sunday at midnight UTC via a cron trigger.
+
+**Locale-aware pricing**
+Prices are displayed using `Intl.NumberFormat` for locale-appropriate formatting (e.g., en-GB, et-EE).
+
 **Non-destructive hide**
 Menu items can be toggled visible/hidden without deleting them. The public API only returns visible items; the admin API returns all.
 

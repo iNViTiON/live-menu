@@ -11,7 +11,7 @@ dev-menu                 # vite dev on :5173 (proxy → :8787)
 dev-admin                # vite dev on :5174 (proxy → :8787)
 
 # Testing
-bun run test:backend     # 137 integration tests (vitest + @cloudflare/vitest-pool-workers)
+bun run test:backend     # 195 integration tests (vitest + @cloudflare/vitest-pool-workers)
 e2e                      # 22 Playwright tests (requires Nix devShell for Chromium)
 e2e --headed             # Playwright in browser
 e2e tests/admin-menu.spec.ts   # Single test file
@@ -62,9 +62,13 @@ Services are classes with D1/R2 injected via constructor, instantiated per-reque
 - `SettingsService` — key-value settings (currency, UI translations)
 - `VersionVectorService` — notify BroadcastRoom DO of changes
 
+All services use D1 `.batch()` to minimise round-trips for multi-statement operations.
+
 ### Realtime sync
 
 `BroadcastRoom` DO (Hibernation API) manages WebSocket connections. Auth-first: client sends `{type:"auth", token}` as first message. On mutations, backend calls `versionVectorService.notifyChange(['menuItem', 'media', ...])` which POSTs to the DO's internal `/update` endpoint, broadcasting version vectors to authenticated clients. Resource keys: `menuItem`, `media`, `language`, `user`, `trait`, `traitGroup`, `option`, `optionGroup`, `setting`.
+
+A cron trigger (`scheduled` handler) runs every Sunday at midnight UTC to clean up expired sessions and challenges.
 
 ### Frontend stores
 
@@ -76,7 +80,7 @@ Trait-based interactive menu filtering. Admin manages traits, trait groups, opti
 
 **Database**: 12 additional tables — `traits`, `trait_names`, `trait_groups`, `trait_group_names`, `trait_group_traits`, `option_groups`, `option_group_names`, `options`, `option_names`, `menu_item_traits`, `menu_item_option_groups`, `settings`. Menu items also have `base_price` and `description` (on `menu_item_names`).
 
-**Seed data**: `backend/src/db/seed.sql` — standalone SQL file, run after migrations to populate menu data.
+**Seed data**: `backend/src/db/seed.sql` — standalone SQL file, run after migrations to populate menu data. Inserts GB + EE languages before FK-dependent rows.
 
 **UI translations**: Stored as settings with `ui:{key}:{languageCode}` convention (e.g., `ui:find_your_drink:GB`). Managed via admin Languages tab. Used in menu SPA via `getUiText(settings, key, lang)` helper with GB fallback.
 
@@ -94,6 +98,7 @@ Trait-based interactive menu filtering. Admin manages traits, trait groups, opti
 - **Commits**: conventional format (`feat:`, `fix:`, `chore:`, `docs:`, `test:`)
 - **Roles**: `admin` and `staff` only (no viewer). Staff can manage menu content; admin can also manage users and languages
 - **Base language**: GB (English UK) — always exists, cannot be deleted, used as fallback
+- **Settings keys**: must match `/^[a-z0-9:_-]{1,100}$/`
 
 ## Agent Team Conventions
 
