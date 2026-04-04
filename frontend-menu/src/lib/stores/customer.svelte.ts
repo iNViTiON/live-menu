@@ -48,11 +48,7 @@ class CustomerStore {
   }
 
   toggleTrait(groupId: number, traitId: number) {
-    const current = this.selectedTraits.get(groupId);
-    const next = new Map(this.selectedTraits);
-    if (current === traitId) next.delete(groupId);
-    else next.set(groupId, traitId);
-    this.selectedTraits = next;
+    this.selectedTraits = toggleTraitUtil(this.selectedTraits, groupId, traitId);
   }
 
   toggleExpand(itemId: number) {
@@ -80,31 +76,19 @@ class CustomerStore {
 
   // Fallback chain: selected language → GB → first available
   getName(names: { language_code: string; name: string }[]): string {
-    const lang = menuStore.selectedLanguage;
-    return (
-      names.find((n) => n.language_code === lang)?.name ??
-      names.find((n) => n.language_code === 'GB')?.name ??
-      names[0]?.name ??
-      ''
-    );
+    return getNameUtil(names, menuStore.selectedLanguage);
   }
 
   getDescription(names: { language_code: string; description: string | null }[]): string | null {
-    const lang = menuStore.selectedLanguage;
-    const m =
-      names.find((n) => n.language_code === lang) ??
-      names.find((n) => n.language_code === 'GB') ??
-      names[0];
-    return m?.description ?? null;
+    return getDescriptionUtil(names, menuStore.selectedLanguage);
   }
 
   formatPrice(cents: number): string {
-    return `${this.currency}${(cents / 100).toFixed(2)}`;
+    return formatPriceUtil(cents, this.currency);
   }
 
   formatDelta(cents: number): string | null {
-    if (cents === 0) return null;
-    return `+${this.currency}${(cents / 100).toFixed(2)}`;
+    return formatDeltaUtil(cents, this.currency);
   }
 }
 
