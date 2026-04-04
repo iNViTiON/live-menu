@@ -7,6 +7,10 @@
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
   import GalleryBar from '$lib/components/GalleryBar.svelte';
 
+  function getUiText(settings: Record<string, string>, key: string, lang: string): string {
+    return settings[`ui:${key}:${lang}`] || settings[`ui:${key}:GB`] || key;
+  }
+
   onMount(() => {
     menuStore.load();
     menuSync.connect();
@@ -43,7 +47,7 @@
     <LanguageSwitcher languages={menuStore.languages} />
     <GalleryBar items={menuStore.items} />
     <a href="/customer" class="customer-mode-btn" aria-label="Interactive menu">
-      <span>{menuStore.settings[`ui:find_your_drink:${menuStore.selectedLanguage}`] || menuStore.settings['ui:find_your_drink:GB'] || 'Find your drink'}</span>
+      <span>{getUiText(menuStore.settings, 'find_your_drink', menuStore.selectedLanguage)}</span>
     </a>
   {/if}
 </main>
