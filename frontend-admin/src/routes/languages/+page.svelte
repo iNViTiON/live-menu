@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { languagesStore } from '$lib/stores/languages.svelte';
+  import { settingsStore } from '$lib/stores/settings.svelte';
 
   const languages = $derived(languagesStore.languages);
   const isLoading = $derived(languagesStore.isLoading);
@@ -12,8 +13,49 @@
   let deletingCode = $state<string | null>(null);
   let deleteError = $state<string | null>(null);
 
+  // Local draft values for all ui: settings
+  let localValues = $state<Record<string, string>>({});
+
+  // Extra keys added this session not yet persisted to any lang
+  let pendingKeys = $state<string[]>([]);
+
+  // Derived: group ui:key:lang settings by translation key
+  const uiTranslations = $derived.by(() => {
+    const grouped: Record<string, Record<string, string>> = {};
+    for (const [k, v] of Object.entries(settingsStore.settings)) {
+      const parts = k.split(':');
+      if (parts.length === 3 && parts[0] === 'ui') {
+        const tKey = parts[1];
+        if (!grouped[tKey]) grouped[tKey] = {};
+        grouped[tKey][parts[2]] = v;
+      }
+    }
+    return grouped;
+  });
+
+  const translationKeys = $derived(
+    [...new Set([...Object.keys(uiTranslations), ...pendingKeys])].sort()
+  );
+
+  // Sync localValues when settings load / change
+  $effect(() => {
+    const next: Record<string, string> = {};
+    for (const [k, v] of Object.entries(settingsStore.settings)) {
+      if (k.startsWith('ui:')) next[k] = v;
+    }
+    // Preserve any in-progress edits for pending keys
+    for (const pk of pendingKeys) {
+      for (const lang of languages) {
+        const key = `ui:${pk}:${lang.code}`;
+        if (!(key in next)) next[key] = localValues[key] ?? '';
+      }
+    }
+    localValues = next;
+  });
+
   onMount(() => {
     languagesStore.loadLanguages();
+    settingsStore.load();
   });
 
   async function addLanguage() {
@@ -56,6 +98,50 @@
     } finally {
       deletingCode = null;
     }
+  }
+
+  // Translations
+  let newTranslationKey = $state('');
+  let addKeyError = $state<string | null>(null);
+  let savingKeys = $state(new Set<string>());
+
+  async function handleTranslationBlur(tKey: string, langCode: string) {
+    const settingKey = `ui:${tKey}:${langCode}`;
+    const value = localValues[settingKey] ?? '';
+    const saved = settingsStore.settings[settingKey] ?? '';
+    if (value === saved) return;
+
+    savingKeys = new Set([...savingKeys, settingKey]);
+    try {
+      await settingsStore.set(settingKey, value);
+      // Remove from pendingKeys if it was there
+      pendingKeys = pendingKeys.filter(k => k !== tKey);
+    } catch (err) {
+      console.error('Failed to save translation:', err);
+    } finally {
+      const next = new Set(savingKeys);
+      next.delete(settingKey);
+      savingKeys = next;
+    }
+  }
+
+  function addTranslationKey() {
+    const key = newTranslationKey.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    if (!key) {
+      addKeyError = 'Key is required';
+      return;
+    }
+    if (translationKeys.includes(key)) {
+      addKeyError = 'Key already exists';
+      return;
+    }
+    // Initialize empty draft values for all languages
+    for (const lang of languages) {
+      localValues[`ui:${key}:${lang.code}`] = '';
+    }
+    pendingKeys = [...pendingKeys, key];
+    newTranslationKey = '';
+    addKeyError = null;
   }
 </script>
 
@@ -140,12 +226,86 @@
       </button>
     </form>
   </div>
+
+  <!-- UI Translations -->
+  <div class="translations-section">
+    <h2>UI Translations</h2>
+    <p class="section-desc">Translations for UI strings shown to customers. Stored as <code>ui:key:LANG</code> settings.</p>
+
+    {#if settingsStore.isLoading}
+      <div class="loading">Loading translations...</div>
+    {:else if translationKeys.length > 0}
+      <div class="translations-table-wrap">
+        <table class="translations-table">
+          <thead>
+            <tr>
+              <th class="col-key">Key</th>
+              {#each languages as lang (lang.code)}
+                <th class="col-lang">{lang.code}</th>
+              {/each}
+            </tr>
+          </thead>
+          <tbody>
+            {#each translationKeys as tKey (tKey)}
+              <tr>
+                <td class="cell-key">
+                  <code>{tKey}</code>
+                </td>
+                {#each languages as lang (lang.code)}
+                  {@const settingKey = `ui:${tKey}:${lang.code}`}
+                  {@const isSaving = savingKeys.has(settingKey)}
+                  <td class="cell-value" class:saving={isSaving}>
+                    <input
+                      type="text"
+                      class="trans-input"
+                      value={localValues[settingKey] ?? ''}
+                      oninput={(e) => { localValues[settingKey] = e.currentTarget.value; }}
+                      onblur={() => handleTranslationBlur(tKey, lang.code)}
+                      placeholder="—"
+                      aria-label={`${tKey} in ${lang.code}`}
+                    />
+                  </td>
+                {/each}
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    {:else}
+      <p class="empty">No UI translations yet. Add a key below.</p>
+    {/if}
+
+    <div class="add-key-form">
+      <h3>Add Translation Key</h3>
+      {#if addKeyError}
+        <div class="error-banner" style="margin-bottom: 0.75rem;">
+          {addKeyError}
+          <button onclick={() => addKeyError = null} class="close-btn">×</button>
+        </div>
+      {/if}
+      <form class="add-form" onsubmit={(e) => { e.preventDefault(); addTranslationKey(); }}>
+        <div class="form-group">
+          <label class="form-label" for="new-key">Key (lowercase, underscores)</label>
+          <input
+            type="text"
+            id="new-key"
+            class="form-input"
+            bind:value={newTranslationKey}
+            placeholder="e.g. find_your_drink"
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">
+          Add Key
+        </button>
+      </form>
+    </div>
+  </div>
 </div>
 
 <style>
   .page {
     padding: 1.5rem;
-    max-width: 600px;
+    max-width: 900px;
   }
 
   .page-header {
@@ -259,6 +419,7 @@
     border: 1px solid #ddd;
     border-radius: 6px;
     padding: 1.25rem;
+    max-width: 600px;
   }
 
   h2 {
@@ -312,5 +473,120 @@
 
   .btn-primary:hover:not(:disabled) {
     background: #0052a3;
+  }
+
+  /* Translations section */
+  .translations-section {
+    margin-top: 2rem;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 1.25rem;
+  }
+
+  .section-desc {
+    font-size: 0.85rem;
+    color: #666;
+    margin: -0.5rem 0 1rem 0;
+  }
+
+  .section-desc code {
+    background: #f0f0f0;
+    padding: 0.05rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.82rem;
+  }
+
+  .translations-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+  }
+
+  .translations-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .translations-table thead th {
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .col-key {
+    min-width: 160px;
+  }
+
+  .col-lang {
+    min-width: 140px;
+  }
+
+  .translations-table tbody tr:hover td {
+    background: #fafafa;
+  }
+
+  .cell-key {
+    padding: 0.35rem 0.6rem;
+    border: 1px solid #eee;
+    vertical-align: middle;
+  }
+
+  .cell-key code {
+    font-size: 0.82rem;
+    color: #555;
+    background: #f0f0f0;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+  }
+
+  .cell-value {
+    padding: 0.25rem 0.4rem;
+    border: 1px solid #eee;
+    vertical-align: middle;
+    transition: background 0.15s;
+  }
+
+  .cell-value.saving {
+    background: #fffbe6;
+  }
+
+  .trans-input {
+    width: 100%;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: transparent;
+    transition: border-color 0.15s, background 0.15s;
+    box-sizing: border-box;
+  }
+
+  .trans-input:hover {
+    border-color: #ccc;
+    background: white;
+  }
+
+  .trans-input:focus {
+    outline: none;
+    border-color: #0066cc;
+    background: white;
+  }
+
+  .add-key-form {
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+    max-width: 400px;
+  }
+
+  h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
   }
 </style>
