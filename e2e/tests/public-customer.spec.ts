@@ -116,11 +116,7 @@ test.describe('Public Customer Page', () => {
     );
 
     // Should show option groups or "no options" message
-    const optionGroups = firstItem.locator('.option-group');
-    const noOptions = firstItem.locator('.no-options');
-    const hasOptions = (await optionGroups.count()) > 0;
-    const hasNoOptions = (await noOptions.count()) > 0;
-    expect(hasOptions || hasNoOptions).toBeTruthy();
+    await expect(firstItem.locator('.option-group, .no-options').first()).toBeVisible();
   });
 
   test('Surprise Me button expands a random item', async ({ page }) => {
