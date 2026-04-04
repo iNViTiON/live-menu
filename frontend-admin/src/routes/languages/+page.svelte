@@ -100,8 +100,6 @@
     savingKeys = new Set([...savingKeys, settingKey]);
     try {
       await settingsStore.set(settingKey, value);
-      // Remove from pendingKeys if it was there
-      pendingKeys = pendingKeys.filter(k => k !== tKey);
     } catch (err) {
       console.error('Failed to save translation:', err);
     } finally {
