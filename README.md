@@ -9,6 +9,7 @@ A single Cloudflare Worker serves the entire stack:
 | `/api/*` | Hono API (D1 database, WebAuthn auth) |
 | `/media/*` | R2 media proxy (immutable cache) |
 | `/admin/*` | Admin SPA (SvelteKit 5, passkey login) |
+| `/customer` | Customer interaction (trait-based drink finder) |
 | `/*` | Menu PWA (SvelteKit 5, fullscreen) |
 | `GET /api/sync-ws` | Durable Object WebSocket (realtime sync) |
 
@@ -38,28 +39,32 @@ live-menu-cf/
 ├── backend/               # Hono API — Cloudflare Worker entry point
 │   ├── src/
 │   │   ├── index.ts       # Worker fetch handler + route wiring
-│   │   ├── routes/        # auth, users, languages, menu-items, public
+│   │   ├── routes/        # auth, users, languages, menu-items, public,
+│   │   │                  # traits, trait-groups, option-groups, options, settings
 │   │   ├── services/      # Business logic (D1 injected)
+│   │   │                  # + trait, trait-group, option-group, option, settings
 │   │   ├── middleware/    # security, cors, db, services, auth
 │   │   ├── do/            # BroadcastRoom Durable Object
 │   │   ├── db/
-│   │   │   └── migrations/
+│   │   │   ├── migrations/
+│   │   │   └── seed.sql   # Default menu data (traits, options, UI translations)
 │   │   ├── validation/    # Zod schemas
 │   │   └── types.ts
 │   └── wrangler.toml
 ├── frontend-admin/        # Admin SPA → served at /admin/
 │   └── src/
-│       ├── routes/        # login, register/[token], users, languages
+│       ├── routes/        # login, register/[token], users, languages, customer-menu
 │       └── lib/
 │           ├── components/admin/
-│           ├── stores/    # auth, menu, languages, users (runes)
+│           ├── stores/    # auth, menu, languages, users, traits, trait-groups,
+│           │              # option-groups, settings (runes)
 │           └── services/  # webauthn, version-sync
 ├── frontend-menu/         # Menu PWA → served at /
 │   └── src/
-│       ├── routes/
+│       ├── routes/        # gallery (/), customer (/customer)
 │       └── lib/
 │           ├── components/ # GalleryBar, MediaItem, LanguageSwitcher
-│           ├── stores/     # menu (runes)
+│           ├── stores/     # menu, customer (runes)
 │           └── services/  # idle-timer, sw-bridge
 ├── shared/                # Shared TypeScript types (both frontends + backend)
 │   └── src/types.ts
@@ -147,8 +152,11 @@ Media variants are stored in R2 and proxied through `/media/*` with immutable ca
 **PWA with offline support**
 The menu frontend ships a service worker (`sw.js`) and a fullscreen web manifest. The menu is accessible offline after first load.
 
+**Customer interaction (Find Your Drink)**
+Trait-based interactive menu filtering. Customers select preferences (e.g., milk/no-milk, matcha/no-matcha, caffeine level) to filter drinks, expand items to see customisation options with pricing, or tap "Surprise Me" for a random selection. Admin manages traits, trait groups, option groups, options, and pricing from the Customer Menu page. All UI text is translatable via the Languages tab.
+
 **60-second idle reset**
-After 60 seconds of no interaction the menu scrolls to the top and resets the language to `GB`. Triggered by scroll, click, touch, and mousemove events.
+After 60 seconds of no interaction the menu scrolls to the top and resets the language to `GB`. On the customer page, the idle timer navigates back to the menu gallery. Triggered by scroll, click, touch, and mousemove events.
 
 **WebAuthn passkey authentication**
 Admin and staff users authenticate with device passkeys — no passwords. Registration is invitation-based via time-limited tokens (6-hour expiry).

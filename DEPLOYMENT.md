@@ -5,7 +5,8 @@
 1. [Prerequisites](#prerequisites)
 2. [Step 1: Create Cloudflare Resources](#step-1-create-cloudflare-resources)
 3. [Step 2: Apply Migrations](#step-2-apply-migrations)
-4. [Step 3: Build and Deploy](#step-3-build-and-deploy)
+4. [Step 2.5: Seed Menu Data (optional)](#step-25-seed-menu-data-optional)
+5. [Step 3: Build and Deploy](#step-3-build-and-deploy)
 5. [Step 4: Configure Custom Domain](#step-4-configure-custom-domain)
 6. [Step 5: Bootstrap First Admin](#step-5-bootstrap-first-admin)
 7. [Step 6: Verify](#step-6-verify)
@@ -66,6 +67,14 @@ bun run db:migrate:remote
 This runs both migration files in order:
 - `backend/src/db/migrations/0001_initial_schema.sql` — creates all tables and seeds the base language (`GB` / English UK)
 - `backend/src/db/migrations/0002_review_fixes.sql` — adds indexes, fixes foreign key constraints, adds passkey sync triggers
+
+### Step 2.5: Seed Menu Data (optional)
+
+```bash
+cd backend && bunx wrangler d1 execute live_menu --remote --file=src/db/seed.sql
+```
+
+This populates the menu with the default drink menu including traits, options, and UI translations.
 
 ---
 

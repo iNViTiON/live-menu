@@ -84,6 +84,12 @@ dev-admin
 bun run db:migrate:local
 ```
 
+### Seed menu data
+
+```bash
+cd backend && bunx wrangler d1 execute live_menu --local --file=src/db/seed.sql
+```
+
 ### Query the local database
 
 ```bash
@@ -101,6 +107,7 @@ backend/.wrangler/state/
 ```bash
 rm -rf backend/.wrangler/state/
 bun run db:migrate:local
+cd backend && bunx wrangler d1 execute live_menu --local --file=src/db/seed.sql
 ```
 
 ### First-time setup (new D1 database)
@@ -116,7 +123,7 @@ bunx wrangler d1 create live_menu
 
 ## Testing
 
-### Backend integration tests (54 tests)
+### Backend integration tests (137 tests)
 
 ```bash
 bun run test:backend
@@ -157,13 +164,36 @@ live-menu-cf/
 │   ├── src/
 │   │   ├── index.ts           # App entry point and route registration
 │   │   ├── services/          # Business logic (D1-injected service classes)
+│   │   │   ├── menu.ts, media.ts, language.ts, auth.ts
+│   │   │   ├── trait.ts, trait-group.ts
+│   │   │   ├── option-group.ts, option.ts
+│   │   │   ├── settings.ts, version-vector.ts
+│   │   │   └── ...
+│   │   ├── routes/            # API route handlers
+│   │   │   ├── auth.ts, users.ts, languages.ts, menu-items.ts, public.ts
+│   │   │   ├── traits.ts, trait-groups.ts
+│   │   │   ├── option-groups.ts, options.ts
+│   │   │   └── settings.ts
 │   │   ├── middleware/        # Auth, CORS, logging middleware
 │   │   └── do/                # Durable Object classes (BroadcastRoom)
-│   ├── src/db/migrations/     # D1 SQL migration files
+│   ├── src/db/
+│   │   ├── migrations/        # D1 SQL migration files
+│   │   └── seed.sql           # Default menu data (traits, options, UI translations)
 │   └── wrangler.toml          # Worker config (D1, R2, DO bindings)
 ├── frontend-menu/     # Customer-facing menu SPA (SvelteKit 5, port 5173)
+│   └── src/
+│       ├── routes/
+│       │   └── customer/      # Customer interaction page (+page.svelte)
+│       └── lib/stores/
+│           └── customer.svelte.ts  # Customer filtering store
 ├── frontend-admin/    # Restaurant admin SPA (SvelteKit 5, port 5174)
-│   └── (includes @simplewebauthn/browser for passkey auth)
+│   └── src/
+│       ├── routes/
+│       │   └── customer-menu/ # Customer menu admin page (+page.svelte)
+│       └── lib/stores/
+│           ├── traits.svelte.ts, trait-groups.svelte.ts
+│           ├── option-groups.svelte.ts, settings.svelte.ts
+│           └── (includes @simplewebauthn/browser for passkey auth)
 ├── shared/            # Shared TypeScript types (@live-menu/shared)
 │   └── src/types.ts
 ├── e2e/               # Playwright end-to-end tests
