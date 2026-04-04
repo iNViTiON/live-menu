@@ -11,7 +11,7 @@ dev-menu                 # vite dev on :5173 (proxy → :8787)
 dev-admin                # vite dev on :5174 (proxy → :8787)
 
 # Testing
-bun run test:backend     # 54 integration tests (vitest + @cloudflare/vitest-pool-workers)
+bun run test:backend     # 137 integration tests (vitest + @cloudflare/vitest-pool-workers)
 e2e                      # 22 Playwright tests (requires Nix devShell for Chromium)
 e2e --headed             # Playwright in browser
 e2e tests/admin-menu.spec.ts   # Single test file
@@ -21,6 +21,7 @@ cd frontend-menu && bunx svelte-check    # Type check menu
 # Database
 bun run db:migrate:local                  # Apply D1 migrations locally
 db execute live_menu --local --command "SQL"  # Query local D1
+cd backend && bunx wrangler d1 execute live_menu --local --file=src/db/seed.sql  # Seed menu data
 
 # Build + Deploy
 bun run build:all        # Build both SPAs → merge into backend/dist/
@@ -51,18 +52,37 @@ Access via `c.env.DB`, `c.get('user')`, `c.get('authService')`, etc.
 
 Services are classes with D1/R2 injected via constructor, instantiated per-request in `middleware/services.ts`:
 - `AuthService` — WebAuthn, sessions, registration tokens
-- `MenuService` — menu item CRUD, names, reorder
+- `MenuService` — menu item CRUD, names, reorder, trait/option-group assignments, base price
 - `MediaService` — R2 upload/delete, variant management
 - `LanguageService` — language CRUD with R2 cascade cleanup
+- `TraitService` — trait CRUD, multilingual names
+- `TraitGroupService` — trait group CRUD, names, trait membership
+- `OptionGroupService` — option group CRUD, names, multi_select/required flags
+- `OptionService` — option CRUD, names, price deltas
+- `SettingsService` — key-value settings (currency, UI translations)
 - `VersionVectorService` — notify BroadcastRoom DO of changes
 
 ### Realtime sync
 
-`BroadcastRoom` DO (Hibernation API) manages WebSocket connections. Auth-first: client sends `{type:"auth", token}` as first message. On mutations, backend calls `versionVectorService.notifyChange(['menuItem', 'media', ...])` which POSTs to the DO's internal `/update` endpoint, broadcasting version vectors to authenticated clients.
+`BroadcastRoom` DO (Hibernation API) manages WebSocket connections. Auth-first: client sends `{type:"auth", token}` as first message. On mutations, backend calls `versionVectorService.notifyChange(['menuItem', 'media', ...])` which POSTs to the DO's internal `/update` endpoint, broadcasting version vectors to authenticated clients. Resource keys: `menuItem`, `media`, `language`, `user`, `trait`, `traitGroup`, `option`, `optionGroup`, `setting`.
 
 ### Frontend stores
 
 Both SPAs use Svelte 5 rune-based class stores (e.g., `class MenuStore { items = $state.raw<...>([]) }`). The admin's `version-sync.svelte.ts` subscribes to WebSocket updates and triggers store refreshes when resources are stale.
+
+### Customer interaction
+
+Trait-based interactive menu filtering. Admin manages traits, trait groups, option groups, options, and assigns them to menu items. Public `/customer` page lets users filter by traits (single-select per group), expand items to see options with pricing, and "Surprise Me" for random selection.
+
+**Database**: 12 additional tables — `traits`, `trait_names`, `trait_groups`, `trait_group_names`, `trait_group_traits`, `option_groups`, `option_group_names`, `options`, `option_names`, `menu_item_traits`, `menu_item_option_groups`, `settings`. Menu items also have `base_price` and `description` (on `menu_item_names`).
+
+**Seed data**: `backend/src/db/seed.sql` — standalone SQL file, run after migrations to populate menu data.
+
+**UI translations**: Stored as settings with `ui:{key}:{languageCode}` convention (e.g., `ui:find_your_drink:GB`). Managed via admin Languages tab. Used in menu SPA via `getUiText(settings, key, lang)` helper with GB fallback.
+
+**Idle timer**: Both gallery (`/`) and customer (`/customer`) pages use `createIdleTimer` (60s). Gallery resets language + scrolls to top. Customer navigates back to `/` + resets language.
+
+**Page transitions**: Menu ↔ Customer pages slide side-by-side using Svelte `fly`-style `translateX` transition (600ms, no opacity fade).
 
 ## Conventions
 
