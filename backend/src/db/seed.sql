@@ -205,25 +205,25 @@ INSERT OR IGNORE INTO option_names (id, option_id, language_code, name, descript
 INSERT OR IGNORE INTO option_names (id, option_id, language_code, name, description, created_at, updated_at) VALUES (255, 22, 'EE', 'SAEMIDORI', NULL, 1775277641, 1775277641);
 
 -- menu_items
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (1, 0, 1, 1775277641, 1775277641, 600);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (2, 1, 1, 1775277641, 1775277641, 650);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (3, 2, 1, 1775277641, 1775277641, 650);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (4, 3, 1, 1775277641, 1775277641, 700);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (5, 4, 1, 1775277641, 1775277641, 650);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (6, 5, 1, 1775277641, 1775277641, 700);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (7, 6, 1, 1775277641, 1775277641, 650);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (8, 7, 1, 1775277641, 1775277641, 600);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (9, 8, 1, 1775277641, 1775277641, 1050);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (10, 10, 1, 1775277641, 1775277641, 700);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (11, 11, 1, 1775277641, 1775277641, 550);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (12, 12, 1, 1775277641, 1775277641, 600);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (13, 13, 1, 1775277641, 1775277641, 550);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (14, 14, 1, 1775277641, 1775277641, 550);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (15, 15, 1, 1775277641, 1775277641, 500);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (16, 16, 1, 1775277641, 1775277641, 500);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (17, 17, 1, 1775277641, 1775277641, 500);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (18, 18, 1, 1775277641, 1775277641, 550);
-INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price) VALUES (19, 19, 1, 1775277641, 1775277641, 550);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (1, 0, 1, 1775277641, 1775277641, 600, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (2, 1, 1, 1775277641, 1775277641, 650, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (3, 2, 1, 1775277641, 1775277641, 650, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (4, 3, 1, 1775277641, 1775277641, 700, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (5, 4, 1, 1775277641, 1775277641, 650, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (6, 5, 1, 1775277641, 1775277641, 700, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (7, 6, 1, 1775277641, 1775277641, 650, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (8, 7, 1, 1775277641, 1775277641, 600, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (9, 8, 1, 1775277641, 1775277641, 1050, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (10, 10, 1, 1775277641, 1775277641, 700, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (11, 11, 1, 1775277641, 1775277641, 550, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (12, 12, 1, 1775277641, 1775277641, 600, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (13, 13, 1, 1775277641, 1775277641, 550, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (14, 14, 1, 1775277641, 1775277641, 550, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (15, 15, 1, 1775277641, 1775277641, 500, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (16, 16, 1, 1775277641, 1775277641, 500, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (17, 17, 1, 1775277641, 1775277641, 500, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (18, 18, 1, 1775277641, 1775277641, 550, NULL, NULL);
+INSERT OR IGNORE INTO menu_items (id, sort_order, is_visible, created_at, updated_at, base_price, schedule_start, schedule_end) VALUES (19, 19, 1, 1775277641, 1775277641, 550, NULL, NULL);
 
 -- menu_item_names
 INSERT OR IGNORE INTO menu_item_names (id, menu_item_id, language_code, name, created_at, updated_at, description) VALUES (187, 1, 'GB', 'Clear Matcha', 1775277641, 1775277641, 'Matcha with water, no milk');
@@ -393,3 +393,7 @@ INSERT OR IGNORE INTO menu_item_option_groups (menu_item_id, option_group_id) VA
 INSERT OR IGNORE INTO menu_item_option_groups (menu_item_id, option_group_id) VALUES (19, 4);
 INSERT OR IGNORE INTO menu_item_option_groups (menu_item_id, option_group_id) VALUES (19, 6);
 INSERT OR IGNORE INTO menu_item_option_groups (menu_item_id, option_group_id) VALUES (19, 2);
+
+-- menu_item_availability_rules (sample: item 1 weekdays 09:00-17:00)
+INSERT OR IGNORE INTO menu_item_availability_rules (id, menu_item_id, start_time, end_time, day_mon, day_tue, day_wed, day_thu, day_fri)
+VALUES (1, 1, '09:00', '17:00', 1, 1, 1, 1, 1);
