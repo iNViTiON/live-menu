@@ -266,11 +266,11 @@ describe('Option Groups & Options CRUD', () => {
       const res = await SELF.fetch(`http://localhost/api/options/${optionId}`, {
         method: 'PATCH',
         headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ price_delta: 2.50 }),
+        body: JSON.stringify({ price_delta: 250 }),
       });
       expect(res.status).toBe(200);
       const option = await res.json<{ price_delta: number }>();
-      expect(option.price_delta).toBe(2.50);
+      expect(option.price_delta).toBe(250);
     });
 
     it('DELETE /api/options/:id deletes an option', async () => {

@@ -94,9 +94,9 @@ auth.post('/register/verify', async (c) => {
       response,
       challengeRow.challenge
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Registration verification error:', error);
-    return c.json({ error: error.message || 'Verification failed' }, 400);
+    return c.json({ error: 'Verification failed' }, 400);
   }
 
   if (!verification.verified) {
@@ -122,7 +122,7 @@ auth.post('/register/verify', async (c) => {
 });
 
 // POST /login/challenge — start passkey login
-auth.post('/login/challenge', async (c) => {
+auth.post('/login/challenge', authRateLimit, async (c) => {
   try {
     const authService = c.get('authService');
     const options = await authService.generateAuthenticationOptions();
@@ -144,7 +144,7 @@ auth.post('/login/challenge', async (c) => {
 });
 
 // POST /login/verify — complete passkey login
-auth.post('/login/verify', async (c) => {
+auth.post('/login/verify', authRateLimit, async (c) => {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -181,9 +181,9 @@ auth.post('/login/verify', async (c) => {
       response,
       challengeRow.challenge
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Login verification error:', error);
-    return c.json({ error: error.message || 'Verification failed' }, 400);
+    return c.json({ error: 'Verification failed' }, 400);
   }
 
   const { userId: loginUserId, verified } = loginResult;

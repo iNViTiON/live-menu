@@ -49,11 +49,11 @@ describe('Menu Items — Customer Interaction', () => {
       const res = await SELF.fetch(`http://localhost/api/menu-items/${itemId}`, {
         method: 'PATCH',
         headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ base_price: 12.99 }),
+        body: JSON.stringify({ base_price: 1299 }),
       });
       expect(res.status).toBe(200);
       const updated = await res.json<{ base_price: number }>();
-      expect(updated.base_price).toBe(12.99);
+      expect(updated.base_price).toBe(1299);
     });
 
     it('PATCH /api/menu-items/:id base_price accepts 0', async () => {
@@ -263,7 +263,7 @@ describe('Menu Items — Customer Interaction', () => {
       await SELF.fetch(`http://localhost/api/menu-items/${itemId}`, {
         method: 'PATCH',
         headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_visible: true, base_price: 9.99 }),
+        body: JSON.stringify({ is_visible: true, base_price: 999 }),
       });
 
       // Set item name
@@ -319,7 +319,7 @@ describe('Menu Items — Customer Interaction', () => {
       // Verify item has customer interaction fields
       const item = body.items.find((i) => i.id === itemId);
       expect(item).toBeDefined();
-      expect(item!.base_price).toBe(9.99);
+      expect(item!.base_price).toBe(999);
       expect(Array.isArray(item!.traits)).toBe(true);
       expect(item!.traits.some((t) => t.id === traitId)).toBe(true);
       expect(Array.isArray(item!.optionGroups)).toBe(true);

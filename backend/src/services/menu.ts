@@ -5,8 +5,12 @@ import type {
   MenuItemWithDetails,
   Trait,
   TraitName,
+  TraitGroup,
+  TraitGroupName,
+  TraitGroupWithDetails,
   OptionGroup,
   OptionGroupName,
+  OptionGroupWithDetails,
   Option,
   OptionName,
 } from '@live-menu/shared';
@@ -36,48 +40,126 @@ export class MenuService {
     const ids = items.results.map((item) => item.id);
     const placeholders = ids.map(() => '?').join(',');
 
-    const [names, media, traitJunctions, ogJunctions] = await Promise.all([
-      this.db
-        .prepare(`SELECT * FROM menu_item_names WHERE menu_item_id IN (${placeholders})`)
-        .bind(...ids)
-        .all<MenuItemName>(),
-      this.db
-        .prepare(`SELECT * FROM media_variants WHERE menu_item_id IN (${placeholders})`)
-        .bind(...ids)
-        .all<MediaVariant>(),
-      this.db
-        .prepare(`SELECT * FROM menu_item_traits WHERE menu_item_id IN (${placeholders})`)
-        .bind(...ids)
-        .all<{ menu_item_id: number; trait_id: number }>(),
-      this.db
-        .prepare(`SELECT * FROM menu_item_option_groups WHERE menu_item_id IN (${placeholders})`)
-        .bind(...ids)
-        .all<{ menu_item_id: number; option_group_id: number }>(),
+    const batchResults = await this.db.batch([
+      this.db.prepare(`SELECT * FROM menu_item_names WHERE menu_item_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare(`SELECT * FROM media_variants WHERE menu_item_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare(`SELECT * FROM menu_item_traits WHERE menu_item_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare(`SELECT * FROM menu_item_option_groups WHERE menu_item_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare('SELECT * FROM traits ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM trait_names'),
+      this.db.prepare('SELECT * FROM option_groups ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM option_group_names'),
+      this.db.prepare('SELECT * FROM options ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM option_names'),
     ]);
-
-    const [allTraits, allTraitNames, allOptionGroups, allOptionGroupNames, allOptions, allOptionNames] =
-      await Promise.all([
-        this.db.prepare('SELECT * FROM traits ORDER BY sort_order').all<Trait>(),
-        this.db.prepare('SELECT * FROM trait_names').all<TraitName>(),
-        this.db.prepare('SELECT * FROM option_groups ORDER BY sort_order').all<OptionGroup>(),
-        this.db.prepare('SELECT * FROM option_group_names').all<OptionGroupName>(),
-        this.db.prepare('SELECT * FROM options ORDER BY sort_order').all<Option>(),
-        this.db.prepare('SELECT * FROM option_names').all<OptionName>(),
-      ]);
 
     return this._assemble(
       items.results,
-      names.results,
-      media.results,
-      traitJunctions.results,
-      ogJunctions.results,
-      allTraits.results,
-      allTraitNames.results,
-      allOptionGroups.results,
-      allOptionGroupNames.results,
-      allOptions.results,
-      allOptionNames.results
+      batchResults[0].results as MenuItemName[],
+      batchResults[1].results as MediaVariant[],
+      batchResults[2].results as { menu_item_id: number; trait_id: number }[],
+      batchResults[3].results as { menu_item_id: number; option_group_id: number }[],
+      batchResults[4].results as Trait[],
+      batchResults[5].results as TraitName[],
+      batchResults[6].results as OptionGroup[],
+      batchResults[7].results as OptionGroupName[],
+      batchResults[8].results as Option[],
+      batchResults[9].results as OptionName[]
     );
+  }
+
+  /**
+   * Fetch all data needed for the public menu endpoint in 2 round-trips.
+   * Returns items, traitGroups, and optionGroups — eliminating duplicate queries
+   * that would otherwise occur when calling listVisible() + traitGroupService.list()
+   * + optionGroupService.list() separately.
+   */
+  async listPublicMenu(): Promise<{
+    items: MenuItemWithDetails[];
+    traitGroups: TraitGroupWithDetails[];
+    optionGroups: OptionGroupWithDetails[];
+  }> {
+    const visibleResult = await this.db
+      .prepare('SELECT * FROM menu_items WHERE is_visible = 1 ORDER BY sort_order')
+      .all<MenuItem>();
+
+    if (visibleResult.results.length === 0) {
+      return { items: [], traitGroups: [], optionGroups: [] };
+    }
+
+    const ids = visibleResult.results.map((item) => item.id);
+    const placeholders = ids.map(() => '?').join(',');
+
+    const batchResults = await this.db.batch([
+      this.db.prepare(`SELECT * FROM menu_item_names WHERE menu_item_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare(`SELECT * FROM media_variants WHERE menu_item_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare(`SELECT * FROM menu_item_traits WHERE menu_item_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare(`SELECT * FROM menu_item_option_groups WHERE menu_item_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare('SELECT * FROM traits ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM trait_names'),
+      this.db.prepare('SELECT * FROM trait_groups ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM trait_group_names'),
+      this.db.prepare('SELECT * FROM trait_group_traits ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM option_groups ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM option_group_names'),
+      this.db.prepare('SELECT * FROM options ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM option_names'),
+    ]);
+
+    const allTraits = batchResults[4].results as Trait[];
+    const allTraitNames = batchResults[5].results as TraitName[];
+    const allOptionGroups = batchResults[9].results as OptionGroup[];
+    const allOptionGroupNames = batchResults[10].results as OptionGroupName[];
+    const allOptions = batchResults[11].results as Option[];
+    const allOptionNames = batchResults[12].results as OptionName[];
+
+    const items = this._assemble(
+      visibleResult.results,
+      batchResults[0].results as MenuItemName[],
+      batchResults[1].results as MediaVariant[],
+      batchResults[2].results as { menu_item_id: number; trait_id: number }[],
+      batchResults[3].results as { menu_item_id: number; option_group_id: number }[],
+      allTraits,
+      allTraitNames,
+      allOptionGroups,
+      allOptionGroupNames,
+      allOptions,
+      allOptionNames
+    );
+
+    const allTraitGroups = batchResults[6].results as TraitGroup[];
+    const allTraitGroupNames = batchResults[7].results as TraitGroupName[];
+    const allTraitGroupJunctions = batchResults[8].results as { trait_group_id: number; trait_id: number; sort_order: number }[];
+
+    const tgNamesByGroup = Map.groupBy(allTraitGroupNames, (n: TraitGroupName) => n.trait_group_id);
+    const traitsById = new Map(allTraits.map((t) => [t.id, t]));
+    const traitNamesByTrait = Map.groupBy(allTraitNames, (n: TraitName) => n.trait_id);
+    const junctionsByGroup = Map.groupBy(allTraitGroupJunctions, (j: { trait_group_id: number; trait_id: number; sort_order: number }) => j.trait_group_id);
+
+    const traitGroups: TraitGroupWithDetails[] = allTraitGroups.map((group) => ({
+      ...group,
+      names: tgNamesByGroup.get(group.id) ?? [],
+      traits: (junctionsByGroup.get(group.id) ?? []).flatMap((j) => {
+        const trait = traitsById.get(j.trait_id);
+        if (!trait) return [];
+        return [{ ...trait, names: traitNamesByTrait.get(j.trait_id) ?? [] }];
+      }),
+    }));
+
+    const ogNamesByGroup = Map.groupBy(allOptionGroupNames, (n: OptionGroupName) => n.option_group_id);
+    const optionsByGroup = Map.groupBy(allOptions, (o: Option) => o.option_group_id);
+    const optNamesByOption = Map.groupBy(allOptionNames, (n: OptionName) => n.option_id);
+
+    const optionGroups: OptionGroupWithDetails[] = allOptionGroups.map((group) => ({
+      ...group,
+      names: ogNamesByGroup.get(group.id) ?? [],
+      options: (optionsByGroup.get(group.id) ?? []).map((opt) => ({
+        ...opt,
+        names: optNamesByOption.get(opt.id) ?? [],
+      })),
+    }));
+
+    return { items, traitGroups, optionGroups };
   }
 
   /** Get a single item with names, media, traits, and option groups */
@@ -345,41 +427,31 @@ export class MenuService {
     const ids = items.map((i) => i.id);
     const placeholders = ids.map(() => '?').join(',');
 
-    const [names, media, traitJunctions, ogJunctions] = await Promise.all([
-      this.db.prepare('SELECT * FROM menu_item_names').all<MenuItemName>(),
-      this.db.prepare('SELECT * FROM media_variants').all<MediaVariant>(),
-      this.db
-        .prepare(`SELECT * FROM menu_item_traits WHERE menu_item_id IN (${placeholders})`)
-        .bind(...ids)
-        .all<{ menu_item_id: number; trait_id: number }>(),
-      this.db
-        .prepare(`SELECT * FROM menu_item_option_groups WHERE menu_item_id IN (${placeholders})`)
-        .bind(...ids)
-        .all<{ menu_item_id: number; option_group_id: number }>(),
+    const batchResults = await this.db.batch([
+      this.db.prepare('SELECT * FROM menu_item_names'),
+      this.db.prepare('SELECT * FROM media_variants'),
+      this.db.prepare(`SELECT * FROM menu_item_traits WHERE menu_item_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare(`SELECT * FROM menu_item_option_groups WHERE menu_item_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare('SELECT * FROM traits ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM trait_names'),
+      this.db.prepare('SELECT * FROM option_groups ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM option_group_names'),
+      this.db.prepare('SELECT * FROM options ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM option_names'),
     ]);
-
-    const [allTraits, allTraitNames, allOptionGroups, allOptionGroupNames, allOptions, allOptionNames] =
-      await Promise.all([
-        this.db.prepare('SELECT * FROM traits ORDER BY sort_order').all<Trait>(),
-        this.db.prepare('SELECT * FROM trait_names').all<TraitName>(),
-        this.db.prepare('SELECT * FROM option_groups ORDER BY sort_order').all<OptionGroup>(),
-        this.db.prepare('SELECT * FROM option_group_names').all<OptionGroupName>(),
-        this.db.prepare('SELECT * FROM options ORDER BY sort_order').all<Option>(),
-        this.db.prepare('SELECT * FROM option_names').all<OptionName>(),
-      ]);
 
     return this._assemble(
       items,
-      names.results,
-      media.results,
-      traitJunctions.results,
-      ogJunctions.results,
-      allTraits.results,
-      allTraitNames.results,
-      allOptionGroups.results,
-      allOptionGroupNames.results,
-      allOptions.results,
-      allOptionNames.results
+      batchResults[0].results as MenuItemName[],
+      batchResults[1].results as MediaVariant[],
+      batchResults[2].results as { menu_item_id: number; trait_id: number }[],
+      batchResults[3].results as { menu_item_id: number; option_group_id: number }[],
+      batchResults[4].results as Trait[],
+      batchResults[5].results as TraitName[],
+      batchResults[6].results as OptionGroup[],
+      batchResults[7].results as OptionGroupName[],
+      batchResults[8].results as Option[],
+      batchResults[9].results as OptionName[]
     );
   }
 

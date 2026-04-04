@@ -17,6 +17,7 @@ import { optionRoutes } from './routes/options';
 import { settingRoutes } from './routes/settings';
 import { publicRoutes } from './routes/public';
 import { BroadcastRoom } from './do/BroadcastRoom';
+import { AuthService } from './services/auth';
 
 const app = new Hono<HonoEnv>();
 
@@ -48,7 +49,7 @@ app.route('/api/options', optionRoutes);
 app.route('/api/settings', settingRoutes);
 app.route('/api/public', publicRoutes);
 
-// Default export — handles WS upgrade, media proxy, and Hono API routes
+// Default export — handles WS upgrade, media proxy, Hono API routes, and scheduled cleanup
 export default {
   async fetch(request: Request, env: HonoEnv['Bindings'], ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -99,6 +100,14 @@ export default {
     }
 
     return env.ASSETS.fetch(request);
+  },
+
+  // Runs on cron schedule — wrangler.toml needs: [triggers] crons = ["0 3 * * *"]
+  async scheduled(_event: ScheduledEvent, env: HonoEnv['Bindings'], _ctx: ExecutionContext): Promise<void> {
+    const authService = new AuthService(env.DB, '', '', '');
+    await authService.deleteExpiredSessions();
+    const now = Math.floor(Date.now() / 1000);
+    await env.DB.prepare('DELETE FROM webauthn_challenges WHERE expires_at <= ?').bind(now).run();
   },
 };
 

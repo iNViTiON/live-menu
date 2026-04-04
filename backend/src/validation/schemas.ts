@@ -58,7 +58,7 @@ export const languageCreateSchema = z.object({
 
 export const menuItemUpdateSchema = z.object({
   is_visible: z.boolean().optional(),
-  base_price: z.number().min(0).optional(),
+  base_price: z.number().int().min(0).optional(), // integer cents
 });
 
 export const reorderSchema = z.object({
@@ -94,7 +94,7 @@ export const optionCreateSchema = z.object({
 
 // Update option price
 export const optionUpdateSchema = z.object({
-  price_delta: z.number().optional(),
+  price_delta: z.number().int().optional(), // integer cents
 });
 
 // Upsert a setting value

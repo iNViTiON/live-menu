@@ -2,8 +2,6 @@ import { Hono } from 'hono';
 import type { HonoEnv } from '../types';
 import { MenuService } from '../services/menu';
 import { LanguageService } from '../services/language';
-import { TraitGroupService } from '../services/trait-group';
-import { OptionGroupService } from '../services/option-group';
 import { SettingsService } from '../services/settings';
 
 const publicRoutes = new Hono<HonoEnv>();
@@ -12,23 +10,19 @@ const publicRoutes = new Hono<HonoEnv>();
 publicRoutes.get('/menu', async (c) => {
   const menuService = new MenuService(c.env.DB);
   const languageService = new LanguageService(c.env.DB, c.env.MEDIA_BUCKET);
-  const traitGroupService = new TraitGroupService(c.env.DB);
-  const optionGroupService = new OptionGroupService(c.env.DB);
   const settingsService = new SettingsService(c.env.DB);
 
-  const [visibleItems, languages, traitGroups, optionGroups, settings] = await Promise.all([
-    menuService.listVisible(),
+  const [menuData, languages, settings] = await Promise.all([
+    menuService.listPublicMenu(),
     languageService.list(),
-    traitGroupService.list(),
-    optionGroupService.list(),
     settingsService.getAll(),
   ]);
 
   return c.json({
-    items: visibleItems,
+    items: menuData.items,
     languages,
-    traitGroups,
-    optionGroups,
+    traitGroups: menuData.traitGroups,
+    optionGroups: menuData.optionGroups,
     settings,
     version: Math.floor(Date.now() / 1000),
   });

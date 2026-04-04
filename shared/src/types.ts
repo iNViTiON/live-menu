@@ -60,7 +60,7 @@ export interface MenuItem {
   id: number;
   sort_order: number;
   is_visible: boolean;
-  base_price: number;
+  base_price: number; // integer cents (e.g. 350 = £3.50)
   created_at: number;
   updated_at: number;
 }
@@ -147,7 +147,7 @@ export interface OptionGroupName {
 export interface Option {
   id: number;
   option_group_id: number;
-  price_delta: number;
+  price_delta: number; // integer cents, can be negative
   sort_order: number;
   created_at: number;
   updated_at: number;
@@ -224,8 +224,4 @@ export interface ApiResponse<T = unknown> {
   error?: string;
 }
 
-export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  total: number;
-  page: number;
-  limit: number;
-}
+
