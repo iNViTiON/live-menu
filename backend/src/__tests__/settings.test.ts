@@ -87,6 +87,20 @@ describe('Settings CRUD', () => {
     expect(setting.value).toBe('true');
   });
 
+  // L14: Empty string settings value
+  it('PUT /api/settings/:key with empty string — accepted (schema has no min)', async () => {
+    const res = await SELF.fetch('http://localhost/api/settings/empty_test', {
+      method: 'PUT',
+      headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: '' }),
+    });
+    // settingValueSchema is z.string().max(10000) — no min(1), so empty string passes validation
+    expect(res.status).toBe(200);
+    const setting = await res.json<{ key: string; value: string }>();
+    expect(setting.key).toBe('empty_test');
+    expect(setting.value).toBe('');
+  });
+
   it('GET /api/settings returns newly set values', async () => {
     // Set a distinct value
     await SELF.fetch('http://localhost/api/settings/test_key', {

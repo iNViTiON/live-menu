@@ -238,6 +238,20 @@ describe('Menu Items — Customer Interaction', () => {
     });
   });
 
+  // L12: FK violation test — assigning non-existent trait
+  describe('FK violation on trait assignment', () => {
+    it('PUT /api/menu-items/:id/traits/99999 returns error for non-existent trait', async () => {
+      const itemId = await createMenuItem();
+
+      const res = await SELF.fetch(`http://localhost/api/menu-items/${itemId}/traits/99999`, {
+        method: 'PUT',
+        headers: authHeader(adminToken),
+      });
+      // With PRAGMA foreign_keys=ON, INSERT OR IGNORE still throws FK error → 500
+      expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+  });
+
   describe('public menu includes customer interaction data', () => {
     it('GET /api/public/menu includes traitGroups, optionGroups, settings', async () => {
       // Set up data: create item with trait and option group

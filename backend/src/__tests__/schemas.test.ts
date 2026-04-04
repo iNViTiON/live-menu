@@ -3,6 +3,12 @@ import {
   registrationLinkSchema,
   userUpdateSchema,
   menuItemNameSchema,
+  menuItemUpdateSchema,
+  reorderSchema,
+  optionCreateSchema,
+  optionUpdateSchema,
+  nameWithDescriptionSchema,
+  settingValueSchema,
   loginVerifySchema,
 } from '../validation/schemas';
 
@@ -89,6 +95,111 @@ describe('Zod schema edge cases', () => {
         },
         challengeId: '',
       });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  // M13: menuItemUpdateSchema edge cases
+  describe('menuItemUpdateSchema', () => {
+    it('accepts base_price=0', () => {
+      const result = menuItemUpdateSchema.safeParse({ base_price: 0 });
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects base_price=-1', () => {
+      const result = menuItemUpdateSchema.safeParse({ base_price: -1 });
+      expect(result.success).toBe(false);
+    });
+
+    it('accepts base_price as integer (cents)', () => {
+      const result = menuItemUpdateSchema.safeParse({ base_price: 650 });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // M13: reorderSchema edge cases
+  describe('reorderSchema', () => {
+    it('accepts valid reorder items', () => {
+      const result = reorderSchema.safeParse({ items: [{ id: 1, sort_order: 0 }] });
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts empty items array', () => {
+      const result = reorderSchema.safeParse({ items: [] });
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects negative sort_order', () => {
+      const result = reorderSchema.safeParse({ items: [{ id: 1, sort_order: -1 }] });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects negative id', () => {
+      const result = reorderSchema.safeParse({ items: [{ id: -1, sort_order: 0 }] });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  // M13: optionCreateSchema edge cases
+  describe('optionCreateSchema', () => {
+    it('rejects missing option_group_id', () => {
+      const result = optionCreateSchema.safeParse({});
+      expect(result.success).toBe(false);
+    });
+
+    it('accepts valid option_group_id', () => {
+      const result = optionCreateSchema.safeParse({ option_group_id: 1 });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // M13: optionUpdateSchema edge cases
+  describe('optionUpdateSchema', () => {
+    it('accepts negative price_delta', () => {
+      // price_delta is z.number().optional() — no min constraint, negatives are valid (discounts)
+      const result = optionUpdateSchema.safeParse({ price_delta: -50 });
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts zero price_delta', () => {
+      const result = optionUpdateSchema.safeParse({ price_delta: 0 });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // M13: nameWithDescriptionSchema edge cases
+  describe('nameWithDescriptionSchema', () => {
+    it('rejects empty name', () => {
+      const result = nameWithDescriptionSchema.safeParse({ name: '' });
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects name over 500 chars', () => {
+      const result = nameWithDescriptionSchema.safeParse({ name: 'a'.repeat(501) });
+      expect(result.success).toBe(false);
+    });
+
+    it('accepts name at max length', () => {
+      const result = nameWithDescriptionSchema.safeParse({ name: 'a'.repeat(500) });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // M13: settingValueSchema edge cases
+  describe('settingValueSchema', () => {
+    it('rejects missing value', () => {
+      const result = settingValueSchema.safeParse({});
+      expect(result.success).toBe(false);
+    });
+
+    it('accepts empty string (no min constraint)', () => {
+      // settingValueSchema is z.string().max(10000) — no min(1), so empty is valid at schema level
+      const result = settingValueSchema.safeParse({ value: '' });
+      expect(result.success).toBe(true);
+    });
+
+    it('rejects value over 10000 chars', () => {
+      const result = settingValueSchema.safeParse({ value: 'x'.repeat(10001) });
       expect(result.success).toBe(false);
     });
   });

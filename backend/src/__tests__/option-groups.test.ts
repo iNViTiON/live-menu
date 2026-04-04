@@ -112,7 +112,15 @@ describe('Option Groups & Options CRUD', () => {
 
     it('DELETE /api/option-groups/:id cascade removes options', async () => {
       const groupId = await createGroup();
-      await createOption(groupId);
+      const optionId = await createOption(groupId);
+
+      // Verify option exists before delete
+      const beforeRes = await SELF.fetch('http://localhost/api/option-groups', {
+        headers: authHeader(adminToken),
+      });
+      const beforeGroups = await beforeRes.json<Array<{ id: number; options: Array<{ id: number }> }>>();
+      const groupBefore = beforeGroups.find((g) => g.id === groupId);
+      expect(groupBefore?.options.some((o) => o.id === optionId)).toBe(true);
 
       // Delete group — options should be cascade deleted
       const res = await SELF.fetch(`http://localhost/api/option-groups/${groupId}`, {
@@ -120,6 +128,14 @@ describe('Option Groups & Options CRUD', () => {
         headers: authHeader(adminToken),
       });
       expect(res.status).toBe(200);
+
+      // Verify option is gone after group deletion
+      const afterRes = await SELF.fetch('http://localhost/api/option-groups', {
+        headers: authHeader(adminToken),
+      });
+      const afterGroups = await afterRes.json<Array<{ id: number; options: Array<{ id: number }> }>>();
+      const groupAfter = afterGroups.find((g) => g.id === groupId);
+      expect(groupAfter).toBeUndefined();
     });
 
     it('PUT /api/option-groups/reorder reorders groups', async () => {

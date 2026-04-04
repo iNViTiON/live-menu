@@ -100,6 +100,92 @@ describe('User routes', () => {
     });
   });
 
+  // H6: Passkey management tests
+  describe('GET /api/users/:id/passkeys', () => {
+    it('admin can list any user passkeys', async () => {
+      // Seed a passkey credential for user 2
+      const now = Math.floor(Date.now() / 1000);
+      await env.DB.prepare(
+        'INSERT OR IGNORE INTO passkey_credentials (id, user_id, credential_id, public_key, counter, device_name, created_at) VALUES (?, ?, ?, ?, 0, ?, ?)'
+      ).bind(100, 2, 'cred-staff-100', 'pk-data', 'Test Device', now).run();
+
+      const res = await SELF.fetch('http://localhost/api/users/2/passkeys', {
+        headers: authHeader(adminToken),
+      });
+      expect(res.status).toBe(200);
+      const passkeys = await res.json<Array<{ credential_id: string; device_name: string }>>();
+      expect(Array.isArray(passkeys)).toBe(true);
+      expect(passkeys.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('staff can list own passkeys', async () => {
+      const res = await SELF.fetch('http://localhost/api/users/2/passkeys', {
+        headers: authHeader(staffToken),
+      });
+      expect(res.status).toBe(200);
+      const passkeys = await res.json<Array<{ credential_id: string }>>();
+      expect(Array.isArray(passkeys)).toBe(true);
+    });
+
+    it('staff cannot list other user passkeys', async () => {
+      const res = await SELF.fetch('http://localhost/api/users/1/passkeys', {
+        headers: authHeader(staffToken),
+      });
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe('DELETE /api/users/:id/passkeys/:credentialId', () => {
+    it('admin can delete a passkey', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      await env.DB.prepare(
+        'INSERT OR IGNORE INTO passkey_credentials (id, user_id, credential_id, public_key, counter, device_name, created_at) VALUES (?, ?, ?, ?, 0, ?, ?)'
+      ).bind(101, 2, 'cred-del-admin', 'pk-data', 'Delete Me', now).run();
+
+      const res = await SELF.fetch('http://localhost/api/users/2/passkeys/cred-del-admin', {
+        method: 'DELETE',
+        headers: authHeader(adminToken),
+      });
+      expect(res.status).toBe(200);
+      const body = await res.json<{ success: boolean }>();
+      expect(body.success).toBe(true);
+
+      // Verify passkey is gone
+      const row = await env.DB.prepare(
+        "SELECT id FROM passkey_credentials WHERE credential_id = 'cred-del-admin'"
+      ).first();
+      expect(row).toBeNull();
+    });
+
+    it('staff can delete own passkey', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      await env.DB.prepare(
+        'INSERT OR IGNORE INTO passkey_credentials (id, user_id, credential_id, public_key, counter, device_name, created_at) VALUES (?, ?, ?, ?, 0, ?, ?)'
+      ).bind(102, 2, 'cred-del-self', 'pk-data', 'My Device', now).run();
+
+      const res = await SELF.fetch('http://localhost/api/users/2/passkeys/cred-del-self', {
+        method: 'DELETE',
+        headers: authHeader(staffToken),
+      });
+      expect(res.status).toBe(200);
+      const body = await res.json<{ success: boolean }>();
+      expect(body.success).toBe(true);
+    });
+
+    it('staff cannot delete other user passkey', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      await env.DB.prepare(
+        'INSERT OR IGNORE INTO passkey_credentials (id, user_id, credential_id, public_key, counter, device_name, created_at) VALUES (?, ?, ?, ?, 0, ?, ?)'
+      ).bind(103, 1, 'cred-admin-only', 'pk-data', 'Admin Device', now).run();
+
+      const res = await SELF.fetch('http://localhost/api/users/1/passkeys/cred-admin-only', {
+        method: 'DELETE',
+        headers: authHeader(staffToken),
+      });
+      expect(res.status).toBe(403);
+    });
+  });
+
   describe('DELETE /api/users/:id', () => {
     it('cannot self-delete', async () => {
       const res = await SELF.fetch('http://localhost/api/users/1', {

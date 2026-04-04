@@ -137,6 +137,43 @@ describe('Menu Items CRUD', () => {
     expect(reorderedItem2?.sort_order).toBe(0);
   });
 
+  // M15: Reorder with invalid body
+  it('PUT /api/menu-items/reorder with empty body returns 400', async () => {
+    const res = await SELF.fetch('http://localhost/api/menu-items/reorder', {
+      method: 'PUT',
+      headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('PUT /api/menu-items/reorder with missing items returns 400', async () => {
+    const res = await SELF.fetch('http://localhost/api/menu-items/reorder', {
+      method: 'PUT',
+      headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: 'not-an-array' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  // M16: Invalid ID params
+  it('PATCH /api/menu-items/abc returns 400 for invalid id', async () => {
+    const res = await SELF.fetch('http://localhost/api/menu-items/abc', {
+      method: 'PATCH',
+      headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_visible: true }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('DELETE /api/menu-items/abc returns 400 for invalid id', async () => {
+    const res = await SELF.fetch('http://localhost/api/menu-items/abc', {
+      method: 'DELETE',
+      headers: authHeader(adminToken),
+    });
+    expect(res.status).toBe(400);
+  });
+
   it('GET /api/menu-items/99999 returns 404 for non-existent item', async () => {
     const res = await SELF.fetch('http://localhost/api/menu-items/99999', {
       headers: authHeader(adminToken),

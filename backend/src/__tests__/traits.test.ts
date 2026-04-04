@@ -215,4 +215,16 @@ describe('Traits CRUD', () => {
     });
     expect(res.status).toBe(400);
   });
+
+  // L11: Delete non-existent ID — documents behavior (200 no-op)
+  it('DELETE /api/traits/99999 returns 200 (no-op for non-existent)', async () => {
+    const res = await SELF.fetch('http://localhost/api/traits/99999', {
+      method: 'DELETE',
+      headers: authHeader(adminToken),
+    });
+    // Route does not check existence before delete — SQL DELETE is a no-op
+    expect(res.status).toBe(200);
+    const body = await res.json<{ success: boolean }>();
+    expect(body.success).toBe(true);
+  });
 });
