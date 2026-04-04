@@ -3,6 +3,7 @@ import type {
   MenuItemName,
   MediaVariant,
   MenuItemWithDetails,
+  AvailabilityRule,
   Trait,
   TraitName,
   TraitGroup,
@@ -53,6 +54,7 @@ export class MenuService {
       this.db.prepare('SELECT * FROM option_group_names'),
       this.db.prepare('SELECT * FROM options ORDER BY sort_order'),
       this.db.prepare('SELECT * FROM option_names'),
+      this.db.prepare(`SELECT * FROM menu_item_availability_rules WHERE menu_item_id IN (${placeholders})`).bind(...ids),
     ]);
 
     return this._assemble(
@@ -66,7 +68,8 @@ export class MenuService {
       batchResults[6].results as OptionGroup[],
       batchResults[7].results as OptionGroupName[],
       batchResults[8].results as Option[],
-      batchResults[9].results as OptionName[]
+      batchResults[9].results as OptionName[],
+      batchResults[10].results as AvailabilityRule[]
     );
   }
 
@@ -117,6 +120,7 @@ export class MenuService {
       this.db.prepare('SELECT * FROM option_names'),
       this.db.prepare('SELECT * FROM languages ORDER BY sort_order'),
       this.db.prepare('SELECT * FROM settings'),
+      this.db.prepare(`SELECT * FROM menu_item_availability_rules WHERE menu_item_id IN (${placeholders})`).bind(...ids),
     ]);
 
     const allTraits = batchResults[4].results as Trait[];
@@ -141,7 +145,8 @@ export class MenuService {
       allOptionGroups,
       allOptionGroupNames,
       allOptions,
-      allOptionNames
+      allOptionNames,
+      batchResults[15].results as AvailabilityRule[]
     );
 
     const allTraitGroups = batchResults[6].results as TraitGroup[];
@@ -189,18 +194,20 @@ export class MenuService {
 
     if (!item) return null;
 
-    // Round 2: item-dependent queries — 4 queries in 1 batch round-trip
+    // Round 2: item-dependent queries — 5 queries in 1 batch round-trip
     const round2 = await this.db.batch([
       this.db.prepare('SELECT * FROM menu_item_names WHERE menu_item_id = ?').bind(id),
       this.db.prepare('SELECT * FROM media_variants WHERE menu_item_id = ?').bind(id),
       this.db.prepare('SELECT * FROM menu_item_traits WHERE menu_item_id = ?').bind(id),
       this.db.prepare('SELECT * FROM menu_item_option_groups WHERE menu_item_id = ?').bind(id),
+      this.db.prepare('SELECT * FROM menu_item_availability_rules WHERE menu_item_id = ?').bind(id),
     ]);
 
     const names = round2[0].results as MenuItemName[];
     const media = round2[1].results as MediaVariant[];
     const traitJunctions = round2[2].results as { menu_item_id: number; trait_id: number }[];
     const ogJunctions = round2[3].results as { menu_item_id: number; option_group_id: number }[];
+    const availabilityRules = round2[4].results as AvailabilityRule[];
 
     const traitIds = traitJunctions.map((j) => j.trait_id);
     const ogIds = ogJunctions.map((j) => j.option_group_id);
@@ -266,6 +273,7 @@ export class MenuService {
       ...item,
       names,
       media,
+      availabilityRules,
       traits: traitJunctions.flatMap((j) => {
         const trait = traitsById.get(j.trait_id);
         if (!trait) return [];
@@ -311,11 +319,16 @@ export class MenuService {
     return item!;
   }
 
-  /** Update is_visible and/or base_price on a menu item */
-  async update(id: number, data: { is_visible?: boolean; base_price?: number }): Promise<MenuItem> {
+  /** Update is_visible, base_price, schedule_start, and/or schedule_end on a menu item */
+  async update(id: number, data: {
+    is_visible?: boolean;
+    base_price?: number;
+    schedule_start?: string | null;
+    schedule_end?: string | null;
+  }): Promise<MenuItem> {
     const now = Math.floor(Date.now() / 1000);
     const setClauses: string[] = [];
-    const binds: (number)[] = [];
+    const binds: (number | string | null)[] = [];
 
     if (data.is_visible !== undefined) {
       setClauses.push('is_visible = ?');
@@ -324,6 +337,14 @@ export class MenuService {
     if (data.base_price !== undefined) {
       setClauses.push('base_price = ?');
       binds.push(data.base_price);
+    }
+    if ('schedule_start' in data) {
+      setClauses.push('schedule_start = ?');
+      binds.push(data.schedule_start ?? null);
+    }
+    if ('schedule_end' in data) {
+      setClauses.push('schedule_end = ?');
+      binds.push(data.schedule_end ?? null);
     }
     setClauses.push('updated_at = ?');
     binds.push(now);
@@ -462,6 +483,7 @@ export class MenuService {
       this.db.prepare('SELECT * FROM option_group_names'),
       this.db.prepare('SELECT * FROM options ORDER BY sort_order'),
       this.db.prepare('SELECT * FROM option_names'),
+      this.db.prepare('SELECT * FROM menu_item_availability_rules'),
     ]);
 
     return this._assemble(
@@ -475,7 +497,8 @@ export class MenuService {
       batchResults[6].results as OptionGroup[],
       batchResults[7].results as OptionGroupName[],
       batchResults[8].results as Option[],
-      batchResults[9].results as OptionName[]
+      batchResults[9].results as OptionName[],
+      batchResults[10].results as AvailabilityRule[]
     );
   }
 
@@ -490,12 +513,14 @@ export class MenuService {
     allOptionGroups: OptionGroup[],
     allOptionGroupNames: OptionGroupName[],
     allOptions: Option[],
-    allOptionNames: OptionName[]
+    allOptionNames: OptionName[],
+    allAvailabilityRules: AvailabilityRule[]
   ): MenuItemWithDetails[] {
     const namesByItem = Map.groupBy(names, (n: MenuItemName) => n.menu_item_id);
     const mediaByItem = Map.groupBy(media, (m: MediaVariant) => m.menu_item_id);
     const traitsByItem = Map.groupBy(traitJunctions, (j: { menu_item_id: number; trait_id: number }) => j.menu_item_id);
     const ogByItem = Map.groupBy(ogJunctions, (j: { menu_item_id: number; option_group_id: number }) => j.menu_item_id);
+    const rulesByItem = Map.groupBy(allAvailabilityRules, (r: AvailabilityRule) => r.menu_item_id);
 
     const traitsById = new Map(allTraits.map((t) => [t.id, t]));
     const traitNamesByTrait = Map.groupBy(allTraitNames, (n: TraitName) => n.trait_id);
@@ -508,6 +533,7 @@ export class MenuService {
       ...item,
       names: namesByItem.get(item.id) ?? [],
       media: mediaByItem.get(item.id) ?? [],
+      availabilityRules: rulesByItem.get(item.id) ?? [],
       traits: (traitsByItem.get(item.id) ?? []).flatMap((j: { menu_item_id: number; trait_id: number }) => {
         const trait = traitsById.get(j.trait_id);
         if (!trait) return [];
@@ -526,5 +552,97 @@ export class MenuService {
         }];
       }),
     }));
+  }
+
+  // ── availability rule CRUD ────────────────────────────────────────────────────
+
+  /** List all availability rules for a menu item */
+  async listRules(menuItemId: number): Promise<AvailabilityRule[]> {
+    const result = await this.db
+      .prepare('SELECT * FROM menu_item_availability_rules WHERE menu_item_id = ? ORDER BY id')
+      .bind(menuItemId)
+      .all<AvailabilityRule>();
+    return result.results;
+  }
+
+  /** Create an availability rule for a menu item */
+  async createRule(menuItemId: number, data: {
+    start_time: string;
+    end_time: string;
+    day_sun: number;
+    day_mon: number;
+    day_tue: number;
+    day_wed: number;
+    day_thu: number;
+    day_fri: number;
+    day_sat: number;
+  }): Promise<AvailabilityRule> {
+    const now = new Date().toISOString();
+    const result = await this.db
+      .prepare(
+        `INSERT INTO menu_item_availability_rules
+         (menu_item_id, start_time, end_time, day_sun, day_mon, day_tue, day_wed, day_thu, day_fri, day_sat, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .bind(menuItemId, data.start_time, data.end_time, data.day_sun, data.day_mon, data.day_tue, data.day_wed, data.day_thu, data.day_fri, data.day_sat, now, now)
+      .run();
+
+    const rule = await this.db
+      .prepare('SELECT * FROM menu_item_availability_rules WHERE id = ?')
+      .bind(result.meta.last_row_id)
+      .first<AvailabilityRule>();
+
+    return rule!;
+  }
+
+  /** Update an availability rule — returns null if not found */
+  async updateRule(ruleId: number, data: Partial<{
+    start_time: string;
+    end_time: string;
+    day_sun: number;
+    day_mon: number;
+    day_tue: number;
+    day_wed: number;
+    day_thu: number;
+    day_fri: number;
+    day_sat: number;
+  }>): Promise<AvailabilityRule | null> {
+    const now = new Date().toISOString();
+    const setClauses: string[] = [];
+    const binds: (string | number)[] = [];
+
+    if (data.start_time !== undefined) { setClauses.push('start_time = ?'); binds.push(data.start_time); }
+    if (data.end_time !== undefined) { setClauses.push('end_time = ?'); binds.push(data.end_time); }
+    if (data.day_sun !== undefined) { setClauses.push('day_sun = ?'); binds.push(data.day_sun); }
+    if (data.day_mon !== undefined) { setClauses.push('day_mon = ?'); binds.push(data.day_mon); }
+    if (data.day_tue !== undefined) { setClauses.push('day_tue = ?'); binds.push(data.day_tue); }
+    if (data.day_wed !== undefined) { setClauses.push('day_wed = ?'); binds.push(data.day_wed); }
+    if (data.day_thu !== undefined) { setClauses.push('day_thu = ?'); binds.push(data.day_thu); }
+    if (data.day_fri !== undefined) { setClauses.push('day_fri = ?'); binds.push(data.day_fri); }
+    if (data.day_sat !== undefined) { setClauses.push('day_sat = ?'); binds.push(data.day_sat); }
+
+    setClauses.push('updated_at = ?');
+    binds.push(now);
+
+    const result = await this.db
+      .prepare(`UPDATE menu_item_availability_rules SET ${setClauses.join(', ')} WHERE id = ?`)
+      .bind(...binds, ruleId)
+      .run();
+
+    if (result.meta.changes === 0) return null;
+
+    return this.db
+      .prepare('SELECT * FROM menu_item_availability_rules WHERE id = ?')
+      .bind(ruleId)
+      .first<AvailabilityRule>();
+  }
+
+  /** Delete an availability rule — returns false if not found */
+  async deleteRule(ruleId: number): Promise<boolean> {
+    const result = await this.db
+      .prepare('DELETE FROM menu_item_availability_rules WHERE id = ?')
+      .bind(ruleId)
+      .run();
+    return result.meta.changes > 0;
   }
 }

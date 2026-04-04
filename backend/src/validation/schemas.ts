@@ -59,7 +59,33 @@ export const languageCreateSchema = z.object({
 export const menuItemUpdateSchema = z.object({
   is_visible: z.boolean().optional(),
   base_price: z.number().int().min(0).optional(), // integer cents
+  schedule_start: z.string().datetime({ local: true }).nullable().optional(),
+  schedule_end: z.string().datetime({ local: true }).nullable().optional(),
 });
+
+const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+const availabilityRuleBaseSchema = z.object({
+  start_time: z.string().regex(timeRegex, 'Must be HH:MM format'),
+  end_time: z.string().regex(timeRegex, 'Must be HH:MM format'),
+  day_sun: z.number().int().min(0).max(1),
+  day_mon: z.number().int().min(0).max(1),
+  day_tue: z.number().int().min(0).max(1),
+  day_wed: z.number().int().min(0).max(1),
+  day_thu: z.number().int().min(0).max(1),
+  day_fri: z.number().int().min(0).max(1),
+  day_sat: z.number().int().min(0).max(1),
+});
+
+export const availabilityRuleSchema = availabilityRuleBaseSchema.refine(
+  (data) => data.start_time < data.end_time,
+  { message: 'end_time must be after start_time (no midnight crossing)' }
+);
+
+export const availabilityRuleUpdateSchema = availabilityRuleBaseSchema.partial().refine(
+  (data) => !data.start_time || !data.end_time || data.start_time < data.end_time,
+  { message: 'end_time must be after start_time (no midnight crossing)' }
+);
 
 export const reorderSchema = z.object({
   items: z.array(

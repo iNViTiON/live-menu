@@ -61,6 +61,8 @@ export interface MenuItem {
   sort_order: number;
   is_visible: boolean;
   base_price: number; // integer cents (e.g. 350 = £3.50)
+  schedule_start: string | null;
+  schedule_end: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -169,6 +171,22 @@ export interface Setting {
   updated_at: number;
 }
 
+export interface AvailabilityRule {
+  id: number;
+  menu_item_id: number;
+  start_time: string; // "HH:MM" (Europe/Tallinn local)
+  end_time: string;   // "HH:MM"
+  day_sun: number;
+  day_mon: number;
+  day_tue: number;
+  day_wed: number;
+  day_thu: number;
+  day_fri: number;
+  day_sat: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // Composed types
 export interface TraitWithDetails extends Trait {
   names: TraitName[];
@@ -194,6 +212,7 @@ export interface MenuItemWithDetails extends MenuItem {
   media: MediaVariant[];
   traits: TraitWithDetails[];
   optionGroups: OptionGroupWithDetails[];
+  availabilityRules: AvailabilityRule[];
 }
 
 export interface PublicMenuResponse {
