@@ -8,6 +8,7 @@ routes = [{ pattern = "menu.mitch.ee/*", zone_name = "mitch.ee" }]
 directory = "./dist/"
 not_found_handling = "none"
 binding = "ASSETS"
+# both "/admin" and "/admin/*" needed: bare path handles redirect, wildcard handles SPA routes
 run_worker_first = ["/api/*", "/media/*", "/admin", "/admin/*"]
 
 # Run: bunx wrangler d1 create live_menu
@@ -35,6 +36,9 @@ class_name = "BroadcastRoom"
 [[migrations]]
 tag = "v1"
 new_classes = ["BroadcastRoom"]
+
+[triggers]
+crons = ["0 0 * * 0"]
 
 [vars]
 FRONTEND_URL = "https://menu.mitch.ee"
