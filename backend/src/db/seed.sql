@@ -4,6 +4,12 @@
 
 PRAGMA foreign_keys = ON;
 
+-- Languages (must exist before any language-dependent rows)
+INSERT OR IGNORE INTO languages (code, display_name, is_base, sort_order, created_at)
+VALUES ('GB', 'English', 1, 0, datetime('now'));
+INSERT OR IGNORE INTO languages (code, display_name, is_base, sort_order, created_at)
+VALUES ('EE', 'Estonian', 0, 1, datetime('now'));
+
 -- settings
 INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES ('currency', '€', 1775277641);
 INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES ('logo_filename', 'LOGO_Mitch-03.png?alt=media&token=586223dd-34ef-43be-a14f-0780c6ce2b58', 1775277641);
