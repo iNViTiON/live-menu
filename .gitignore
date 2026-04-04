@@ -10,3 +10,4 @@ build/
 .turbo
 .direnv/
 coverage/
+test-results/

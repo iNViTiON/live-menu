@@ -6,7 +6,7 @@
       "name": "live-menu-cf",
       "devDependencies": {
         "@vitest/coverage-istanbul": "^3.2.4",
-        "vitest": "^4.1.0",
+        "vitest": "^4.1.2",
       },
     },
     "backend": {
