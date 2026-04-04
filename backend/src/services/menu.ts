@@ -181,6 +181,7 @@ export class MenuService {
 
   /** Get a single item with names, media, traits, and option groups */
   async getById(id: number): Promise<MenuItemWithDetails | null> {
+    // Round 1: fetch the item (need its ID before anything else)
     const item = await this.db
       .prepare('SELECT * FROM menu_items WHERE id = ?')
       .bind(id)
@@ -188,83 +189,89 @@ export class MenuService {
 
     if (!item) return null;
 
-    const [names, media, traitJunctions, ogJunctions] = await Promise.all([
-      this.db
-        .prepare('SELECT * FROM menu_item_names WHERE menu_item_id = ?')
-        .bind(id)
-        .all<MenuItemName>(),
-      this.db
-        .prepare('SELECT * FROM media_variants WHERE menu_item_id = ?')
-        .bind(id)
-        .all<MediaVariant>(),
-      this.db
-        .prepare('SELECT * FROM menu_item_traits WHERE menu_item_id = ?')
-        .bind(id)
-        .all<{ menu_item_id: number; trait_id: number }>(),
-      this.db
-        .prepare('SELECT * FROM menu_item_option_groups WHERE menu_item_id = ?')
-        .bind(id)
-        .all<{ menu_item_id: number; option_group_id: number }>(),
+    // Round 2: item-dependent queries — 4 queries in 1 batch round-trip
+    const round2 = await this.db.batch([
+      this.db.prepare('SELECT * FROM menu_item_names WHERE menu_item_id = ?').bind(id),
+      this.db.prepare('SELECT * FROM media_variants WHERE menu_item_id = ?').bind(id),
+      this.db.prepare('SELECT * FROM menu_item_traits WHERE menu_item_id = ?').bind(id),
+      this.db.prepare('SELECT * FROM menu_item_option_groups WHERE menu_item_id = ?').bind(id),
     ]);
 
-    const traitIds = traitJunctions.results.map((j) => j.trait_id);
-    const ogIds = ogJunctions.results.map((j) => j.option_group_id);
+    const names = round2[0].results as MenuItemName[];
+    const media = round2[1].results as MediaVariant[];
+    const traitJunctions = round2[2].results as { menu_item_id: number; trait_id: number }[];
+    const ogJunctions = round2[3].results as { menu_item_id: number; option_group_id: number }[];
 
-    const [traits, traitNames, optionGroups, ogNames, options, optionNames] = await Promise.all([
-      traitIds.length > 0
-        ? this.db
-            .prepare(`SELECT * FROM traits WHERE id IN (${traitIds.map(() => '?').join(',')})`)
-            .bind(...traitIds)
-            .all<Trait>()
-        : Promise.resolve({ results: [] }),
-      traitIds.length > 0
-        ? this.db
-            .prepare(`SELECT * FROM trait_names WHERE trait_id IN (${traitIds.map(() => '?').join(',')})`)
-            .bind(...traitIds)
-            .all<TraitName>()
-        : Promise.resolve({ results: [] }),
-      ogIds.length > 0
-        ? this.db
-            .prepare(`SELECT * FROM option_groups WHERE id IN (${ogIds.map(() => '?').join(',')})`)
-            .bind(...ogIds)
-            .all<OptionGroup>()
-        : Promise.resolve({ results: [] }),
-      ogIds.length > 0
-        ? this.db
-            .prepare(`SELECT * FROM option_group_names WHERE option_group_id IN (${ogIds.map(() => '?').join(',')})`)
-            .bind(...ogIds)
-            .all<OptionGroupName>()
-        : Promise.resolve({ results: [] }),
-      ogIds.length > 0
-        ? this.db
-            .prepare(`SELECT * FROM options WHERE option_group_id IN (${ogIds.map(() => '?').join(',')}) ORDER BY sort_order`)
-            .bind(...ogIds)
-            .all<Option>()
-        : Promise.resolve({ results: [] }),
-      ogIds.length > 0
-        ? this.db
-            .prepare('SELECT * FROM option_names')
-            .all<OptionName>()
-        : Promise.resolve({ results: [] }),
-    ]);
+    const traitIds = traitJunctions.map((j) => j.trait_id);
+    const ogIds = ogJunctions.map((j) => j.option_group_id);
 
-    const traitNamesByTrait = Map.groupBy(traitNames.results, (n: TraitName) => n.trait_id);
-    const ogNamesById = Map.groupBy(ogNames.results, (n: OptionGroupName) => n.option_group_id);
-    const optsByGroup = Map.groupBy(options.results, (o: Option) => o.option_group_id);
-    const optNamesByOpt = Map.groupBy(optionNames.results, (n: OptionName) => n.option_id);
-    const traitsById = new Map(traits.results.map((t) => [t.id, t]));
-    const ogById = new Map(optionGroups.results.map((g) => [g.id, g]));
+    // Round 3: related entity details — all filtered by IDs from round 2, 1 batch round-trip
+    let traits: Trait[] = [];
+    let traitNames: TraitName[] = [];
+    let optionGroups: OptionGroup[] = [];
+    let ogNames: OptionGroupName[] = [];
+    let options: Option[] = [];
+    let optionNames: OptionName[] = [];
+
+    if (traitIds.length > 0 || ogIds.length > 0) {
+      const round3Queries: D1PreparedStatement[] = [];
+      let traitIdx = -1, traitNameIdx = -1, ogIdx = -1, ogNameIdx = -1, optIdx = -1, optNameIdx = -1;
+      let idx = 0;
+
+      if (traitIds.length > 0) {
+        const tp = traitIds.map(() => '?').join(',');
+        traitIdx = idx++;
+        round3Queries.push(this.db.prepare(`SELECT * FROM traits WHERE id IN (${tp})`).bind(...traitIds));
+        traitNameIdx = idx++;
+        round3Queries.push(this.db.prepare(`SELECT * FROM trait_names WHERE trait_id IN (${tp})`).bind(...traitIds));
+      }
+
+      if (ogIds.length > 0) {
+        const op = ogIds.map(() => '?').join(',');
+        ogIdx = idx++;
+        round3Queries.push(this.db.prepare(`SELECT * FROM option_groups WHERE id IN (${op})`).bind(...ogIds));
+        ogNameIdx = idx++;
+        round3Queries.push(this.db.prepare(`SELECT * FROM option_group_names WHERE option_group_id IN (${op})`).bind(...ogIds));
+        optIdx = idx++;
+        round3Queries.push(this.db.prepare(`SELECT * FROM options WHERE option_group_id IN (${op}) ORDER BY sort_order`).bind(...ogIds));
+        // Filter option_names via JOIN — avoids SELECT * on the full table (H5 fix)
+        optNameIdx = idx++;
+        round3Queries.push(
+          this.db
+            .prepare(
+              `SELECT onames.* FROM option_names onames INNER JOIN options o ON o.id = onames.option_id WHERE o.option_group_id IN (${op})`
+            )
+            .bind(...ogIds)
+        );
+      }
+
+      const round3 = await this.db.batch(round3Queries);
+
+      if (traitIdx >= 0) traits = round3[traitIdx].results as Trait[];
+      if (traitNameIdx >= 0) traitNames = round3[traitNameIdx].results as TraitName[];
+      if (ogIdx >= 0) optionGroups = round3[ogIdx].results as OptionGroup[];
+      if (ogNameIdx >= 0) ogNames = round3[ogNameIdx].results as OptionGroupName[];
+      if (optIdx >= 0) options = round3[optIdx].results as Option[];
+      if (optNameIdx >= 0) optionNames = round3[optNameIdx].results as OptionName[];
+    }
+
+    const traitNamesByTrait = Map.groupBy(traitNames, (n: TraitName) => n.trait_id);
+    const ogNamesById = Map.groupBy(ogNames, (n: OptionGroupName) => n.option_group_id);
+    const optsByGroup = Map.groupBy(options, (o: Option) => o.option_group_id);
+    const optNamesByOpt = Map.groupBy(optionNames, (n: OptionName) => n.option_id);
+    const traitsById = new Map(traits.map((t) => [t.id, t]));
+    const ogById = new Map(optionGroups.map((g) => [g.id, g]));
 
     return {
       ...item,
-      names: names.results,
-      media: media.results,
-      traits: traitJunctions.results.flatMap((j) => {
+      names,
+      media,
+      traits: traitJunctions.flatMap((j) => {
         const trait = traitsById.get(j.trait_id);
         if (!trait) return [];
         return [{ ...trait, names: traitNamesByTrait.get(j.trait_id) ?? [] }];
       }),
-      optionGroups: ogJunctions.results.flatMap((j) => {
+      optionGroups: ogJunctions.flatMap((j) => {
         const group = ogById.get(j.option_group_id);
         if (!group) return [];
         return [{
