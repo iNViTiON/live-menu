@@ -2,6 +2,7 @@
   import type { MenuItemWithDetails, Language } from '@live-menu/shared';
   import { menuStore } from '$lib/stores/menu.svelte';
   import MediaUploader from './MediaUploader.svelte';
+  import ScheduleEditor from './ScheduleEditor.svelte';
 
   interface Props {
     item: MenuItemWithDetails;
@@ -147,6 +148,8 @@
       </div>
     {/if}
   {/each}
+
+  <ScheduleEditor {item} />
 </div>
 
 <style>

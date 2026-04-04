@@ -39,13 +39,13 @@
     <div class="error">{menuStore.error}</div>
   {:else}
     <div class="scroll-container">
-      {#each menuStore.items as item (item.id)}
+      {#each menuStore.visibleItems as item (item.id)}
         <MediaItem {item} />
       {/each}
     </div>
 
     <LanguageSwitcher languages={menuStore.languages} />
-    <GalleryBar items={menuStore.items} />
+    <GalleryBar items={menuStore.visibleItems} />
     <a href="/customer" class="customer-mode-btn" aria-label="Interactive menu">
       <span>{getUiText(menuStore.settings, 'find_your_drink', menuStore.selectedLanguage)}</span>
     </a>

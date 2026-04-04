@@ -1,5 +1,6 @@
 import { tick } from 'svelte';
 import type { MenuItemWithDetails, Language, PublicMenuResponse, TraitGroupWithDetails, OptionGroupWithDetails } from '@live-menu/shared';
+import { isScheduleVisible } from './schedule-utils';
 
 class MenuStore {
   items = $state.raw<MenuItemWithDetails[]>([]);
@@ -11,6 +12,21 @@ class MenuStore {
   selectedLanguage = $state('GB');
   isLoading = $state(true);
   error = $state<string | null>(null);
+  currentTime = $state(new Date());
+
+  visibleItems = $derived.by(() =>
+    this.items.filter((item) =>
+      item.is_visible &&
+      isScheduleVisible(item.schedule_start, item.schedule_end, item.availabilityRules, this.currentTime)
+    )
+  );
+
+  startSchedulePolling(): () => void {
+    const id = setInterval(() => {
+      this.currentTime = new Date();
+    }, 60_000);
+    return () => clearInterval(id);
+  }
 
   get baseLanguage() {
     return 'GB';

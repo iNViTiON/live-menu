@@ -20,8 +20,10 @@ class CustomerStore {
 
   filteredItems = $derived.by(() => {
     if (!this.data) return [];
-    return filterItems(this.data.items, this.selectedTraits);
+    return filterItems(menuStore.visibleItems, this.selectedTraits);
   });
+
+  scheduleVisibleCount = $derived(menuStore.visibleItems.length);
 
   currency = $derived(this.data?.settings?.currency ?? '€');
 
