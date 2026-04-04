@@ -1,3 +1,7 @@
+-- WARNING: The registration_tokens recreation below (lines 7-22) is not wrapped in a transaction.
+-- If this migration fails mid-way, data could be lost. This has been applied successfully
+-- and cannot be safely modified. Future table recreations MUST use BEGIN/COMMIT.
+
 -- M8: Add indexes on webauthn_challenges
 CREATE INDEX IF NOT EXISTS idx_challenges_expires ON webauthn_challenges(expires_at);
 CREATE INDEX IF NOT EXISTS idx_challenges_user ON webauthn_challenges(user_id);
