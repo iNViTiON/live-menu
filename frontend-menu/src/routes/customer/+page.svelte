@@ -33,12 +33,12 @@
 </script>
 
 <svelte:head>
-  <title>Find Your Drink</title>
+  <title>{getUiText(menuStore.settings, 'find_your_drink', menuStore.selectedLanguage)}</title>
 </svelte:head>
 
 <main class="page">
   {#if customerStore.isLoading}
-    <div class="loading">Loading…</div>
+    <div class="loading">{getUiText(menuStore.settings, 'loading', menuStore.selectedLanguage)}</div>
   {:else if customerStore.error}
     <div class="error">{customerStore.error}</div>
   {:else if customerStore.data}
@@ -48,7 +48,7 @@
         <a href="/" class="back-btn" aria-label="Back to menu">
           <span class="back-icon">‹</span> {getUiText(customerStore.data.settings, 'menu', menuStore.selectedLanguage)}
         </a>
-        <h1 class="page-title">Find your drink</h1>
+        <h1 class="page-title">{getUiText(customerStore.data.settings, 'find_your_drink', menuStore.selectedLanguage)}</h1>
       </header>
 
       {#if customerStore.data.languages.length > 1}
@@ -60,9 +60,9 @@
         {#if customerStore.selectedTraits.size > 0}
           <div class="reset-bar" transition:slide={{ duration: 200 }}>
             <span class="reset-label">
-              {customerStore.selectedTraits.size} filter{customerStore.selectedTraits.size > 1 ? 's' : ''} active
+              {customerStore.selectedTraits.size} {getUiText(customerStore.data.settings, 'filters_active', menuStore.selectedLanguage)}
             </span>
-            <button class="reset-btn" onclick={() => customerStore.reset()}>Clear all</button>
+            <button class="reset-btn" onclick={() => customerStore.reset()}>{getUiText(customerStore.data.settings, 'clear_all', menuStore.selectedLanguage)}</button>
           </div>
         {/if}
 
@@ -99,7 +99,7 @@
             onclick={() => customerStore.surpriseMe()}
             disabled={customerStore.filteredItems.length === 0}
           >
-            ✨ Surprise Me!
+            ✨ {getUiText(customerStore.data.settings, 'surprise_me', menuStore.selectedLanguage)}
           </button>
         </div>
       </section>

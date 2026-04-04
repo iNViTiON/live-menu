@@ -16,9 +16,6 @@
   // Local draft values for all ui: settings
   let localValues = $state<Record<string, string>>({});
 
-  // Extra keys added this session not yet persisted to any lang
-  let pendingKeys = $state<string[]>([]);
-
   // Derived: group ui:key:lang settings by translation key
   const uiTranslations = $derived.by(() => {
     const grouped: Record<string, Record<string, string>> = {};
@@ -33,22 +30,13 @@
     return grouped;
   });
 
-  const translationKeys = $derived(
-    [...new Set([...Object.keys(uiTranslations), ...pendingKeys])].sort()
-  );
+  const translationKeys = $derived(Object.keys(uiTranslations).sort());
 
   // Sync localValues when settings load / change
   $effect(() => {
     const next: Record<string, string> = {};
     for (const [k, v] of Object.entries(settingsStore.settings)) {
       if (k.startsWith('ui:')) next[k] = v;
-    }
-    // Preserve any in-progress edits for pending keys
-    for (const pk of pendingKeys) {
-      for (const lang of languages) {
-        const key = `ui:${pk}:${lang.code}`;
-        if (!(key in next)) next[key] = localValues[key] ?? '';
-      }
     }
     localValues = next;
   });
@@ -101,8 +89,6 @@
   }
 
   // Translations
-  let newTranslationKey = $state('');
-  let addKeyError = $state<string | null>(null);
   let savingKeys = $state(new Set<string>());
 
   async function handleTranslationBlur(tKey: string, langCode: string) {
@@ -125,24 +111,6 @@
     }
   }
 
-  function addTranslationKey() {
-    const key = newTranslationKey.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-    if (!key) {
-      addKeyError = 'Key is required';
-      return;
-    }
-    if (translationKeys.includes(key)) {
-      addKeyError = 'Key already exists';
-      return;
-    }
-    // Initialize empty draft values for all languages
-    for (const lang of languages) {
-      localValues[`ui:${key}:${lang.code}`] = '';
-    }
-    pendingKeys = [...pendingKeys, key];
-    newTranslationKey = '';
-    addKeyError = null;
-  }
 </script>
 
 <div class="page">
@@ -272,33 +240,8 @@
         </table>
       </div>
     {:else}
-      <p class="empty">No UI translations yet. Add a key below.</p>
+      <p class="empty">No UI translations found.</p>
     {/if}
-
-    <div class="add-key-form">
-      <h3>Add Translation Key</h3>
-      {#if addKeyError}
-        <div class="error-banner" style="margin-bottom: 0.75rem;">
-          {addKeyError}
-          <button onclick={() => addKeyError = null} class="close-btn">×</button>
-        </div>
-      {/if}
-      <form class="add-form" onsubmit={(e) => { e.preventDefault(); addTranslationKey(); }}>
-        <div class="form-group">
-          <label class="form-label" for="new-key">Key (lowercase, underscores)</label>
-          <input
-            type="text"
-            id="new-key"
-            class="form-input"
-            bind:value={newTranslationKey}
-            placeholder="e.g. find_your_drink"
-          />
-        </div>
-        <button type="submit" class="btn btn-primary">
-          Add Key
-        </button>
-      </form>
-    </div>
   </div>
 </div>
 
@@ -577,16 +520,4 @@
     background: white;
   }
 
-  .add-key-form {
-    border-top: 1px solid #eee;
-    padding-top: 1rem;
-    max-width: 400px;
-  }
-
-  h3 {
-    margin: 0 0 0.75rem 0;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #555;
-  }
 </style>
