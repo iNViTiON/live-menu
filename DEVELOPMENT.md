@@ -125,7 +125,7 @@ bunx wrangler d1 create live_menu
 
 ## Testing
 
-### Backend integration tests (216 tests)
+### Backend integration tests (264 tests)
 
 ```bash
 bun run test:backend
@@ -170,13 +170,13 @@ live-menu-cf/
 │   ├── src/
 │   │   ├── index.ts           # App entry point and route registration
 │   │   ├── services/          # Business logic (D1-injected service classes)
-│   │   │   ├── menu.ts, media.ts, language.ts, auth.ts
+│   │   │   ├── menu.ts, gallery.ts, media.ts, language.ts, auth.ts
 │   │   │   ├── trait.ts, trait-group.ts
 │   │   │   ├── option-group.ts, option.ts
 │   │   │   ├── settings.ts, version-vector.ts
 │   │   │   └── ...
 │   │   ├── routes/            # API route handlers
-│   │   │   ├── auth.ts, users.ts, languages.ts, menu-items.ts, public.ts
+│   │   │   ├── auth.ts, users.ts, languages.ts, menu-items.ts, gallery.ts, public.ts
 │   │   │   ├── traits.ts, trait-groups.ts
 │   │   │   ├── option-groups.ts, options.ts
 │   │   │   └── settings.ts
@@ -191,12 +191,16 @@ live-menu-cf/
 │       ├── routes/
 │       │   └── customer/      # Customer interaction page (+page.svelte)
 │       └── lib/stores/
+│           ├── menu.svelte.ts      # Find Your Drink products
+│           ├── gallery.svelte.ts   # Gallery pages (schedule-filtered)
 │           └── customer.svelte.ts  # Customer filtering store
 ├── frontend-admin/    # Restaurant admin SPA (SvelteKit 5, port 5174)
 │   └── src/
 │       ├── routes/
-│       │   └── customer-menu/ # Customer menu admin page (+page.svelte)
+│       │   ├── customer-menu/ # Customer menu admin page (+page.svelte)
+│       │   └── gallery/       # Gallery page management (+page.svelte)
 │       └── lib/stores/
+│           ├── gallery.svelte.ts
 │           ├── traits.svelte.ts, trait-groups.svelte.ts
 │           ├── option-groups.svelte.ts, settings.svelte.ts
 │           └── (includes @simplewebauthn/browser for passkey auth)

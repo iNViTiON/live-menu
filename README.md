@@ -7,6 +7,8 @@ A single Cloudflare Worker serves the entire stack:
 | Path | Handled by |
 |------|------------|
 | `/api/*` | Hono API (D1 database, WebAuthn auth) |
+| `/api/public/menu` | Public Find Your Drink products (customer page) |
+| `/api/public/gallery` | Public gallery pages with schedule data (menu board) |
 | `/media/*` | R2 media proxy (immutable cache) |
 | `/admin/*` | Admin SPA (SvelteKit 5, passkey login) |
 | `/customer` | Customer interaction (trait-based drink finder) |
@@ -39,10 +41,11 @@ live-menu-cf/
 ├── backend/               # Hono API — Cloudflare Worker entry point
 │   ├── src/
 │   │   ├── index.ts       # Worker fetch handler + route wiring
-│   │   ├── routes/        # auth, users, languages, menu-items, public,
+│   │   ├── routes/        # auth, users, languages, menu-items, gallery, public,
 │   │   │                  # traits, trait-groups, option-groups, options, settings
 │   │   ├── services/      # Business logic (D1 injected)
-│   │   │                  # + trait, trait-group, option-group, option, settings
+│   │   │                  # menu, gallery, media, language, auth, + trait, trait-group,
+│   │   │                  # option-group, option, settings, version-vector
 │   │   ├── middleware/    # security, cors, db, services, auth
 │   │   ├── do/            # BroadcastRoom Durable Object
 │   │   ├── db/
@@ -53,18 +56,18 @@ live-menu-cf/
 │   └── wrangler.toml
 ├── frontend-admin/        # Admin SPA → served at /admin/
 │   └── src/
-│       ├── routes/        # login, register/[token], users, languages, customer-menu
+│       ├── routes/        # login, register/[token], users, languages, customer-menu, gallery
 │       └── lib/
 │           ├── components/admin/
-│           ├── stores/    # auth, menu, languages, users, traits, trait-groups,
+│           ├── stores/    # auth, menu, gallery, languages, users, traits, trait-groups,
 │           │              # option-groups, settings (runes)
 │           └── services/  # webauthn, version-sync
 ├── frontend-menu/         # Menu PWA → served at /
 │   └── src/
 │       ├── routes/        # gallery (/), customer (/customer)
 │       └── lib/
-│           ├── components/ # GalleryBar, MediaItem, LanguageSwitcher
-│           ├── stores/     # menu, customer (runes)
+│           ├── components/ # GalleryBar, GalleryMediaItem, MediaItem, LanguageSwitcher
+│           ├── stores/     # menu, gallery, customer (runes)
 │           └── services/  # idle-timer, sw-bridge
 ├── shared/                # Shared TypeScript types (both frontends + backend)
 │   └── src/types.ts
@@ -178,8 +181,8 @@ Expired sessions and authentication challenges are cleaned up automatically ever
 **Locale-aware pricing**
 Prices are displayed using `Intl.NumberFormat` for locale-appropriate formatting (e.g., en-GB, et-EE).
 
-**Menu scheduling**
-Menu items can have optional time-based visibility schedules. A date window (start/end datetime) limits the item to a date range, and availability rules define time-of-day + day-of-week windows (OR'd together). Schedules are evaluated client-side every 60 seconds in the `Europe/Tallinn` timezone. Items without schedules are always visible.
+**Gallery scheduling**
+Gallery pages (the full-screen menu board at `/`) can have optional time-based visibility schedules — separate from the Find Your Drink product catalogue. A date window (start/end datetime) limits a page to a date range, and availability rules define time-of-day + day-of-week windows (OR'd together). Schedules are evaluated client-side every 60 seconds in the `Europe/Tallinn` timezone. Pages without schedules are always visible. Find Your Drink products are never schedule-gated.
 
 **Non-destructive hide**
 Menu items can be toggled visible/hidden without deleting them. The public API only returns visible items; the admin API returns all.

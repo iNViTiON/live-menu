@@ -11,7 +11,7 @@ dev-menu                 # vite dev on :5173 (proxy → :8787)
 dev-admin                # vite dev on :5174 (proxy → :8787)
 
 # Testing
-bun run test:backend     # 216 integration tests (vitest + @cloudflare/vitest-pool-workers)
+bun run test:backend     # 264 integration tests (vitest + @cloudflare/vitest-pool-workers)
 e2e                      # 22 Playwright tests (requires Nix devShell for Chromium)
 e2e --headed             # Playwright in browser
 e2e tests/admin-menu.spec.ts   # Single test file
@@ -52,7 +52,8 @@ Access via `c.env.DB`, `c.get('user')`, `c.get('authService')`, etc.
 
 Services are classes with D1/R2 injected via constructor, instantiated per-request in `middleware/services.ts`:
 - `AuthService` — WebAuthn, sessions, registration tokens
-- `MenuService` — menu item CRUD, names, reorder, trait/option-group assignments, base price, scheduling
+- `MenuService` — menu item CRUD, names, reorder, trait/option-group assignments, base price
+- `GalleryService` — gallery page CRUD, names, reorder, media, scheduling, availability rules
 - `MediaService` — R2 upload/delete, variant management
 - `LanguageService` — language CRUD with R2 cascade cleanup
 - `TraitService` — trait CRUD, multilingual names
@@ -66,7 +67,7 @@ All services use D1 `.batch()` to minimise round-trips for multi-statement opera
 
 ### Realtime sync
 
-`BroadcastRoom` DO (Hibernation API) manages WebSocket connections. Auth-first: client sends `{type:"auth", token}` as first message. On mutations, backend calls `versionVectorService.notifyChange(['menuItem', 'media', ...])` which POSTs to the DO's internal `/update` endpoint, broadcasting version vectors to authenticated clients. Resource keys: `menuItem`, `media`, `language`, `user`, `trait`, `traitGroup`, `option`, `optionGroup`, `setting`.
+`BroadcastRoom` DO (Hibernation API) manages WebSocket connections. Auth-first: client sends `{type:"auth", token}` as first message. On mutations, backend calls `versionVectorService.notifyChange(['menuItem', 'media', ...])` which POSTs to the DO's internal `/update` endpoint, broadcasting version vectors to authenticated clients. Resource keys: `menuItem`, `media`, `language`, `user`, `trait`, `traitGroup`, `option`, `optionGroup`, `setting`, `gallery`.
 
 A cron trigger (`scheduled` handler) runs every Sunday at midnight UTC to clean up expired sessions and challenges.
 
@@ -88,14 +89,15 @@ Trait-based interactive menu filtering. Admin manages traits, trait groups, opti
 
 **Page transitions**: Menu ↔ Customer pages slide side-by-side using Svelte `fly`-style `translateX` transition (600ms, no opacity fade).
 
-### Menu scheduling
+### Gallery scheduling
 
-Menu items support optional time-based visibility scheduling evaluated in `Europe/Tallinn` timezone:
-- **Date window**: optional `schedule_start`/`schedule_end` datetime columns on `menu_items` (ISO 8601 local time, either bound nullable)
-- **Availability rules**: `menu_item_availability_rules` table — time-of-day ranges (`HH:MM`, no midnight crossing) + day-of-week toggles (Sun–Sat). Multiple rules OR'd together.
+Gallery pages (menu board display, served at `/`) support optional time-based visibility scheduling evaluated in `Europe/Tallinn` timezone. Scheduling applies **only to gallery pages** — Find Your Drink products (`menu_items`) are never schedule-gated.
+- **Gallery tables**: `gallery_pages`, `gallery_page_names`, `gallery_page_media`, `gallery_page_availability_rules` (separate from `menu_items`).
+- **Date window**: optional `schedule_start`/`schedule_end` datetime columns on `gallery_pages` (ISO 8601 local time, either bound nullable)
+- **Availability rules**: `gallery_page_availability_rules` table — time-of-day ranges (`HH:MM`, no midnight crossing) + day-of-week toggles (Sun–Sat). Multiple rules OR'd together.
 - **Visibility logic**: date window AND (any rule matches). No rules = visible all day within the date window. No schedule fields = always visible.
-- **Frontend-only enforcement**: backend serves schedule data via the public menu API; the menu SPA evaluates `isScheduleVisible()` every 60 seconds and removes hidden items from the DOM. All media is pre-cached regardless of schedule state.
-- **Admin**: `ScheduleEditor` component in the menu item editor for managing date windows and availability rules.
+- **Frontend-only enforcement**: backend serves schedule data via `/api/public/gallery`; the menu SPA evaluates `isScheduleVisible()` every 60 seconds and removes hidden pages from the DOM. All media is pre-cached regardless of schedule state.
+- **Admin**: `ScheduleEditor` component (generic, callback-based) in the gallery page editor for managing date windows and availability rules.
 
 ## Conventions
 

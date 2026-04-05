@@ -67,7 +67,8 @@ bun run db:migrate:remote
 This runs all migration files in order, including:
 - `backend/src/db/migrations/0001_initial_schema.sql` — creates all tables and seeds the base language (`GB` / English UK)
 - `backend/src/db/migrations/0002_review_fixes.sql` — adds indexes, fixes foreign key constraints, adds passkey sync triggers
-- `backend/src/db/migrations/0008_menu_scheduling.sql` — adds `schedule_start`/`schedule_end` columns on `menu_items` and creates the `menu_item_availability_rules` table
+- `backend/src/db/migrations/0008_menu_scheduling.sql` — introduced schedule fields on `menu_items` and the `menu_item_availability_rules` table (superseded by 0009)
+- `backend/src/db/migrations/0009_gallery_separation.sql` — moves scheduling out of `menu_items` and into new `gallery_pages`, `gallery_page_names`, `gallery_page_media`, and `gallery_page_availability_rules` tables; drops `menu_item_availability_rules` and the schedule columns on `menu_items`
 
 ### Step 2.5: Seed Menu Data (optional)
 

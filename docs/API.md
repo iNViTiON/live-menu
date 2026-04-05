@@ -6,14 +6,16 @@
 - [Authentication](#authentication)
 - [Users](#users)
 - [Menu Items](#menu-items)
+- [Gallery](#gallery)
+- [Gallery Availability Rules](#gallery-availability-rules)
 - [Languages](#languages)
 - [Traits](#traits)
 - [Trait Groups](#trait-groups)
 - [Option Groups](#option-groups)
 - [Options](#options)
-- [Availability Rules](#availability-rules)
 - [Settings](#settings)
 - [Public Menu](#public-menu)
+- [Public Gallery](#public-gallery)
 - [Media Proxy](#media-proxy)
 - [WebSocket](#websocket)
 - [Health Check](#health-check)
@@ -875,7 +877,7 @@ curl -X DELETE "https://api.example.com/api/users/42/passkeys/base64url-credenti
 
 ## Menu Items
 
-All menu item endpoints require authentication. Any authenticated user (admin or staff) can manage menu items.
+Find Your Drink product catalogue. All menu item endpoints require authentication. Any authenticated user (admin or staff) can manage menu items. Products are **not** schedule-gated — scheduling lives on [Gallery](#gallery) pages instead.
 
 ### Table of Contents
 
@@ -893,8 +895,6 @@ All menu item endpoints require authentication. Any authenticated user (admin or
 - [DELETE /api/menu-items/:id/traits/:traitId](#delete-apimenu-itemsidtraitstraitid)
 - [PUT /api/menu-items/:id/option-groups/:groupId](#put-apimenu-itemsidoption-groupsgroupid)
 - [DELETE /api/menu-items/:id/option-groups/:groupId](#delete-apimenu-itemsidoption-groupsgroupid)
-- [GET /api/menu-items/:id/availability-rules](#get-apimenu-itemsidavailability-rules)
-- [POST /api/menu-items/:id/availability-rules](#post-apimenu-itemsidavailability-rules)
 
 ---
 
@@ -1027,7 +1027,7 @@ curl https://api.example.com/api/menu-items/1 \
 
 ### PATCH /api/menu-items/:id
 
-Updates a menu item's visibility, base price, and/or schedule window.
+Updates a menu item's visibility and/or base price.
 
 **Authentication:** Required
 
@@ -1040,15 +1040,13 @@ Updates a menu item's visibility, base price, and/or schedule window.
 **Request body:**
 
 ```json
-{ "is_visible": true, "base_price": 4.50, "schedule_start": "2026-06-01T09:00:00", "schedule_end": null }
+{ "is_visible": true, "base_price": 450 }
 ```
 
-| Field            | Type            | Required | Description                                                   |
-|------------------|-----------------|----------|---------------------------------------------------------------|
-| `is_visible`     | boolean         | No       | Show or hide the item                                         |
-| `base_price`     | number          | No       | Base price in cents (integer, ≥ 0)                            |
-| `schedule_start` | string \| null  | No       | Start of date window (ISO 8601 local datetime), `null` to clear |
-| `schedule_end`   | string \| null  | No       | End of date window (ISO 8601 local datetime), `null` to clear   |
+| Field        | Type    | Required | Description                         |
+|--------------|---------|----------|-------------------------------------|
+| `is_visible` | boolean | No       | Show or hide the item               |
+| `base_price` | integer | No       | Base price in cents (integer, ≥ 0)  |
 
 **Success response — 200:** Returns the updated menu item with names and media.
 
@@ -1472,17 +1470,32 @@ curl -X DELETE https://api.example.com/api/menu-items/1/option-groups/2 \
 
 ---
 
-### GET /api/menu-items/:id/availability-rules
+## Gallery
 
-Lists all availability rules for a menu item.
+Gallery pages drive the full-screen menu board served at `/`. Each page has multilingual names and media (image or video) per language and supports optional time-based scheduling in the `Europe/Tallinn` timezone. Gallery pages are independent from [Menu Items](#menu-items) — they use separate tables and endpoints. All gallery endpoints require authentication.
+
+### Table of Contents
+
+- [GET /api/gallery](#get-apigallery)
+- [POST /api/gallery](#post-apigallery)
+- [PUT /api/gallery/reorder](#put-apigalleryreorder)
+- [GET /api/gallery/:id](#get-apigalleryid)
+- [PATCH /api/gallery/:id](#patch-apigalleryid)
+- [DELETE /api/gallery/:id](#delete-apigalleryid)
+- [PUT /api/gallery/:id/names/:lang](#put-apigalleryidnameslang)
+- [DELETE /api/gallery/:id/names/:lang](#delete-apigalleryidnameslang)
+- [POST /api/gallery/:id/media/:lang](#post-apigalleryidmedialang)
+- [DELETE /api/gallery/:id/media/:lang](#delete-apigalleryidmedialang)
+- [GET /api/gallery/:id/availability-rules](#get-apigalleryidavailability-rules)
+- [POST /api/gallery/:id/availability-rules](#post-apigalleryidavailability-rules)
+
+---
+
+### GET /api/gallery
+
+Lists all gallery pages (including hidden ones) with their names, media, and availability rules for all languages.
 
 **Authentication:** Required
-
-**Path parameters:**
-
-| Parameter | Type    | Description  |
-|-----------|---------|--------------|
-| `id`      | integer | Menu item ID |
 
 **Success response — 200:**
 
@@ -1490,7 +1503,245 @@ Lists all availability rules for a menu item.
 [
   {
     "id": 1,
-    "menu_item_id": 1,
+    "sort_order": 0,
+    "is_visible": 1,
+    "schedule_start": null,
+    "schedule_end": null,
+    "created_at": "2026-04-01T12:00:00.000Z",
+    "updated_at": "2026-04-01T12:00:00.000Z",
+    "names": [
+      {
+        "id": 1,
+        "gallery_page_id": 1,
+        "language_code": "GB",
+        "name": "Breakfast Menu",
+        "description": null,
+        "created_at": "2026-04-01T12:00:00.000Z",
+        "updated_at": "2026-04-01T12:00:00.000Z"
+      }
+    ],
+    "media": [
+      {
+        "id": 1,
+        "gallery_page_id": 1,
+        "language_code": "GB",
+        "media_type": "image",
+        "r2_key": "gallery/1/GB/board.jpg",
+        "original_filename": "board.jpg",
+        "content_type": "image/jpeg",
+        "file_size": 204800,
+        "created_at": "2026-04-01T12:00:00.000Z",
+        "updated_at": "2026-04-01T12:00:00.000Z"
+      }
+    ],
+    "availabilityRules": []
+  }
+]
+```
+
+**curl example:**
+
+```bash
+curl https://api.example.com/api/gallery \
+  -H "Authorization: Bearer <session-token>"
+```
+
+---
+
+### POST /api/gallery
+
+Creates a new empty gallery page (visible by default) with no names, media, or rules. `sort_order` is set to the next position.
+
+**Authentication:** Required
+
+**Request body:** None
+
+**Success response — 201:** Returns the created page with empty `names`, `media`, and `availabilityRules`.
+
+**curl example:**
+
+```bash
+curl -X POST https://api.example.com/api/gallery \
+  -H "Authorization: Bearer <session-token>"
+```
+
+---
+
+### PUT /api/gallery/reorder
+
+Sets the `sort_order` for multiple gallery pages in a single batch.
+
+**Authentication:** Required
+
+**Request body:**
+
+```json
+{ "items": [ { "id": 3, "sort_order": 0 }, { "id": 1, "sort_order": 1 } ] }
+```
+
+| Field                | Type    | Required | Description          |
+|----------------------|---------|----------|----------------------|
+| `items`              | array   | Yes      | Pages to reorder     |
+| `items[].id`         | integer | Yes      | Gallery page ID      |
+| `items[].sort_order` | integer | Yes      | New position (≥ 0)   |
+
+**Success response — 200:** `{ "success": true }`
+
+---
+
+### GET /api/gallery/:id
+
+Returns a single gallery page with names, media, and availability rules.
+
+**Authentication:** Required
+
+**Path parameters:**
+
+| Parameter | Type    | Description      |
+|-----------|---------|------------------|
+| `id`      | integer | Gallery page ID  |
+
+**Success response — 200:** Same shape as a single element in GET /api/gallery.
+
+**Error responses:**
+
+```json
+{ "error": "Invalid id" }
+{ "error": "Not found" }
+```
+
+---
+
+### PATCH /api/gallery/:id
+
+Updates a gallery page's visibility and/or schedule window.
+
+**Authentication:** Required
+
+**Path parameters:**
+
+| Parameter | Type    | Description     |
+|-----------|---------|-----------------|
+| `id`      | integer | Gallery page ID |
+
+**Request body:**
+
+```json
+{ "is_visible": true, "schedule_start": "2026-06-01T09:00:00", "schedule_end": null }
+```
+
+| Field            | Type            | Required | Description                                                        |
+|------------------|-----------------|----------|--------------------------------------------------------------------|
+| `is_visible`     | boolean         | No       | Show or hide the page                                              |
+| `schedule_start` | string \| null  | No       | Start of date window (ISO 8601 local datetime), `null` to clear     |
+| `schedule_end`   | string \| null  | No       | End of date window (ISO 8601 local datetime), `null` to clear       |
+
+**Success response — 200:** Returns the updated page with details.
+
+---
+
+### DELETE /api/gallery/:id
+
+Deletes a gallery page, all its names, media, and availability rules. Associated R2 objects are also deleted.
+
+**Authentication:** Required
+
+**Success response — 200:** `{ "success": true }`
+
+---
+
+### PUT /api/gallery/:id/names/:lang
+
+Creates or replaces the name and optional description for a gallery page in a given language.
+
+**Authentication:** Required
+
+**Path parameters:**
+
+| Parameter | Type    | Description                      |
+|-----------|---------|----------------------------------|
+| `id`      | integer | Gallery page ID                  |
+| `lang`    | string  | Language code (e.g. `GB`, `EE`)  |
+
+**Request body:**
+
+```json
+{ "name": "Breakfast Menu", "description": "Served 08:00–11:00" }
+```
+
+| Field         | Type                   | Required | Description                      |
+|---------------|------------------------|----------|----------------------------------|
+| `name`        | string (1–500 chars)   | Yes      | Localized name                   |
+| `description` | string (≤ 2000 chars)  | No       | Localized description (nullable) |
+
+**Success response — 200:** Returns the created or updated name row.
+
+---
+
+### DELETE /api/gallery/:id/names/:lang
+
+Removes the name for a gallery page in a given language.
+
+**Authentication:** Required
+
+**Success response — 200:** `{ "success": true }`
+
+---
+
+### POST /api/gallery/:id/media/:lang
+
+Uploads a media file (image or video) for a gallery page in a given language. Uses `multipart/form-data`. Replaces any existing media for the same page + language combination.
+
+**Authentication:** Required
+
+**Path parameters:**
+
+| Parameter | Type    | Description                      |
+|-----------|---------|----------------------------------|
+| `id`      | integer | Gallery page ID                  |
+| `lang`    | string  | Language code (e.g. `GB`, `EE`)  |
+
+**Request body:** `multipart/form-data`
+
+| Field  | Type | Required | Description                   |
+|--------|------|----------|-------------------------------|
+| `file` | File | Yes      | Image or video file to upload |
+
+**Success response — 201:** Returns the created media row.
+
+**curl example:**
+
+```bash
+curl -X POST https://api.example.com/api/gallery/1/media/GB \
+  -H "Authorization: Bearer <session-token>" \
+  -F "file=@/path/to/board.jpg"
+```
+
+---
+
+### DELETE /api/gallery/:id/media/:lang
+
+Removes the media variant for a gallery page in a given language. The R2 object is also deleted.
+
+**Authentication:** Required
+
+**Success response — 200:** `{ "success": true }`
+
+---
+
+### GET /api/gallery/:id/availability-rules
+
+Lists all availability rules for a gallery page.
+
+**Authentication:** Required
+
+**Success response — 200:**
+
+```json
+[
+  {
+    "id": 1,
+    "gallery_page_id": 1,
     "start_time": "08:00",
     "end_time": "14:00",
     "day_sun": 0,
@@ -1506,33 +1757,13 @@ Lists all availability rules for a menu item.
 ]
 ```
 
-**Error responses:**
-
-```json
-{ "error": "Unauthorized" }
-{ "error": "Invalid id" }
-```
-
-**curl example:**
-
-```bash
-curl https://api.example.com/api/menu-items/1/availability-rules \
-  -H "Authorization: Bearer <session-token>"
-```
-
 ---
 
-### POST /api/menu-items/:id/availability-rules
+### POST /api/gallery/:id/availability-rules
 
-Creates an availability rule for a menu item. The rule defines a time-of-day range and day-of-week toggles. Multiple rules per item are OR'd together.
+Creates an availability rule for a gallery page. The rule defines a time-of-day range and day-of-week toggles. Multiple rules per page are OR'd together.
 
 **Authentication:** Required
-
-**Path parameters:**
-
-| Parameter | Type    | Description  |
-|-----------|---------|--------------|
-| `id`      | integer | Menu item ID |
 
 **Request body:**
 
@@ -1562,49 +1793,38 @@ Creates an availability rule for a menu item. The rule defines a time-of-day ran
 | `day_fri`    | integer (0/1)  | Yes      | Active on Friday                                     |
 | `day_sat`    | integer (0/1)  | Yes      | Active on Saturday                                   |
 
-**Success response — 201:** Returns the created rule (same shape as GET list elements).
+**Success response — 201:** Returns the created rule.
 
 **Error responses:**
 
 ```json
-{ "error": "Unauthorized" }
-{ "error": "Invalid id" }
 { "error": "end_time must be after start_time (no midnight crossing)" }
 ```
 
-**curl example:**
-
-```bash
-curl -X POST https://api.example.com/api/menu-items/1/availability-rules \
-  -H "Authorization: Bearer <session-token>" \
-  -H "Content-Type: application/json" \
-  -d '{"start_time":"08:00","end_time":"14:00","day_sun":0,"day_mon":1,"day_tue":1,"day_wed":1,"day_thu":1,"day_fri":1,"day_sat":0}'
-```
-
 ---
 
-## Availability Rules
+## Gallery Availability Rules
 
-Standalone endpoints for updating and deleting individual availability rules (created via `POST /api/menu-items/:id/availability-rules`).
+Standalone endpoints for updating and deleting individual gallery availability rules (created via `POST /api/gallery/:id/availability-rules`).
 
 ### Table of Contents
 
-- [PATCH /api/availability-rules/:id](#patch-apiavailability-rulesid)
-- [DELETE /api/availability-rules/:id](#delete-apiavailability-rulesid)
+- [PATCH /api/gallery/availability-rules/:id](#patch-apigalleryavailability-rulesid)
+- [DELETE /api/gallery/availability-rules/:id](#delete-apigalleryavailability-rulesid)
 
 ---
 
-### PATCH /api/availability-rules/:id
+### PATCH /api/gallery/availability-rules/:id
 
-Updates an existing availability rule. All fields are optional.
+Updates an existing gallery availability rule. All fields are optional.
 
 **Authentication:** Required
 
 **Path parameters:**
 
-| Parameter | Type    | Description           |
-|-----------|---------|------------------------|
-| `id`      | integer | Availability rule ID   |
+| Parameter | Type    | Description                   |
+|-----------|---------|-------------------------------|
+| `id`      | integer | Gallery availability rule ID  |
 
 **Request body (all fields optional):**
 
@@ -1629,54 +1849,24 @@ Updates an existing availability rule. All fields are optional.
 **Error responses:**
 
 ```json
-{ "error": "Unauthorized" }
-{ "error": "Invalid id" }
 { "error": "Not found" }
 { "error": "end_time must be after start_time (no midnight crossing)" }
 ```
 
-**curl example:**
-
-```bash
-curl -X PATCH https://api.example.com/api/availability-rules/1 \
-  -H "Authorization: Bearer <session-token>" \
-  -H "Content-Type: application/json" \
-  -d '{"start_time": "09:00", "end_time": "17:00"}'
-```
-
 ---
 
-### DELETE /api/availability-rules/:id
+### DELETE /api/gallery/availability-rules/:id
 
-Deletes an availability rule.
+Deletes a gallery availability rule.
 
 **Authentication:** Required
 
-**Path parameters:**
-
-| Parameter | Type    | Description           |
-|-----------|---------|------------------------|
-| `id`      | integer | Availability rule ID   |
-
-**Success response — 200:**
-
-```json
-{ "success": true }
-```
+**Success response — 200:** `{ "success": true }`
 
 **Error responses:**
 
 ```json
-{ "error": "Unauthorized" }
-{ "error": "Invalid id" }
 { "error": "Not found" }
-```
-
-**curl example:**
-
-```bash
-curl -X DELETE https://api.example.com/api/availability-rules/1 \
-  -H "Authorization: Bearer <session-token>"
 ```
 
 ---
@@ -2827,7 +3017,7 @@ curl -X PUT https://api.example.com/api/settings/currency \
 
 ### GET /api/public/menu
 
-Returns the full menu for public display: only visible items (including their scheduling data), all configured languages, trait groups, option groups, settings, and a version timestamp for cache diffing. Schedule-based visibility is evaluated client-side.
+Returns the Find Your Drink product catalogue for public display: only visible items, all configured languages, trait groups, option groups, settings, and a version timestamp for cache diffing. This endpoint powers the `/customer` page only — the menu board (`/`) is served by [GET /api/public/gallery](#get-apipublicgallery). Products are never schedule-gated.
 
 **Authentication:** None
 
@@ -2840,8 +3030,7 @@ Returns the full menu for public display: only visible items (including their sc
       "id": 1,
       "sort_order": 0,
       "is_visible": true,
-      "schedule_start": "2026-06-01T09:00:00",
-      "schedule_end": null,
+      "base_price": 450,
       "created_at": 1700000000,
       "updated_at": 1700000000,
       "names": [
@@ -2856,23 +3045,8 @@ Returns the full menu for public display: only visible items (including their sc
         }
       ],
       "media": [ ... ],
-      "availabilityRules": [
-        {
-          "id": 1,
-          "menu_item_id": 1,
-          "start_time": "08:00",
-          "end_time": "14:00",
-          "day_sun": 0,
-          "day_mon": 1,
-          "day_tue": 1,
-          "day_wed": 1,
-          "day_thu": 1,
-          "day_fri": 1,
-          "day_sat": 0,
-          "created_at": "2026-04-01T12:00:00.000Z",
-          "updated_at": "2026-04-01T12:00:00.000Z"
-        }
-      ]
+      "traits": [ ... ],
+      "optionGroups": [ ... ]
     }
   ],
   "languages": [
@@ -2897,6 +3071,73 @@ Returns the full menu for public display: only visible items (including their sc
 
 ```bash
 curl https://api.example.com/api/public/menu
+```
+
+---
+
+## Public Gallery
+
+### GET /api/public/gallery
+
+Returns the gallery pages that drive the full-screen menu board at `/`. Only pages with `is_visible = 1` are included; all schedule data (`schedule_start`, `schedule_end`, `availabilityRules`) is returned as-is so the menu SPA can evaluate visibility client-side in the `Europe/Tallinn` timezone and re-check every 60 seconds.
+
+**Authentication:** None
+
+**Success response — 200:**
+
+```json
+{
+  "pages": [
+    {
+      "id": 1,
+      "sort_order": 0,
+      "is_visible": 1,
+      "schedule_start": "2026-06-01T09:00:00",
+      "schedule_end": null,
+      "created_at": "2026-04-01T12:00:00.000Z",
+      "updated_at": "2026-04-01T12:00:00.000Z",
+      "names": [
+        {
+          "id": 1,
+          "gallery_page_id": 1,
+          "language_code": "GB",
+          "name": "Breakfast Menu",
+          "description": null,
+          "created_at": "2026-04-01T12:00:00.000Z",
+          "updated_at": "2026-04-01T12:00:00.000Z"
+        }
+      ],
+      "media": [ ... ],
+      "availabilityRules": [
+        {
+          "id": 1,
+          "gallery_page_id": 1,
+          "start_time": "08:00",
+          "end_time": "11:00",
+          "day_sun": 0,
+          "day_mon": 1,
+          "day_tue": 1,
+          "day_wed": 1,
+          "day_thu": 1,
+          "day_fri": 1,
+          "day_sat": 0,
+          "created_at": "2026-04-01T12:00:00.000Z",
+          "updated_at": "2026-04-01T12:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  "languages": [
+    { "code": "GB", "display_name": "English", "is_base": true, "sort_order": 0, "created_at": 1700000000 }
+  ],
+  "version": 1700000000
+}
+```
+
+**curl example:**
+
+```bash
+curl https://api.example.com/api/public/gallery
 ```
 
 ---
@@ -2976,7 +3217,7 @@ After connection, the server broadcasts version-vector updates to all connected 
 }
 ```
 
-The `vector` maps resource keys (`menuItem`, `media`, `language`, `user`, `trait`, `traitGroup`, `option`, `optionGroup`, `setting`) to Unix timestamps representing the last known change. Clients compare these values to decide whether to refetch.
+The `vector` maps resource keys (`menuItem`, `media`, `language`, `user`, `trait`, `traitGroup`, `option`, `optionGroup`, `setting`, `gallery`) to Unix timestamps representing the last known change. Clients compare these values to decide whether to refetch.
 
 **curl example (connection test):**
 
