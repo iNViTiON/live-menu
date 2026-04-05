@@ -153,7 +153,41 @@
 
             {#if isExpanded}
               {@const itemMedia = menuStore.getMediaVariant(item)}
-              <div class="option-groups" transition:slide={{ duration: 300 }}>
+              <div class="option-groups" class:has-media={itemMedia} transition:slide={{ duration: 300 }}>
+                <div class="option-content">
+                  {#if item.optionGroups.length === 0}
+                    <p class="no-options">{getUiText(customerStore.data.settings, 'no_options', menuStore.selectedLanguage)}</p>
+                  {:else}
+                    {#each item.optionGroups as og (og.id)}
+                      {@const ogName = customerStore.getName(og.names)}
+                      {@const ogDesc = customerStore.getDescription(og.names)}
+                      <div class="option-group">
+                        <h3 class="og-name">
+                          {ogName}
+                          {#if og.multi_select}
+                            <span class="og-badge">multi</span>
+                          {/if}
+                        </h3>
+                        {#if ogDesc}
+                          <p class="og-desc">{ogDesc}</p>
+                        {/if}
+                        <ul class="options-list">
+                          {#each og.options as opt (opt.id)}
+                            {@const optName = customerStore.getName(opt.names)}
+                            {@const delta = customerStore.formatDelta(opt.price_delta)}
+                            <li class="option-item">
+                              <span class="opt-dot">○</span>
+                              <span class="opt-name">{optName}</span>
+                              {#if delta}
+                                <span class="opt-delta">{delta}</span>
+                              {/if}
+                            </li>
+                          {/each}
+                        </ul>
+                      </div>
+                    {/each}
+                  {/if}
+                </div>
                 {#if itemMedia}
                   <div class="item-media">
                     {#if itemMedia.media_type === 'video'}
@@ -162,38 +196,6 @@
                       <img src="/media/{itemMedia.r2_key}" alt={name} class="item-media-el" />
                     {/if}
                   </div>
-                {/if}
-                {#if item.optionGroups.length === 0}
-                  <p class="no-options">{getUiText(customerStore.data.settings, 'no_options', menuStore.selectedLanguage)}</p>
-                {:else}
-                  {#each item.optionGroups as og (og.id)}
-                    {@const ogName = customerStore.getName(og.names)}
-                    {@const ogDesc = customerStore.getDescription(og.names)}
-                    <div class="option-group">
-                      <h3 class="og-name">
-                        {ogName}
-                        {#if og.multi_select}
-                          <span class="og-badge">multi</span>
-                        {/if}
-                      </h3>
-                      {#if ogDesc}
-                        <p class="og-desc">{ogDesc}</p>
-                      {/if}
-                      <ul class="options-list">
-                        {#each og.options as opt (opt.id)}
-                          {@const optName = customerStore.getName(opt.names)}
-                          {@const delta = customerStore.formatDelta(opt.price_delta)}
-                          <li class="option-item">
-                            <span class="opt-dot">○</span>
-                            <span class="opt-name">{optName}</span>
-                            {#if delta}
-                              <span class="opt-delta">{delta}</span>
-                            {/if}
-                          </li>
-                        {/each}
-                      </ul>
-                    </div>
-                  {/each}
                 {/if}
               </div>
             {/if}
@@ -501,9 +503,44 @@
   .option-groups {
     border-top: 1px solid #f0e8dc;
     padding: 0.75rem 1rem 0.5rem;
+  }
+
+  .option-content {
     display: flex;
     flex-direction: column;
     gap: 0.9rem;
+  }
+
+  /* 2-column layout when media is present */
+  .option-groups.has-media {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .option-groups.has-media .option-content {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .option-groups.has-media .item-media {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+    background: transparent;
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  /* Narrow screens: fall back to single column */
+  @media (max-width: 640px) {
+    .option-groups.has-media {
+      flex-direction: column;
+    }
+    .option-groups.has-media .item-media {
+      order: -1;
+    }
   }
 
   .no-options {
@@ -584,6 +621,7 @@
   }
 
   /* ── Item media ── */
+  /* Default (no has-media parent): full-width banner above options */
   .item-media {
     margin: -0.75rem -1rem 0.75rem;
     overflow: hidden;
@@ -592,9 +630,18 @@
 
   .item-media-el {
     width: 100%;
+    height: auto;
     max-height: 260px;
     object-fit: cover;
     display: block;
+  }
+
+  /* 2-column variant: fill column width, keep natural aspect ratio */
+  .option-groups.has-media .item-media-el {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
   }
 
   /* ── States ── */
