@@ -7,23 +7,47 @@
   import GalleryMediaItem from '$lib/components/GalleryMediaItem.svelte';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
   import GalleryBar from '$lib/components/GalleryBar.svelte';
+  import IdleWarningOverlay from '$lib/components/IdleWarningOverlay.svelte';
 
   function getUiText(settings: Record<string, string>, key: string, lang: string): string {
     return settings[`ui:${key}:${lang}`] || settings[`ui:${key}:GB`] || key;
   }
 
+  let warningVisible = $state(false);
+  let warningSeconds = $state(5);
+
   onMount(() => {
     galleryStore.load();
     menuSync.connect();
 
-    const idle = createIdleTimer(60_000, () => {
-      galleryStore.resetToDefault();
-      const scrollEl = document.querySelector('.scroll-container');
-      if (scrollEl) scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
+    let countdownInterval: ReturnType<typeof setInterval> | null = null;
+
+    const idle = createIdleTimer({
+      timeoutMs: 60_000,
+      warningMs: 5_000,
+      onWarning: () => {
+        warningVisible = true;
+        warningSeconds = 5;
+        countdownInterval = setInterval(() => {
+          warningSeconds = Math.max(0, warningSeconds - 1);
+        }, 1000);
+      },
+      onDismiss: () => {
+        warningVisible = false;
+        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+      },
+      onIdle: () => {
+        warningVisible = false;
+        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+        galleryStore.resetToDefault();
+        const scrollEl = document.querySelector('.scroll-container');
+        if (scrollEl) scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
+      },
     });
     const stopIdle = idle.start();
     return () => {
       stopIdle();
+      if (countdownInterval) clearInterval(countdownInterval);
       menuSync.disconnect();
     };
   });
@@ -56,6 +80,13 @@
     </a>
   {/if}
 </main>
+
+<IdleWarningOverlay
+  visible={warningVisible}
+  secondsLeft={warningSeconds}
+  title={getUiText(galleryStore.settings, 'idle_warning_title', galleryStore.selectedLanguage)}
+  hint={getUiText(galleryStore.settings, 'idle_warning_hint', galleryStore.selectedLanguage)}
+/>
 
 <style>
   .page {

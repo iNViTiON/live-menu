@@ -7,23 +7,47 @@
   import { menuSync } from '$lib/services/version-sync';
   import { createIdleTimer } from '$lib/services/idle-timer';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+  import IdleWarningOverlay from '$lib/components/IdleWarningOverlay.svelte';
 
   function getUiText(settings: Record<string, string>, key: string, lang: string): string {
     return settings[`ui:${key}:${lang}`] || settings[`ui:${key}:GB`] || key;
   }
 
+  let warningVisible = $state(false);
+  let warningSeconds = $state(5);
+
   onMount(() => {
     customerStore.load();
     menuSync.connect();
 
-    const idle = createIdleTimer(60_000, () => {
-      menuStore.resetToDefault();
-      goto('/');
+    let countdownInterval: ReturnType<typeof setInterval> | null = null;
+
+    const idle = createIdleTimer({
+      timeoutMs: 60_000,
+      warningMs: 5_000,
+      onWarning: () => {
+        warningVisible = true;
+        warningSeconds = 5;
+        countdownInterval = setInterval(() => {
+          warningSeconds = Math.max(0, warningSeconds - 1);
+        }, 1000);
+      },
+      onDismiss: () => {
+        warningVisible = false;
+        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+      },
+      onIdle: () => {
+        warningVisible = false;
+        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+        menuStore.resetToDefault();
+        goto('/');
+      },
     });
     const stopIdle = idle.start();
 
     return () => {
       stopIdle();
+      if (countdownInterval) clearInterval(countdownInterval);
       menuSync.disconnect();
     };
   });
@@ -205,6 +229,13 @@
     </div>
   {/if}
 </main>
+
+<IdleWarningOverlay
+  visible={warningVisible}
+  secondsLeft={warningSeconds}
+  title={getUiText(customerStore.data?.settings ?? menuStore.settings, 'idle_warning_title', menuStore.selectedLanguage)}
+  hint={getUiText(customerStore.data?.settings ?? menuStore.settings, 'idle_warning_hint', menuStore.selectedLanguage)}
+/>
 
 <style>
   .page {
