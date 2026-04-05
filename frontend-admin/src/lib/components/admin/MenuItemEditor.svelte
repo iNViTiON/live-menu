@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { MenuItemWithDetails, Language } from '@live-menu/shared';
   import { menuStore } from '$lib/stores/menu.svelte';
-  import MediaUploader from './MediaUploader.svelte';
 
   interface Props {
     item: MenuItemWithDetails;
@@ -89,9 +88,7 @@
     }
   }
 
-  function getMediaForLang(lang: string) {
-    return item.media.find(m => m.language_code === lang);
-  }
+
 </script>
 
 <div class="editor">
@@ -136,15 +133,6 @@
           </div>
         </div>
 
-        <div class="field-group">
-          <label class="field-label">Media ({lang.display_name})</label>
-          <MediaUploader
-            lang={lang.code}
-            currentMedia={getMediaForLang(lang.code)}
-            onUpload={(l, file) => menuStore.uploadMedia(item.id, l, file)}
-            onDelete={(l) => menuStore.deleteMedia(item.id, l)}
-          />
-        </div>
       </div>
     {/if}
   {/each}

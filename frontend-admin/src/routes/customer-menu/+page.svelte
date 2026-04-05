@@ -7,10 +7,11 @@
   import { optionGroupStore } from '$lib/stores/option-groups.svelte';
   import { settingsStore } from '$lib/stores/settings.svelte';
   import { menuStore } from '$lib/stores/menu.svelte';
+  import MenuItemList from '$lib/components/admin/MenuItemList.svelte';
 
-  type Tab = 'settings' | 'traits' | 'traitGroups' | 'optionGroups' | 'assignments';
+  type Tab = 'products' | 'settings' | 'traits' | 'traitGroups' | 'optionGroups' | 'assignments';
 
-  let activeTab = $state<Tab>('settings');
+  let activeTab = $state<Tab>('products');
   let editingLang = $state('GB');
 
   const languages = $derived(languagesStore.languages);
@@ -18,6 +19,21 @@
   const traitGroups = $derived(traitGroupStore.items);
   const optionGroups = $derived(optionGroupStore.items);
   const menuItems = $derived(menuStore.items);
+
+  // ---- Products ----
+  let isAddingProduct = $state(false);
+
+  async function addProduct() {
+    isAddingProduct = true;
+    try {
+      await menuStore.createItem();
+      showToast('Product added');
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Failed to add product', true);
+    } finally {
+      isAddingProduct = false;
+    }
+  }
 
   // Toast
   let toastMsg = $state<string | null>(null);
@@ -529,23 +545,41 @@
   </div>
 
   <div class="tabs">
-    {#each (['settings', 'traits', 'traitGroups', 'optionGroups', 'assignments'] as Tab[]) as tab}
+    {#each (['products', 'traits', 'traitGroups', 'optionGroups', 'assignments', 'settings'] as Tab[]) as tab}
       <button
         class="tab-btn"
         class:active={activeTab === tab}
         onclick={() => activeTab = tab}
       >
-        {tab === 'settings' ? 'Settings' :
+        {tab === 'products' ? 'Products' :
          tab === 'traits' ? 'Traits' :
          tab === 'traitGroups' ? 'Trait Groups' :
          tab === 'optionGroups' ? 'Option Groups' :
-         'Assignments'}
+         tab === 'assignments' ? 'Assignments' :
+         'Settings'}
       </button>
     {/each}
   </div>
 
+  <!-- ============ PRODUCTS ============ -->
+  {#if activeTab === 'products'}
+    <div class="section">
+      <div class="section-header">
+        <span class="count">{menuStore.items.length} product{menuStore.items.length !== 1 ? 's' : ''} — {menuStore.items.filter(i => i.is_visible).length} visible</span>
+        <button class="btn btn-primary" onclick={addProduct} disabled={isAddingProduct}>
+          {isAddingProduct ? 'Adding...' : '+ Add Product'}
+        </button>
+      </div>
+
+      {#if menuStore.isLoading}
+        <div class="loading">Loading...</div>
+      {:else}
+        <MenuItemList {languages} />
+      {/if}
+    </div>
+
   <!-- ============ SETTINGS ============ -->
-  {#if activeTab === 'settings'}
+  {:else if activeTab === 'settings'}
     <div class="section">
       <div class="card">
         <h2>Settings</h2>

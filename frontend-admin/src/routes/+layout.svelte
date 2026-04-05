@@ -43,7 +43,7 @@
     if (!isAuthenticated) return;
 
     const unsubscribe = versionSync.onChange((staleResources) => {
-      if (staleResources.includes('menuItem') || staleResources.includes('media')) {
+      if (staleResources.includes('menuItem')) {
         // Skip if a local mutation is in flight — it will load fresh data itself
         if (!menuStore.mutating) {
           menuStore.loadItems();
@@ -97,23 +97,18 @@
 
       <ul class="nav-links">
         <li>
-          <a href="{base}/" class:active={currentPath === base + '/' || currentPath === base}>
-            Menu
-          </a>
-        </li>
-        <li>
           <a href="{base}/gallery" class:active={currentPath === base + '/gallery'}>
-            Gallery
-          </a>
-        </li>
-        <li>
-          <a href="{base}/languages" class:active={currentPath === base + '/languages'}>
-            Languages
+            Menu
           </a>
         </li>
         <li>
           <a href="{base}/customer-menu" class:active={currentPath === base + '/customer-menu'}>
             Customer Menu
+          </a>
+        </li>
+        <li>
+          <a href="{base}/languages" class:active={currentPath === base + '/languages'}>
+            Languages
           </a>
         </li>
         {#if isAdmin}
