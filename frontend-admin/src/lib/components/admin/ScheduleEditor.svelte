@@ -1,10 +1,6 @@
 <script lang="ts">
-  import type { MenuItemWithDetails } from '@live-menu/shared';
-  import { menuStore } from '$lib/stores/menu.svelte';
-
-  interface AvailabilityRule {
+  export interface ScheduleRule {
     id: number;
-    menu_item_id: number;
     start_time: string;
     end_time: string;
     day_sun: number;
@@ -16,20 +12,29 @@
     day_sat: number;
   }
 
-  type ItemWithSchedule = MenuItemWithDetails & {
-    schedule_start: string | null;
-    schedule_end: string | null;
-    availabilityRules: AvailabilityRule[];
-  };
+  type RuleData = Omit<ScheduleRule, 'id'>;
 
   interface Props {
-    item: MenuItemWithDetails;
+    entityId: number;
+    scheduleStart: string | null;
+    scheduleEnd: string | null;
+    rules: ScheduleRule[];
+    onSaveSchedule: (start: string | null, end: string | null) => Promise<void>;
+    onCreateRule: (data: RuleData) => Promise<void>;
+    onUpdateRule: (ruleId: number, data: Partial<RuleData>) => Promise<void>;
+    onDeleteRule: (ruleId: number) => Promise<void>;
   }
 
-  let { item }: Props = $props();
-
-  const si = $derived(item as unknown as ItemWithSchedule);
-  const rules = $derived(si.availabilityRules ?? []);
+  let {
+    entityId,
+    scheduleStart,
+    scheduleEnd,
+    rules,
+    onSaveSchedule,
+    onCreateRule,
+    onUpdateRule,
+    onDeleteRule,
+  }: Props = $props();
 
   // Schedule date inputs
   let localStart = $state('');
@@ -40,10 +45,10 @@
   let initialisedForId = $state<number | null>(null);
 
   $effect(() => {
-    if (initialisedForId !== item.id) {
-      initialisedForId = item.id;
-      localStart = si.schedule_start ? si.schedule_start.slice(0, 16) : '';
-      localEnd = si.schedule_end ? si.schedule_end.slice(0, 16) : '';
+    if (initialisedForId !== entityId) {
+      initialisedForId = entityId;
+      localStart = scheduleStart ? scheduleStart.slice(0, 16) : '';
+      localEnd = scheduleEnd ? scheduleEnd.slice(0, 16) : '';
     }
   });
 
@@ -51,7 +56,7 @@
     savingSchedule = true;
     scheduleError = null;
     try {
-      await menuStore.updateSchedule(item.id, localStart || null, localEnd || null);
+      await onSaveSchedule(localStart || null, localEnd || null);
     } catch (err: unknown) {
       scheduleError = err instanceof Error ? err.message : 'Failed to save schedule';
     } finally {
@@ -63,7 +68,7 @@
   let savingRuleId = $state<number | null>(null);
   let ruleError = $state<string | null>(null);
 
-  async function updateRuleField(rule: AvailabilityRule, field: string, value: string | number) {
+  async function updateRuleField(rule: ScheduleRule, field: string, value: string | number) {
     if (field === 'start_time' || field === 'end_time') {
       const st = field === 'start_time' ? (value as string) : rule.start_time;
       const et = field === 'end_time' ? (value as string) : rule.end_time;
@@ -75,7 +80,7 @@
     ruleError = null;
     savingRuleId = rule.id;
     try {
-      await menuStore.updateAvailabilityRule(rule.id, { [field]: value });
+      await onUpdateRule(rule.id, { [field]: value });
     } catch (err: unknown) {
       ruleError = err instanceof Error ? err.message : 'Failed to update rule';
     } finally {
@@ -86,7 +91,7 @@
   async function deleteRule(ruleId: number) {
     ruleError = null;
     try {
-      await menuStore.deleteAvailabilityRule(ruleId);
+      await onDeleteRule(ruleId);
     } catch (err: unknown) {
       ruleError = err instanceof Error ? err.message : 'Failed to delete rule';
     }
@@ -107,7 +112,7 @@
     ruleError = null;
     addingRule = true;
     try {
-      await menuStore.createAvailabilityRule(item.id, {
+      await onCreateRule({
         start_time: newStart,
         end_time: newEnd,
         day_sun: newDays[0] ? 1 : 0,
@@ -150,9 +155,9 @@
 
       <div class="date-fields">
         <div class="date-row">
-          <label class="field-label" for="sched-start-{item.id}">Start</label>
+          <label class="field-label" for="sched-start-{entityId}">Start</label>
           <input
-            id="sched-start-{item.id}"
+            id="sched-start-{entityId}"
             type="datetime-local"
             class="field-input"
             bind:value={localStart}
@@ -165,9 +170,9 @@
           >×</button>
         </div>
         <div class="date-row">
-          <label class="field-label" for="sched-end-{item.id}">End</label>
+          <label class="field-label" for="sched-end-{entityId}">End</label>
           <input
-            id="sched-end-{item.id}"
+            id="sched-end-{entityId}"
             type="datetime-local"
             class="field-input"
             bind:value={localEnd}

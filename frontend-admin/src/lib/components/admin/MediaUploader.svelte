@@ -1,14 +1,18 @@
 <script lang="ts">
-  import { menuStore } from '$lib/stores/menu.svelte';
-  import type { MediaVariant } from '@live-menu/shared';
-
-  interface Props {
-    itemId: number;
-    lang: string;
-    currentMedia: MediaVariant | undefined;
+  interface MediaLike {
+    media_type: 'image' | 'video';
+    r2_key: string;
+    original_filename: string | null;
   }
 
-  let { itemId, lang, currentMedia }: Props = $props();
+  interface Props {
+    lang: string;
+    currentMedia: MediaLike | undefined;
+    onUpload: (lang: string, file: File) => Promise<void>;
+    onDelete: (lang: string) => Promise<void>;
+  }
+
+  let { lang, currentMedia, onUpload, onDelete }: Props = $props();
 
   let isUploading = $state(false);
   let uploadError = $state<string | null>(null);
@@ -23,7 +27,7 @@
     uploadError = null;
 
     try {
-      await menuStore.uploadMedia(itemId, lang, file);
+      await onUpload(lang, file);
     } catch (err: unknown) {
       uploadError = err instanceof Error ? err.message : 'Upload failed';
     } finally {
@@ -35,7 +39,7 @@
   async function handleDelete() {
     if (!confirm('Delete this media?')) return;
     try {
-      await menuStore.deleteMedia(itemId, lang);
+      await onDelete(lang);
     } catch (err: unknown) {
       uploadError = err instanceof Error ? err.message : 'Delete failed';
     }
@@ -46,7 +50,7 @@
   {#if currentMedia}
     <div class="media-preview">
       {#if currentMedia.media_type === 'image'}
-        <img src="/media/{currentMedia.r2_key}" alt="Menu item media" />
+        <img src="/media/{currentMedia.r2_key}" alt="Media" />
       {:else}
         <video src="/media/{currentMedia.r2_key}" muted playsinline></video>
       {/if}

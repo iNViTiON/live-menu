@@ -1,14 +1,15 @@
 <script lang="ts">
-  import type { MenuItemWithDetails, Language } from '@live-menu/shared';
-  import { menuStore } from '$lib/stores/menu.svelte';
+  import type { Language, GalleryPageWithDetails } from '@live-menu/shared';
+  import { galleryStore } from '$lib/stores/gallery.svelte';
   import MediaUploader from './MediaUploader.svelte';
+  import ScheduleEditor from './ScheduleEditor.svelte';
 
   interface Props {
-    item: MenuItemWithDetails;
+    page: GalleryPageWithDetails;
     languages: Language[];
   }
 
-  let { item, languages }: Props = $props();
+  let { page, languages }: Props = $props();
 
   let activeTab = $state<string>('');
 
@@ -17,29 +18,20 @@
       activeTab = languages[0].code;
     }
   });
+
   let nameInputs = $state<Record<string, string>>({});
   let savingLang = $state<string | null>(null);
   let saveError = $state<string | null>(null);
-
-  // "Last known server value" per language — used to detect whether the
-  // user has an unsaved local edit.  Stored separately from nameInputs so
-  // incoming realtime updates can be applied to unmodified fields without
-  // touching fields the user is actively editing.
   let serverNames = $state<Record<string, string>>({});
-
-  // Track the item ID we last initialised inputs for, so we only reset
-  // form state when a genuinely different item is opened — not on every
-  // loadItems() call that replaces the array with fresh object references.
   let initialisedForId = $state<number | null>(null);
 
   $effect(() => {
-    if (initialisedForId !== item.id) {
-      // Editor just opened for a new item — hard reset all inputs.
-      initialisedForId = item.id;
+    if (initialisedForId !== page.id) {
+      initialisedForId = page.id;
       const inputs: Record<string, string> = {};
       const server: Record<string, string> = {};
       for (const lang of languages) {
-        const value = item.names.find(n => n.language_code === lang.code)?.name ?? '';
+        const value = page.names.find(n => n.language_code === lang.code)?.name ?? '';
         inputs[lang.code] = value;
         server[lang.code] = value;
       }
@@ -48,18 +40,12 @@
       return;
     }
 
-    // Same item, but item prop was replaced (loadItems after a save or
-    // realtime update).  Only update inputs for languages where the user
-    // has NOT made a local edit (i.e. their current value still matches
-    // the previous server value).
     for (const lang of languages) {
-      const newServerValue = item.names.find(n => n.language_code === lang.code)?.name ?? '';
+      const newServerValue = page.names.find(n => n.language_code === lang.code)?.name ?? '';
       const prev = serverNames[lang.code] ?? '';
       if (newServerValue !== prev) {
-        // Server data changed for this language.
         const userEdited = nameInputs[lang.code] !== prev;
         if (!userEdited) {
-          // Safe to apply — user hasn't touched this field.
           nameInputs[lang.code] = newServerValue;
         }
         serverNames[lang.code] = newServerValue;
@@ -71,16 +57,12 @@
     const name = nameInputs[lang]?.trim() ?? '';
     savingLang = lang;
     saveError = null;
-
     try {
       if (name) {
-        await menuStore.setName(item.id, lang, name);
+        await galleryStore.setName(page.id, lang, name);
       } else {
-        await menuStore.deleteName(item.id, lang);
+        await galleryStore.deleteName(page.id, lang);
       }
-      // Record the saved value as the new server baseline so that the
-      // subsequent loadItems() re-render doesn't treat this field as
-      // having an unsaved local edit.
       serverNames[lang] = name;
     } catch (err: unknown) {
       saveError = err instanceof Error ? err.message : 'Failed to save name';
@@ -90,7 +72,7 @@
   }
 
   function getMediaForLang(lang: string) {
-    return item.media.find(m => m.language_code === lang);
+    return page.media.find(m => m.language_code === lang);
   }
 </script>
 
@@ -116,14 +98,14 @@
     {#if activeTab === lang.code}
       <div class="tab-panel">
         <div class="field-group">
-          <label class="field-label" for="name-{lang.code}">Name ({lang.display_name})</label>
+          <label class="field-label" for="page-name-{lang.code}">Name ({lang.display_name})</label>
           <div class="name-row">
             <input
               type="text"
-              id="name-{lang.code}"
+              id="page-name-{lang.code}"
               class="field-input"
               bind:value={nameInputs[lang.code]}
-              placeholder="Enter item name..."
+              placeholder="Enter page name..."
               onkeydown={(e) => { if (e.key === 'Enter') saveName(lang.code); }}
             />
             <button
@@ -141,13 +123,24 @@
           <MediaUploader
             lang={lang.code}
             currentMedia={getMediaForLang(lang.code)}
-            onUpload={(l, file) => menuStore.uploadMedia(item.id, l, file)}
-            onDelete={(l) => menuStore.deleteMedia(item.id, l)}
+            onUpload={(l, file) => galleryStore.uploadMedia(page.id, l, file)}
+            onDelete={(l) => galleryStore.deleteMedia(page.id, l)}
           />
         </div>
       </div>
     {/if}
   {/each}
+
+  <ScheduleEditor
+    entityId={page.id}
+    scheduleStart={page.schedule_start}
+    scheduleEnd={page.schedule_end}
+    rules={page.availabilityRules}
+    onSaveSchedule={(start, end) => galleryStore.updatePage(page.id, { schedule_start: start, schedule_end: end })}
+    onCreateRule={(data) => galleryStore.createRule(page.id, data)}
+    onUpdateRule={(ruleId, data) => galleryStore.updateRule(ruleId, data)}
+    onDeleteRule={(ruleId) => galleryStore.deleteRule(ruleId)}
+  />
 </div>
 
 <style>

@@ -118,53 +118,6 @@ class MenuStore {
     });
   }
 
-  async updateSchedule(itemId: number, schedule_start: string | null, schedule_end: string | null) {
-    await this.mutate(async () => {
-      await api.patch(`/api/menu-items/${itemId}`, { schedule_start, schedule_end });
-      await this.loadItems();
-    });
-  }
-
-  async createAvailabilityRule(itemId: number, rule: {
-    start_time: string;
-    end_time: string;
-    day_sun: number;
-    day_mon: number;
-    day_tue: number;
-    day_wed: number;
-    day_thu: number;
-    day_fri: number;
-    day_sat: number;
-  }) {
-    await this.mutate(async () => {
-      await api.post(`/api/menu-items/${itemId}/availability-rules`, rule);
-      await this.loadItems();
-    });
-  }
-
-  async updateAvailabilityRule(ruleId: number, data: Partial<{
-    start_time: string;
-    end_time: string;
-    day_sun: number;
-    day_mon: number;
-    day_tue: number;
-    day_wed: number;
-    day_thu: number;
-    day_fri: number;
-    day_sat: number;
-  }>) {
-    await this.mutate(async () => {
-      await api.patch(`/api/availability-rules/${ruleId}`, data);
-      await this.loadItems();
-    });
-  }
-
-  async deleteAvailabilityRule(ruleId: number) {
-    await this.mutate(async () => {
-      await api.delete(`/api/availability-rules/${ruleId}`);
-      await this.loadItems();
-    });
-  }
 }
 
 export const menuStore = new MenuStore();

@@ -12,6 +12,7 @@
   import { traitGroupStore } from '$lib/stores/trait-groups.svelte';
   import { optionGroupStore } from '$lib/stores/option-groups.svelte';
   import { settingsStore } from '$lib/stores/settings.svelte';
+  import { galleryStore } from '$lib/stores/gallery.svelte';
 
   interface Props {
     children: import('svelte').Snippet;
@@ -66,6 +67,11 @@
       if (staleResources.includes('setting')) {
         settingsStore.load();
       }
+      if (staleResources.includes('gallery')) {
+        if (!galleryStore.mutating) {
+          galleryStore.loadPages();
+        }
+      }
     });
 
     return () => unsubscribe();
@@ -93,6 +99,11 @@
         <li>
           <a href="{base}/" class:active={currentPath === base + '/' || currentPath === base}>
             Menu
+          </a>
+        </li>
+        <li>
+          <a href="{base}/gallery" class:active={currentPath === base + '/gallery'}>
+            Gallery
           </a>
         </li>
         <li>
