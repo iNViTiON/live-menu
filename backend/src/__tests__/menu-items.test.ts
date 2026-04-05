@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { SELF } from 'cloudflare:test';
+import { SELF, env } from 'cloudflare:test';
 import { setupTestEnv, authHeader } from './setup';
 
 describe('Menu Items CRUD', () => {
@@ -179,6 +179,59 @@ describe('Menu Items CRUD', () => {
       headers: authHeader(adminToken),
     });
     expect(res.status).toBe(404);
+  });
+
+  it('DELETE /api/menu-items/:id cascades to media_variants and cleans R2', async () => {
+    // Create a menu item
+    const createRes = await SELF.fetch('http://localhost/api/menu-items', {
+      method: 'POST',
+      headers: authHeader(adminToken),
+    });
+    const created = await createRes.json<{ id: number }>();
+
+    // Upload a media variant
+    const formData = new FormData();
+    const file = new File(
+      [new Uint8Array([0x89, 0x50, 0x4e, 0x47])],
+      'cascade-test.png',
+      { type: 'image/png' }
+    );
+    formData.append('file', file);
+
+    const uploadRes = await SELF.fetch(
+      `http://localhost/api/menu-items/${created.id}/media/GB`,
+      { method: 'POST', headers: authHeader(adminToken), body: formData }
+    );
+    expect(uploadRes.status).toBe(201);
+    const variant = await uploadRes.json<{ id: number; r2_key: string }>();
+
+    // Sanity: the row exists in media_variants and the object exists in R2
+    const rowBefore = await env.DB
+      .prepare('SELECT id FROM media_variants WHERE menu_item_id = ?')
+      .bind(created.id)
+      .first<{ id: number }>();
+    expect(rowBefore).not.toBeNull();
+
+    const r2Before = await env.MEDIA_BUCKET.get(variant.r2_key);
+    expect(r2Before).not.toBeNull();
+
+    // Delete the menu item
+    const delRes = await SELF.fetch(`http://localhost/api/menu-items/${created.id}`, {
+      method: 'DELETE',
+      headers: authHeader(adminToken),
+    });
+    expect(delRes.status).toBe(200);
+
+    // media_variants row should be cascade-deleted
+    const rowAfter = await env.DB
+      .prepare('SELECT id FROM media_variants WHERE menu_item_id = ?')
+      .bind(created.id)
+      .first<{ id: number }>();
+    expect(rowAfter).toBeNull();
+
+    // R2 object should also have been cleaned up
+    const r2After = await env.MEDIA_BUCKET.get(variant.r2_key);
+    expect(r2After).toBeNull();
   });
 
   it('DELETE /:id/names/:lang removes the name', async () => {
