@@ -256,6 +256,61 @@ test.describe('Realtime Sync — WebSocket updates', () => {
     });
   });
 
+  test('admin setting edit propagates live to the gallery (idle warning title)', async ({
+    page,
+  }) => {
+    // This test proves the full realtime chain for UI-translation settings:
+    //   1. admin PUT /api/settings/:key → settings.ts calls notifyChange(['setting'])
+    //   2. VersionVectorService POSTs to BroadcastRoom DO
+    //   3. DO broadcasts version_update over the WebSocket
+    //   4. version-sync.ts sees 'setting' in GALLERY_RESOURCES (wired up by the
+    //      realtime agent) → galleryStore.load() refetches /api/public/gallery
+    //      (which now returns `settings` thanks to the backend agent)
+    //   5. The live idle warning overlay renders the NEW title without any
+    //      page reload.
+    // If any link in that chain breaks, this test fails.
+
+    const { adminToken } = getTestData();
+    const SETTING_KEY = 'ui:idle_warning_title:GB';
+    const ORIGINAL = 'Are you still there?';
+    const CUSTOM = 'Still with us?';
+
+    // Install clock BEFORE navigation so the page's idle setTimeout is intercepted.
+    // Network and WebSocket events are NOT affected by clock.install.
+    await page.clock.install();
+    await page.goto('/');
+    await page.waitForSelector('.scroll-container', { timeout: 10_000 });
+
+    // Arm a response listener for the WS-triggered gallery reload BEFORE mutating.
+    const reloadPromise = page.waitForResponse(
+      (res) =>
+        res.url().includes('/api/public/gallery') && res.status() === 200,
+      { timeout: 5_000 },
+    );
+
+    // Mutate the setting via the admin API — triggers the broadcast.
+    await authenticatedRequest(`/api/settings/${SETTING_KEY}`, adminToken, {
+      method: 'PUT',
+      body: JSON.stringify({ value: CUSTOM }),
+    });
+
+    // The WebSocket push should cause version-sync.ts to refetch the gallery.
+    await reloadPromise;
+
+    // Fast-forward into the warning phase. The overlay reads title from
+    // galleryStore.settings, which should now contain the CUSTOM value.
+    await page.clock.fastForward('00:55');
+
+    await expect(page.getByText(CUSTOM)).toBeVisible({ timeout: 2_000 });
+    await expect(page.getByText(ORIGINAL)).not.toBeVisible();
+
+    // Restore the original value so downstream tests see the seed defaults.
+    await authenticatedRequest(`/api/settings/${SETTING_KEY}`, adminToken, {
+      method: 'PUT',
+      body: JSON.stringify({ value: ORIGINAL }),
+    });
+  });
+
   test('media upload updates public menu', async ({ page }) => {
     const { adminToken } = getTestData();
 

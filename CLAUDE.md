@@ -114,7 +114,7 @@ Gallery pages (menu board display, served at `/`) support optional time-based vi
 - **Commits**: conventional format (`feat:`, `fix:`, `chore:`, `docs:`, `test:`)
 - **Roles**: `admin` and `staff` only (no viewer). Staff can manage menu content; admin can also manage users and languages
 - **Base language**: GB (English UK) — always exists, cannot be deleted, used as fallback
-- **Settings keys**: must match `/^[a-z0-9:_-]{1,100}$/`
+- **Settings keys**: must match `/^[a-zA-Z0-9:_-]{1,100}$/` (uppercase allowed for language codes in UI translation keys like `ui:find_your_drink:GB`)
 - **Timezone**: `Europe/Tallinn` (EET/EEST) — used for all schedule evaluation, DST handled automatically
 
 ## Agent Team Conventions
