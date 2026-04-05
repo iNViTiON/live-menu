@@ -152,7 +152,17 @@
             {/if}
 
             {#if isExpanded}
+              {@const itemMedia = menuStore.getMediaVariant(item)}
               <div class="option-groups" transition:slide={{ duration: 300 }}>
+                {#if itemMedia}
+                  <div class="item-media">
+                    {#if itemMedia.media_type === 'video'}
+                      <video src="/media/{itemMedia.r2_key}" autoplay loop muted playsinline class="item-media-el"></video>
+                    {:else}
+                      <img src="/media/{itemMedia.r2_key}" alt={name} class="item-media-el" />
+                    {/if}
+                  </div>
+                {/if}
                 {#if item.optionGroups.length === 0}
                   <p class="no-options">{getUiText(customerStore.data.settings, 'no_options', menuStore.selectedLanguage)}</p>
                 {:else}
@@ -571,6 +581,20 @@
     border-radius: 0.3rem;
     padding: 0.1rem 0.4rem;
     white-space: nowrap;
+  }
+
+  /* ── Item media ── */
+  .item-media {
+    margin: -0.75rem -1rem 0.75rem;
+    overflow: hidden;
+    background: #1a1412;
+  }
+
+  .item-media-el {
+    width: 100%;
+    max-height: 260px;
+    object-fit: cover;
+    display: block;
   }
 
   /* ── States ── */
