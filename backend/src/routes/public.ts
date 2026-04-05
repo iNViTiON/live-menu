@@ -20,14 +20,15 @@ publicRoutes.get('/menu', async (c) => {
   });
 });
 
-// GET /gallery — public, returns visible gallery pages + languages + version
+// GET /gallery — public, returns visible gallery pages + languages + settings + version
 publicRoutes.get('/gallery', async (c) => {
   const galleryService = new GalleryService(c.env.DB, c.env.MEDIA_BUCKET);
-  const { pages, languages } = await galleryService.listPublicGallery();
+  const { pages, languages, settings } = await galleryService.listPublicGallery();
 
   return c.json({
     pages,
     languages,
+    settings,
     version: Math.floor(Date.now() / 1000),
   });
 });

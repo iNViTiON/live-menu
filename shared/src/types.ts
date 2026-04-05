@@ -264,6 +264,7 @@ export interface PublicMenuResponse {
 export interface PublicGalleryResponse {
   pages: GalleryPageWithDetails[];
   languages: Language[];
+  settings: Record<string, string>;
   version: number;
 }
 

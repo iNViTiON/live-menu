@@ -5,6 +5,7 @@ import type {
   GalleryAvailabilityRule,
   GalleryPageWithDetails,
   Language,
+  Setting,
 } from '@live-menu/shared';
 
 type MediaType = 'image' | 'video';
@@ -342,28 +343,33 @@ export class GalleryService {
 
   /**
    * Fetch all data needed for the public gallery endpoint.
-   * Returns visible pages with names, media, rules, and languages.
+   * Returns visible pages with names, media, rules, languages, and settings.
    */
   async listPublicGallery(): Promise<{
     pages: GalleryPageWithDetails[];
     languages: Language[];
+    settings: Record<string, string>;
   }> {
     const pagesResult = await this.db
       .prepare('SELECT * FROM gallery_pages WHERE is_visible = 1 ORDER BY sort_order')
       .all<GalleryPage>();
 
-    const [langResult] = await this.db.batch([
+    const [langResult, settingsResult] = await this.db.batch([
       this.db.prepare('SELECT * FROM languages ORDER BY sort_order'),
+      this.db.prepare('SELECT * FROM settings'),
     ]);
 
     const languages = langResult.results as Language[];
+    const settings = Object.fromEntries(
+      (settingsResult.results as Setting[]).map((s) => [s.key, s.value])
+    );
 
     if (pagesResult.results.length === 0) {
-      return { pages: [], languages };
+      return { pages: [], languages, settings };
     }
 
     const pages = await this._hydrate(pagesResult.results);
-    return { pages, languages };
+    return { pages, languages, settings };
   }
 
   // ── private helpers ──────────────────────────────────────────────────────────
