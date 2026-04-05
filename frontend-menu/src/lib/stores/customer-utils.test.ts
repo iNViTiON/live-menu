@@ -17,8 +17,6 @@ function makeItem(id: number, traitIds: number[]): MenuItemWithDetails {
     sort_order: id,
     is_visible: true,
     base_price: 500,
-    schedule_start: null,
-    schedule_end: null,
     created_at: 0,
     updated_at: 0,
     names: [],
@@ -31,7 +29,6 @@ function makeItem(id: number, traitIds: number[]): MenuItemWithDetails {
       names: [],
     })),
     optionGroups: [],
-    availabilityRules: [],
   };
 }
 

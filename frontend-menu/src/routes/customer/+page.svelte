@@ -53,7 +53,11 @@
       </header>
 
       {#if customerStore.data.languages.length > 1}
-        <LanguageSwitcher languages={customerStore.data.languages} />
+        <LanguageSwitcher
+          languages={customerStore.data.languages}
+          selectedLanguage={menuStore.selectedLanguage}
+          onLanguageChange={(code) => menuStore.setLanguage(code)}
+        />
       {/if}
 
       <!-- Trait filters -->

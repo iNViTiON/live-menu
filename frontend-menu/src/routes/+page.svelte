@@ -1,9 +1,10 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { galleryStore } from '$lib/stores/gallery.svelte';
   import { menuStore } from '$lib/stores/menu.svelte';
   import { createIdleTimer } from '$lib/services/idle-timer';
   import { menuSync } from '$lib/services/version-sync';
-  import MediaItem from '$lib/components/MediaItem.svelte';
+  import GalleryMediaItem from '$lib/components/GalleryMediaItem.svelte';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
   import GalleryBar from '$lib/components/GalleryBar.svelte';
 
@@ -12,11 +13,11 @@
   }
 
   onMount(() => {
-    menuStore.load();
+    galleryStore.load();
     menuSync.connect();
 
     const idle = createIdleTimer(60_000, () => {
-      menuStore.resetToDefault();
+      galleryStore.resetToDefault();
       const scrollEl = document.querySelector('.scroll-container');
       if (scrollEl) scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
     });
@@ -33,21 +34,25 @@
 </svelte:head>
 
 <main class="page">
-  {#if menuStore.isLoading}
+  {#if galleryStore.isLoading}
     <div class="loading">Loading…</div>
-  {:else if menuStore.error}
-    <div class="error">{menuStore.error}</div>
+  {:else if galleryStore.error}
+    <div class="error">{galleryStore.error}</div>
   {:else}
     <div class="scroll-container">
-      {#each menuStore.visibleItems as item (item.id)}
-        <MediaItem {item} />
+      {#each galleryStore.visiblePages as page (page.id)}
+        <GalleryMediaItem {page} />
       {/each}
     </div>
 
-    <LanguageSwitcher languages={menuStore.languages} />
-    <GalleryBar items={menuStore.visibleItems} />
+    <LanguageSwitcher
+      languages={galleryStore.languages}
+      selectedLanguage={galleryStore.selectedLanguage}
+      onLanguageChange={(code) => galleryStore.setLanguage(code)}
+    />
+    <GalleryBar items={galleryStore.visiblePages} />
     <a href="/customer" class="customer-mode-btn" aria-label="Interactive menu">
-      <span>{getUiText(menuStore.settings, 'find_your_drink', menuStore.selectedLanguage)}</span>
+      <span>{getUiText(menuStore.settings, 'find_your_drink', galleryStore.selectedLanguage)}</span>
     </a>
   {/if}
 </main>

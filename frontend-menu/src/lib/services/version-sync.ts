@@ -1,7 +1,9 @@
 import type { VersionVector, VersionVectorMessage, ResourceKey } from '@live-menu/shared';
 import { menuStore } from '$lib/stores/menu.svelte';
 import { customerStore } from '$lib/stores/customer.svelte';
+import { galleryStore } from '$lib/stores/gallery.svelte';
 
+const GALLERY_RESOURCES: ResourceKey[] = ['gallery'];
 const MENU_RESOURCES: ResourceKey[] = ['menuItem', 'media', 'language'];
 const CUSTOMER_RESOURCES: ResourceKey[] = ['trait', 'traitGroup', 'option', 'optionGroup', 'setting'];
 
@@ -27,6 +29,9 @@ class MenuVersionSync {
         try {
           const msg: VersionVectorMessage = JSON.parse(event.data);
           if (msg.type === 'version_update') {
+            const staleGallery = GALLERY_RESOURCES.some(
+              (key) => (msg.vector[key] || 0) > (this.localVector[key] || 0)
+            );
             const staleMenu = MENU_RESOURCES.some(
               (key) => (msg.vector[key] || 0) > (this.localVector[key] || 0)
             );
@@ -34,6 +39,10 @@ class MenuVersionSync {
               (key) => (msg.vector[key] || 0) > (this.localVector[key] || 0)
             );
             this.localVector = { ...msg.vector };
+            if (staleGallery) {
+              console.log('[MenuSync] Gallery data changed, refreshing...');
+              galleryStore.load();
+            }
             if (staleMenu) {
               console.log('[MenuSync] Menu data changed, refreshing...');
               menuStore.load();

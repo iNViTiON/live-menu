@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { MenuItemWithDetails } from '@live-menu/shared';
-  import { menuStore } from '$lib/stores/menu.svelte';
+  import type { GalleryPageWithDetails } from '@live-menu/shared';
+  import { galleryStore } from '$lib/stores/gallery.svelte';
 
-  let { items }: { items: MenuItemWithDetails[] } = $props();
+  let { items }: { items: GalleryPageWithDetails[] } = $props();
 
   let activeId = $state<number | null>(null);
   let visible = $state(true);
@@ -86,8 +86,8 @@
   aria-label="Menu navigation"
 >
   {#each items as item (item.id)}
-    {@const media = menuStore.getMediaVariant(item)}
-    {@const name = menuStore.getName(item)}
+    {@const media = galleryStore.getMediaVariant(item, galleryStore.selectedLanguage)}
+    {@const name = galleryStore.getName(item, galleryStore.selectedLanguage)}
     <button
       class="thumb-btn"
       class:active={activeId === item.id}

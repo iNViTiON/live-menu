@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { HonoEnv } from '../types';
 import { MenuService } from '../services/menu';
 import { MediaService } from '../services/media';
-import { menuItemUpdateSchema, reorderSchema, menuItemNameSchema, availabilityRuleSchema } from '../validation/schemas';
+import { menuItemUpdateSchema, reorderSchema, menuItemNameSchema } from '../validation/schemas';
 
 const menuItems = new Hono<HonoEnv>();
 
@@ -287,48 +287,6 @@ menuItems.delete('/:id/option-groups/:groupId', async (c) => {
   await versionVectorService.notifyChange(['menuItem']);
 
   return c.json({ success: true });
-});
-
-// GET /:id/availability-rules — list rules for item
-menuItems.get('/:id/availability-rules', async (c) => {
-  const user = c.get('user');
-  if (!user) return c.json({ error: 'Unauthorized' }, 401);
-
-  const id = parseInt(c.req.param('id'), 10);
-  if (isNaN(id)) return c.json({ error: 'Invalid id' }, 400);
-
-  const service = new MenuService(c.env.DB);
-  const rules = await service.listRules(id);
-  return c.json(rules);
-});
-
-// POST /:id/availability-rules — create rule
-menuItems.post('/:id/availability-rules', async (c) => {
-  const user = c.get('user');
-  if (!user) return c.json({ error: 'Unauthorized' }, 401);
-
-  const id = parseInt(c.req.param('id'), 10);
-  if (isNaN(id)) return c.json({ error: 'Invalid id' }, 400);
-
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: 'Invalid JSON' }, 400);
-  }
-
-  const parsed = availabilityRuleSchema.safeParse(body);
-  if (!parsed.success) {
-    return c.json({ error: parsed.error.issues[0]?.message ?? 'Validation error' }, 400);
-  }
-
-  const service = new MenuService(c.env.DB);
-  const rule = await service.createRule(id, parsed.data);
-
-  const versionVectorService = c.get('versionVectorService');
-  await versionVectorService.notifyChange(['menuItem']);
-
-  return c.json(rule, 201);
 });
 
 export { menuItems as menuItemRoutes };

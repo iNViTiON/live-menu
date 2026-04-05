@@ -61,8 +61,6 @@ export interface MenuItem {
   sort_order: number;
   is_visible: boolean;
   base_price: number; // integer cents (e.g. 350 = £3.50)
-  schedule_start: string | null;
-  schedule_end: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -171,9 +169,43 @@ export interface Setting {
   updated_at: number;
 }
 
-export interface AvailabilityRule {
+// === Gallery Types ===
+export interface GalleryPage {
   id: number;
-  menu_item_id: number;
+  sort_order: number;
+  is_visible: number;
+  schedule_start: string | null;
+  schedule_end: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GalleryPageName {
+  id: number;
+  gallery_page_id: number;
+  language_code: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GalleryPageMedia {
+  id: number;
+  gallery_page_id: number;
+  language_code: string;
+  media_type: 'image' | 'video';
+  r2_key: string;
+  original_filename: string;
+  content_type: string;
+  file_size: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GalleryAvailabilityRule {
+  id: number;
+  gallery_page_id: number;
   start_time: string; // "HH:MM" (Europe/Tallinn local)
   end_time: string;   // "HH:MM"
   day_sun: number;
@@ -185,6 +217,12 @@ export interface AvailabilityRule {
   day_sat: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface GalleryPageWithDetails extends GalleryPage {
+  names: GalleryPageName[];
+  media: GalleryPageMedia[];
+  availabilityRules: GalleryAvailabilityRule[];
 }
 
 // Composed types
@@ -212,7 +250,6 @@ export interface MenuItemWithDetails extends MenuItem {
   media: MediaVariant[];
   traits: TraitWithDetails[];
   optionGroups: OptionGroupWithDetails[];
-  availabilityRules: AvailabilityRule[];
 }
 
 export interface PublicMenuResponse {
@@ -224,8 +261,14 @@ export interface PublicMenuResponse {
   version: number; // unix timestamp for cache diffing
 }
 
+export interface PublicGalleryResponse {
+  pages: GalleryPageWithDetails[];
+  languages: Language[];
+  version: number;
+}
+
 // === Realtime ===
-export type ResourceKey = 'menuItem' | 'media' | 'language' | 'user' | 'trait' | 'traitGroup' | 'option' | 'optionGroup' | 'setting';
+export type ResourceKey = 'menuItem' | 'media' | 'language' | 'user' | 'trait' | 'traitGroup' | 'option' | 'optionGroup' | 'setting' | 'gallery';
 
 export interface VersionVector {
   [key: string]: number; // ResourceKey -> version timestamp

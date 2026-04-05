@@ -3,7 +3,7 @@
   import { beforeNavigate } from '$app/navigation';
   import { page } from '$app/state';
   import { registerServiceWorker } from '$lib/services/sw-bridge';
-  import { menuStore } from '$lib/stores/menu.svelte';
+  import { galleryStore } from '$lib/stores/gallery.svelte';
 
   let { children } = $props();
 
@@ -11,7 +11,7 @@
 
   onMount(() => {
     registerServiceWorker();
-    return menuStore.startSchedulePolling();
+    return galleryStore.startSchedulePolling();
   });
 
   beforeNavigate(({ from, to }) => {

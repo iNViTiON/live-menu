@@ -1,8 +1,11 @@
 <script lang="ts">
   import type { Language } from '@live-menu/shared';
-  import { menuStore } from '$lib/stores/menu.svelte';
 
-  let { languages }: { languages: Language[] } = $props();
+  let { languages, selectedLanguage, onLanguageChange }: {
+    languages: Language[];
+    selectedLanguage: string;
+    onLanguageChange: (code: string) => void;
+  } = $props();
 
   // Convert country code to flag emoji (e.g. GB -> 🇬🇧)
   function toFlag(code: string): string {
@@ -28,11 +31,11 @@
     {#each sorted as lang (lang.code)}
       <button
         class="lang-btn"
-        class:active={menuStore.selectedLanguage === lang.code}
-        onclick={() => menuStore.setLanguage(lang.code)}
+        class:active={selectedLanguage === lang.code}
+        onclick={() => onLanguageChange(lang.code)}
         title={lang.display_name}
         aria-label={lang.display_name}
-        aria-pressed={menuStore.selectedLanguage === lang.code}
+        aria-pressed={selectedLanguage === lang.code}
       >
         {toFlag(lang.code)}
       </button>
