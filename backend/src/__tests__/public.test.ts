@@ -112,4 +112,64 @@ describe('Public routes', () => {
     expect(gbMedia!.media_type).toBe('image');
     expect(gbMedia!.r2_key).toContain('media/');
   });
+
+  // -------------------------------------------------------------------------
+  // Idle warning UI strings (migration 0010)
+  //
+  // These assertions verify that the seeded ui:idle_warning_* keys flow all
+  // the way from the database through MenuService.listPublicMenu() and
+  // (after Phase 4a) GalleryService.listPublicGallery() into the public
+  // API responses consumed by the menu SPA.
+  //
+  // The menu endpoint already exposes `settings` today; the gallery endpoint
+  // is gaining a `settings` field in Phase 4a, so the gallery-side tests
+  // will only pass after Backend's Phase 4a merge.
+  // -------------------------------------------------------------------------
+
+  it('GET /api/public/menu exposes idle_warning_title in GB and EE', async () => {
+    const res = await SELF.fetch('http://localhost/api/public/menu');
+    expect(res.status).toBe(200);
+    const body = await res.json<{ settings: Record<string, string> }>();
+
+    expect(body.settings).toBeDefined();
+    expect(typeof body.settings).toBe('object');
+    expect(body.settings['ui:idle_warning_title:GB']).toBe('Are you still there?');
+    expect(body.settings['ui:idle_warning_title:EE']).toBe('Oled sa endiselt siin?');
+  });
+
+  it('GET /api/public/menu exposes idle_warning_hint in GB and EE', async () => {
+    const res = await SELF.fetch('http://localhost/api/public/menu');
+    expect(res.status).toBe(200);
+    const body = await res.json<{ settings: Record<string, string> }>();
+
+    expect(body.settings['ui:idle_warning_hint:GB']).toBe('Tap anywhere to continue');
+    expect(body.settings['ui:idle_warning_hint:EE']).toBe('Puuduta kuhugi, et jätkata');
+  });
+
+  it('GET /api/public/gallery response now includes a settings object', async () => {
+    const res = await SELF.fetch('http://localhost/api/public/gallery');
+    expect(res.status).toBe(200);
+    const body = await res.json<{
+      pages: unknown[];
+      languages: unknown[];
+      version: number;
+      settings: Record<string, string>;
+    }>();
+
+    // New field required by Phase 4a so the gallery SPA can render idle warnings
+    expect(body.settings).toBeDefined();
+    expect(typeof body.settings).toBe('object');
+    expect(Array.isArray(body.settings)).toBe(false);
+  });
+
+  it('GET /api/public/gallery exposes all 4 idle_warning settings keys', async () => {
+    const res = await SELF.fetch('http://localhost/api/public/gallery');
+    expect(res.status).toBe(200);
+    const body = await res.json<{ settings: Record<string, string> }>();
+
+    expect(body.settings['ui:idle_warning_title:GB']).toBe('Are you still there?');
+    expect(body.settings['ui:idle_warning_title:EE']).toBe('Oled sa endiselt siin?');
+    expect(body.settings['ui:idle_warning_hint:GB']).toBe('Tap anywhere to continue');
+    expect(body.settings['ui:idle_warning_hint:EE']).toBe('Puuduta kuhugi, et jätkata');
+  });
 });
