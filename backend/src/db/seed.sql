@@ -39,6 +39,10 @@ INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES ('ui:no_results:G
 INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES ('ui:no_results:EE', 'Ükski jook ei vasta — proovi filtrit tühjendada', 1775277641);
 INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES ('ui:no_options:GB', 'No customisation options', 1775277641);
 INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES ('ui:no_options:EE', 'Kohandamisvalikud puuduvad', 1775277641);
+INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES ('ui:idle_warning_title:GB', 'Are you still there?', 1775277641);
+INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES ('ui:idle_warning_title:EE', 'Oled sa endiselt siin?', 1775277641);
+INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES ('ui:idle_warning_hint:GB', 'Tap anywhere to continue', 1775277641);
+INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES ('ui:idle_warning_hint:EE', 'Puuduta kuhugi, et jätkata', 1775277641);
 
 -- traits
 INSERT OR IGNORE INTO traits (id, sort_order, created_at, updated_at) VALUES (1, 1, 1775277641, 1775277641);
