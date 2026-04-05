@@ -55,6 +55,7 @@ class GalleryStore {
       this.pages = data.pages;
       this.languages = data.languages;
       this.version = data.version;
+      this.settings = (data as PublicGalleryResponse & { settings?: Record<string, string> }).settings ?? {};
 
       requestAnimationFrame(() => {
         if (scrollEl) (scrollEl as HTMLElement).scrollTop = savedScroll;
