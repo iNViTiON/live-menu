@@ -11,7 +11,7 @@ dev-menu                 # vite dev on :5173 (proxy → :8787)
 dev-admin                # vite dev on :5174 (proxy → :8787)
 
 # Testing
-bun run test:backend     # 264 integration tests (vitest + @cloudflare/vitest-pool-workers)
+bun run test:backend     # 266 integration tests (vitest + @cloudflare/vitest-pool-workers)
 e2e                      # 22 Playwright tests (requires Nix devShell for Chromium)
 e2e --headed             # Playwright in browser
 e2e tests/admin-menu.spec.ts   # Single test file
@@ -88,6 +88,11 @@ Trait-based interactive menu filtering. Admin manages traits, trait groups, opti
 **Idle timer**: Both gallery (`/`) and customer (`/customer`) pages use `createIdleTimer` (60s). Gallery resets language + scrolls to top. Customer navigates back to `/` + resets language.
 
 **Page transitions**: Menu ↔ Customer pages slide side-by-side using Svelte `fly`-style `translateX` transition (600ms, no opacity fade).
+
+**Product media**: Find Your Drink products (`menu_items`) support per-language media variants (image or autoplay video) uploaded from the admin Customer Menu → Products editor and rendered inside the expanded customer card. This is **separate from gallery media** — do not conflate the two:
+- Product media → `media_variants` table (FK → `menu_items`), R2 prefix `media/{menuItemId}/{lang}/{uuid}.{ext}`, endpoints `POST`/`DELETE /api/menu-items/:id/media/:lang`, served on `/api/public/menu`.
+- Gallery media → `gallery_page_media` table (FK → `gallery_pages`), R2 prefix `gallery/*`, served on `/api/public/gallery`.
+Cascade delete is wired on both sides: deleting a menu item removes its `media_variants` rows (and backing R2 objects via `MediaService`).
 
 ### Gallery scheduling
 

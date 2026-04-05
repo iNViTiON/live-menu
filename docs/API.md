@@ -1243,7 +1243,7 @@ curl -X DELETE https://api.example.com/api/menu-items/1/names/en \
 
 ### POST /api/menu-items/:id/media/:lang
 
-Uploads a media file (image or video) for a menu item in a given language. Uses multipart/form-data. Replaces any existing media for the same item + language combination.
+Uploads a media file (image or video) for a menu item in a given language. Uses multipart/form-data. Replaces any existing media for the same item + language combination — the previous R2 object and DB row are deleted before the new variant is written. Stored under the R2 key `media/{menuItemId}/{lang}/{uuid}.{ext}`. Product media is separate from [gallery page media](#gallery), which uses its own table and the `gallery/` R2 prefix.
 
 **Authentication:** Required
 
@@ -1252,7 +1252,7 @@ Uploads a media file (image or video) for a menu item in a given language. Uses 
 | Parameter | Type    | Description                      |
 |-----------|---------|----------------------------------|
 | `id`      | integer | Menu item ID                     |
-| `lang`    | string  | Language code (e.g. `en`, `fr`)  |
+| `lang`    | string  | Language code (e.g. `GB`, `EE`)  |
 
 **Request body:** `multipart/form-data`
 
@@ -1260,15 +1260,25 @@ Uploads a media file (image or video) for a menu item in a given language. Uses 
 |--------|------|----------|-----------------------------|
 | `file` | File | Yes      | Image or video file to upload |
 
+**Accepted MIME types:**
+
+- Images: `image/jpeg`, `image/png`, `image/webp`, `image/gif`
+- Videos: `video/mp4`, `video/webm`
+
+**File size limits:**
+
+- Images: **10 MB** max
+- Videos: **50 MB** max
+
 **Success response — 201:**
 
 ```json
 {
   "id": 1,
   "menu_item_id": 1,
-  "language_code": "en",
+  "language_code": "GB",
   "media_type": "image",
-  "r2_key": "items/1/en/photo.jpg",
+  "r2_key": "media/1/GB/9f3c…e1a2.jpeg",
   "original_filename": "photo.jpg",
   "content_type": "image/jpeg",
   "file_size": 204800,
@@ -1280,9 +1290,11 @@ Uploads a media file (image or video) for a menu item in a given language. Uses 
 **Error responses:**
 
 ```json
-{ "error": "Unauthorized" }
-{ "error": "Invalid id" }
-{ "error": "Missing file field in multipart body" }
+{ "error": "Unauthorized" }            // 401
+{ "error": "Invalid id" }              // 400
+{ "error": "Missing file field in multipart body" }  // 400
+{ "error": "File too large" }          // 413 (image > 10MB or video > 50MB)
+{ "error": "Upload failed" }           // 400 (unsupported MIME or R2/DB error)
 ```
 
 **curl example:**
@@ -1297,7 +1309,7 @@ curl -X POST https://api.example.com/api/menu-items/1/media/en \
 
 ### DELETE /api/menu-items/:id/media/:lang
 
-Removes the media variant for a menu item in a given language. The R2 object is also deleted.
+Removes the product media variant for a menu item in a given language. Both the `media_variants` row and the backing R2 object are deleted. Deleting a menu item itself also cascades to its media variants (both DB rows and R2 objects) via `MediaService`.
 
 **Authentication:** Required
 

@@ -160,6 +160,9 @@ Each menu item has a name and a media file (image or video) per language. The ba
 **Image and video support**
 Media variants are stored in R2 and proxied through `/media/*` with immutable cache headers. Videos auto-play/pause as items scroll into and out of view.
 
+**Product media**
+Find Your Drink products can carry their own image or video per language, uploaded from the admin Customer Menu → Products editor and displayed inside the expanded customer card on `/customer`. Product media lives in the `media_variants` table under the `media/{menuItemId}/{lang}/` R2 prefix and is cleanly separated from gallery media (which uses the `gallery_page_media` table and the `gallery/` R2 prefix).
+
 **PWA with offline support**
 The menu frontend ships a service worker (`sw.js`) and a fullscreen web manifest. The menu is accessible offline after first load.
 

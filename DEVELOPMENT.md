@@ -125,7 +125,7 @@ bunx wrangler d1 create live_menu
 
 ## Testing
 
-### Backend integration tests (264 tests)
+### Backend integration tests (266 tests)
 
 ```bash
 bun run test:backend
