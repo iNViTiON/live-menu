@@ -104,6 +104,20 @@ class MenuStore {
     });
   }
 
+  async uploadMedia(itemId: number, lang: string, file: File) {
+    await this.mutate(async () => {
+      await api.upload(`/api/menu-items/${itemId}/media/${lang}`, file);
+      await this.loadItems();
+    });
+  }
+
+  async deleteMedia(itemId: number, lang: string) {
+    await this.mutate(async () => {
+      await api.delete(`/api/menu-items/${itemId}/media/${lang}`);
+      await this.loadItems();
+    });
+  }
+
 }
 
 export const menuStore = new MenuStore();
