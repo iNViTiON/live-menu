@@ -59,6 +59,9 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin requests
   if (url.origin !== self.location.origin) return;
 
+  // Don't intercept admin routes — CF Pages serves admin SPA directly
+  if (url.pathname.startsWith('/admin')) return;
+
   // API: cache-then-network (instant cached response + background update)
   if (url.pathname === MENU_API) {
     return event.respondWith(cacheThenNetwork(event, 'menu'));
@@ -73,12 +76,21 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Navigation: serve index.html from shell cache (SPA fallback)
-  // Always fetch /index.html directly — never re-fetch the navigation request,
-  // which uses redirect:'manual' and breaks on CF Pages redirect responses.
+  // Construct a fresh Response to strip the `redirected` flag — navigation
+  // requests use redirect:'manual', and respondWith() rejects redirected responses.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       caches.match('/index.html', { cacheName: SHELL_CACHE })
-        .then((cached) => cached || fetch('/index.html'))
+        .then((cached) => {
+          if (cached) return cached;
+          return fetch('/index.html').then((r) =>
+            new Response(r.body, {
+              status: r.status,
+              statusText: r.statusText,
+              headers: r.headers,
+            })
+          );
+        })
     );
     return;
   }
