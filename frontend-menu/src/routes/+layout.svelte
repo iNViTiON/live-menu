@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { registerServiceWorker, onDataUpdated } from '$lib/services/sw-bridge';
+  import { registerServiceWorker } from '$lib/services/sw-bridge';
   import { connectionStatus } from '$lib/stores/connection-status.svelte';
   import { galleryStore } from '$lib/stores/gallery.svelte';
   import { menuStore } from '$lib/stores/menu.svelte';
@@ -38,15 +38,6 @@
     menuSync.onConnectionChange = (connected) => {
       connectionStatus.setWsConnected(connected);
     };
-
-    const unsubData = onDataUpdated((resource) => {
-      if (resource === 'gallery') galleryStore.load();
-      if (resource === 'menu') {
-        menuStore.load().then(() => {
-          if (customerStore.data) customerStore.load();
-        });
-      }
-    });
 
     const stopPolling = galleryStore.startSchedulePolling();
 
@@ -102,7 +93,6 @@
     const stopIdle = idle.start();
 
     return () => {
-      unsubData();
       stopPolling();
       stopIdle();
       if (countdownInterval) clearInterval(countdownInterval);

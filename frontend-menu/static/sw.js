@@ -55,12 +55,12 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin requests
   if (url.origin !== self.location.origin) return;
 
-  // API: cache-then-network
+  // API: network-first (cache as offline fallback)
   if (url.pathname === MENU_API) {
-    return event.respondWith(cacheThenNetwork(event, 'menu'));
+    return event.respondWith(networkFirst(event, 'menu'));
   }
   if (url.pathname === GALLERY_API) {
-    return event.respondWith(cacheThenNetwork(event, 'gallery'));
+    return event.respondWith(networkFirst(event, 'gallery'));
   }
 
   // Media: cache-first
@@ -89,70 +89,27 @@ self.addEventListener('fetch', (event) => {
   // Everything else: network passthrough
 });
 
-// ── Cache-then-network for API data ──
+// ── Network-first for API data ──
 
-async function cacheThenNetwork(event, resourceType) {
+async function networkFirst(event, resourceType) {
   const cache = await caches.open(MANIFEST_CACHE);
-  const cached = await cache.match(event.request);
-
-  // Start background network fetch
-  const networkPromise = fetchAndUpdate(event.request, resourceType, cache, cached);
-  event.waitUntil(networkPromise);
-
-  // Return cached immediately if available, otherwise wait for network
-  if (cached) {
-    return cached;
-  }
-  return networkPromise;
-}
-
-async function fetchAndUpdate(request, resourceType, cache, cachedResponse) {
   try {
-    const response = await fetch(request);
-    if (!response.ok) {
-      return cachedResponse || response;
-    }
-
-    // Compare response bodies to detect actual data changes
-    const newText = await response.clone().text();
-    let changed = true;
-    if (cachedResponse) {
+    const response = await fetch(event.request);
+    if (response.ok) {
+      await cache.put(event.request, response.clone());
+      // Pre-cache media (non-blocking)
       try {
-        const oldText = await cachedResponse.clone().text();
-        changed = newText !== oldText;
-      } catch {
-        // Treat read failure as changed
-      }
+        const data = await response.clone().json();
+        if (resourceType === 'menu') await cacheAllMenuMedia(data);
+        else if (resourceType === 'gallery') await cacheAllGalleryMedia(data);
+        await evictOrphanMedia();
+      } catch {}
     }
-
-    const newData = JSON.parse(newText);
-
-    // Update cache
-    await cache.put(request, response.clone());
-
-    // Notify clients if data changed (before media caching so a media error doesn't block it)
-    if (changed && cachedResponse) {
-      await notifyClients({ type: 'data-updated', resource: resourceType });
-    }
-
-    // Pre-cache media from this response
-    try {
-      if (resourceType === 'menu') {
-        await cacheAllMenuMedia(newData);
-      } else if (resourceType === 'gallery') {
-        await cacheAllGalleryMedia(newData);
-      }
-
-      // Evict orphaned media (only when both endpoints are cached)
-      await evictOrphanMedia();
-    } catch {
-      // Media caching failure is non-fatal
-    }
-
     return response;
   } catch {
-    // Network error — return cached or offline error
-    return cachedResponse || new Response(
+    // Offline — fall back to cache
+    const cached = await cache.match(event.request);
+    return cached || new Response(
       JSON.stringify({ error: 'offline' }),
       { status: 503, headers: { 'Content-Type': 'application/json' } }
     );

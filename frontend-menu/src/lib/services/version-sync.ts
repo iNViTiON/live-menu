@@ -1,4 +1,7 @@
 import type { VersionVector, VersionVectorMessage, ResourceKey } from '@live-menu/shared';
+import { menuStore } from '$lib/stores/menu.svelte';
+import { customerStore } from '$lib/stores/customer.svelte';
+import { galleryStore } from '$lib/stores/gallery.svelte';
 
 const GALLERY_RESOURCES: ResourceKey[] = ['gallery', 'setting'];
 const MENU_RESOURCES: ResourceKey[] = ['menuItem', 'media', 'language', 'setting'];
@@ -59,11 +62,15 @@ class MenuVersionSync {
             // Gallery is independent (different endpoint)
             if (staleGallery) {
               console.log('[MenuSync] Gallery data changed, refreshing...');
-              fetch('/api/public/gallery').catch(() => {});
+              galleryStore.load();
             }
+            // Menu and customer share the same /api/public/menu endpoint.
+            // Customer store reads FROM menuStore, so menu must load first.
             if (staleMenu || staleCustomer) {
               console.log('[MenuSync] Menu/customer data changed, refreshing...');
-              fetch('/api/public/menu').catch(() => {});
+              menuStore.load().then(() => {
+                if (customerStore.data) customerStore.load();
+              });
             }
           }
         } catch {}
