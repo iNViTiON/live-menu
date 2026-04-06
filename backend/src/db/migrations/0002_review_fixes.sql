@@ -46,3 +46,7 @@ BEGIN
   SELECT RAISE(ABORT, 'Language code must be uppercase')
   WHERE NEW.code != upper(NEW.code);
 END;
+
+-- DOWN MIGRATION:
+-- Reverse: recreate original registration_tokens with 'pending' status column
+-- and original pre_filled_name constraint. Not safely reversible due to data loss.

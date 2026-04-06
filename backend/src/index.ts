@@ -112,7 +112,7 @@ export default {
     return env.ASSETS.fetch(request);
   },
 
-  // Runs on cron schedule — wrangler.toml needs: [triggers] crons = ["0 3 * * *"]
+  // Runs weekly — cron: "0 0 * * 0" (Sunday midnight UTC)
   async scheduled(_event: ScheduledEvent, env: HonoEnv['Bindings'], _ctx: ExecutionContext): Promise<void> {
     const authService = new AuthService(env.DB, '', '', '');
     await authService.deleteExpiredSessions();

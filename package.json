@@ -16,7 +16,7 @@
     "build:menu": "bun run --filter frontend-menu build",
     "build:admin": "bun run --filter frontend-admin build",
     "build:merge": "bun scripts/merge-dist.mjs",
-    "build:all": "bun run build:menu && bun run build:admin && bun run build:merge",
+    "build:all": "bun run build:menu & bun run build:admin & wait && bun run build:merge",
     "test:backend": "bun run --filter backend test",
     "test:menu": "bun run --filter frontend-menu test",
     "test:admin": "bun run --filter frontend-admin test",

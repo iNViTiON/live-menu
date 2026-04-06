@@ -2,7 +2,6 @@ name = "live-menu-api"
 main = "src/index.ts"
 compatibility_date = "2026-04-01"
 compatibility_flags = ["nodejs_compat"]
-routes = [{ pattern = "menu.mitch.ee/*", zone_name = "mitch.ee" }]
 
 [assets]
 directory = "./dist/"
@@ -41,6 +40,15 @@ new_classes = ["BroadcastRoom"]
 crons = ["0 0 * * 0"]
 
 [vars]
+FRONTEND_URL = "http://localhost:5173"
+WEBAUTHN_RP_ID = "localhost"
+WEBAUTHN_RP_NAME = "Live Menu (Dev)"
+WEBAUTHN_ORIGIN = "http://localhost:5173"
+
+[env.production]
+routes = [{ pattern = "menu.mitch.ee/*", zone_name = "mitch.ee" }]
+
+[env.production.vars]
 FRONTEND_URL = "https://menu.mitch.ee"
 WEBAUTHN_RP_ID = "mitch.ee"
 WEBAUTHN_RP_NAME = "Live Menu"

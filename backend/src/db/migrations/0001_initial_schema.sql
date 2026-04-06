@@ -111,3 +111,14 @@ CREATE INDEX idx_media_item ON media_variants(menu_item_id);
 -- Seed base language
 INSERT INTO languages (code, display_name, is_base, sort_order, created_at)
 VALUES ('GB', 'English (UK)', 1, 0, unixepoch());
+
+-- DOWN MIGRATION:
+-- DROP TABLE IF EXISTS media_variants;
+-- DROP TABLE IF EXISTS menu_item_names;
+-- DROP TABLE IF EXISTS menu_items;
+-- DROP TABLE IF EXISTS registration_tokens;
+-- DROP TABLE IF EXISTS sessions;
+-- DROP TABLE IF EXISTS webauthn_challenges;
+-- DROP TABLE IF EXISTS passkey_credentials;
+-- DROP TABLE IF EXISTS languages;
+-- DROP TABLE IF EXISTS users;
