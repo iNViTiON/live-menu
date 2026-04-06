@@ -161,22 +161,30 @@
           </div>
         {/if}
 
+        <div class="items-grid">
         {#each customerStore.filteredItems as item, i (item.id)}
           {@const name = customerStore.getName(item.names)}
           {@const desc = customerStore.getDescription(item.names)}
           {@const isExpanded = customerStore.expandedItemId === item.id}
           <div
             class="item-card"
+            class:unavailable={item.is_unavailable}
             id="ci-item-{item.id}"
             in:fly={{ y: 18, duration: 300, delay: Math.min(i * 35, 280) }}
             out:fly={{ y: -10, duration: 180 }}
           >
             <button
               class="item-header"
-              onclick={() => customerStore.toggleExpand(item.id)}
+              onclick={() => !item.is_unavailable && customerStore.toggleExpand(item.id)}
               aria-expanded={isExpanded}
+              disabled={item.is_unavailable}
             >
-              <span class="item-name">{name}</span>
+              <span class="item-name" class:strikethrough={item.is_unavailable}>
+                {name}
+                {#if item.is_unavailable}
+                  <span class="unavailable-label">({getUiText(customerStore.data.settings, 'unavailable', menuStore.selectedLanguage)})</span>
+                {/if}
+              </span>
               <span class="item-right">
                 <span class="item-price">{customerStore.formatPrice(item.base_price)}</span>
                 <span class="expand-icon" class:open={isExpanded}>›</span>
@@ -237,6 +245,7 @@
             {/if}
           </div>
         {/each}
+        </div>
       </section>
     </div>
   {/if}
@@ -466,15 +475,52 @@
     font-size: 0.95rem;
   }
 
+  .items-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  /* Expanded cards span full width */
+  .items-grid .item-card:has(.item-header[aria-expanded="true"]) {
+    grid-column: 1 / -1;
+  }
+
+  /* Mobile: single column */
+  @media (max-width: 768px) {
+    .items-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
   .item-card {
     background: #fff;
     border-radius: 0.75rem;
     box-shadow: 0 1px 4px rgba(58, 46, 30, 0.08);
-    margin-bottom: 0.75rem;
     overflow: hidden;
     border: 1px solid #e8dfd0;
     border-left: 3px solid transparent;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+
+  .item-card.unavailable {
+    opacity: 0.6;
+  }
+
+  .item-card.unavailable .item-header {
+    cursor: default;
+  }
+
+  .strikethrough {
+    text-decoration: line-through;
+  }
+
+  .unavailable-label {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #a08060;
+    font-style: italic;
+    margin-left: 0.35rem;
   }
 
   .item-card:has(.item-header[aria-expanded="true"]) {
