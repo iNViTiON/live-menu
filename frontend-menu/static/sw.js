@@ -11,6 +11,10 @@ const GALLERY_API = '/api/public/gallery';
 // Build a Set of precache URLs for fast lookup
 const PRECACHE_URLS = new Set(PRECACHE_MANIFEST.map((entry) => entry.url));
 
+// Track recently-updated URLs to avoid redundant background fetches
+const recentlyUpdated = new Map(); // url → timestamp
+const RECENT_THRESHOLD_MS = 750;
+
 // ── Lifecycle ──
 
 self.addEventListener('install', (event) => {
@@ -55,12 +59,12 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin requests
   if (url.origin !== self.location.origin) return;
 
-  // API: network-first (cache as offline fallback)
+  // API: cache-then-network (instant cached response + background update)
   if (url.pathname === MENU_API) {
-    return event.respondWith(networkFirst(event, 'menu'));
+    return event.respondWith(cacheThenNetwork(event, 'menu'));
   }
   if (url.pathname === GALLERY_API) {
-    return event.respondWith(networkFirst(event, 'gallery'));
+    return event.respondWith(cacheThenNetwork(event, 'gallery'));
   }
 
   // Media: cache-first
@@ -89,26 +93,56 @@ self.addEventListener('fetch', (event) => {
   // Everything else: network passthrough
 });
 
-// ── Network-first for API data ──
+// ── Cache-then-network for API data ──
 
-async function networkFirst(event, resourceType) {
+async function cacheThenNetwork(event, resourceType) {
   const cache = await caches.open(MANIFEST_CACHE);
+  const cached = await cache.match(event.request);
+
+  const url = event.request.url;
+  const lastUpdate = recentlyUpdated.get(url);
+  const isRecent = lastUpdate && (Date.now() - lastUpdate < RECENT_THRESHOLD_MS);
+
+  if (cached && isRecent) {
+    // Cache was just updated by a background fetch — return without another network request
+    return cached;
+  }
+
+  // Normal cache-then-network: start background fetch, return cached immediately
+  const networkPromise = fetchAndUpdate(event.request, resourceType, cache, cached);
+  event.waitUntil(networkPromise);
+
+  if (cached) {
+    return cached;
+  }
+  return networkPromise;
+}
+
+async function fetchAndUpdate(request, resourceType, cache, cached) {
   try {
-    const response = await fetch(event.request);
+    const response = await fetch(request);
     if (response.ok) {
-      await cache.put(event.request, response.clone());
-      // Pre-cache media (non-blocking)
-      try {
-        const data = await response.clone().json();
-        if (resourceType === 'menu') await cacheAllMenuMedia(data);
-        else if (resourceType === 'gallery') await cacheAllGalleryMedia(data);
-        await evictOrphanMedia();
-      } catch {}
+      const newText = await response.clone().text();
+      // Only update cache and notify if data actually changed
+      const oldText = cached ? await cached.clone().text() : null;
+      if (newText !== oldText) {
+        await cache.put(request, new Response(newText, { headers: response.headers }));
+        // Mark URL as recently updated to suppress redundant background fetches
+        recentlyUpdated.set(request.url, Date.now());
+        // Notify clients before media caching (don't block notification on media)
+        const newData = JSON.parse(newText);
+        await notifyClients({ type: 'data-updated', resource: resourceType });
+        // Pre-cache media (non-blocking)
+        try {
+          if (resourceType === 'menu') await cacheAllMenuMedia(newData);
+          else if (resourceType === 'gallery') await cacheAllGalleryMedia(newData);
+          await evictOrphanMedia();
+        } catch {}
+      }
     }
     return response;
   } catch {
-    // Offline — fall back to cache
-    const cached = await cache.match(event.request);
+    // Offline — return cached or error
     return cached || new Response(
       JSON.stringify({ error: 'offline' }),
       { status: 503, headers: { 'Content-Type': 'application/json' } }
