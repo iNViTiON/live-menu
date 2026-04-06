@@ -33,7 +33,13 @@ Create the D1 database:
 bunx wrangler d1 create live_menu
 ```
 
-Wrangler prints a `database_id`. Copy it and update `backend/wrangler.toml`:
+Wrangler prints a `database_id`. If you need to retrieve it later from an existing database:
+
+```bash
+bunx wrangler d1 list
+```
+
+Copy the `database_id` and update `backend/wrangler.toml`:
 
 ```toml
 [[d1_databases]]
