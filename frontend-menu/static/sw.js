@@ -25,7 +25,11 @@ self.addEventListener('install', (event) => {
         try {
           const response = await fetch(entry.url);
           if (response.ok) {
-            await cache.put(entry.url, response);
+            // Strip redirected flag so cached responses work with respondWith()
+            const clean = response.redirected
+              ? new Response(response.body, { status: response.status, statusText: response.statusText, headers: response.headers })
+              : response;
+            await cache.put(entry.url, clean);
           }
         } catch {
           // Skip failed fetches during install — non-critical
@@ -76,21 +80,18 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Navigation: serve index.html from shell cache (SPA fallback)
-  // Construct a fresh Response to strip the `redirected` flag — navigation
+  // Always construct a fresh Response to strip the `redirected` flag — navigation
   // requests use redirect:'manual', and respondWith() rejects redirected responses.
+  // Both cached and fetched responses can have redirected:true (CF Pages _redirects).
   if (event.request.mode === 'navigate') {
     event.respondWith(
       caches.match('/index.html', { cacheName: SHELL_CACHE })
-        .then((cached) => {
-          if (cached) return cached;
-          return fetch('/index.html').then((r) =>
-            new Response(r.body, {
-              status: r.status,
-              statusText: r.statusText,
-              headers: r.headers,
-            })
-          );
-        })
+        .then((r) => r || fetch('/index.html'))
+        .then((r) => new Response(r.body, {
+          status: r.status,
+          statusText: r.statusText,
+          headers: r.headers,
+        }))
     );
     return;
   }
