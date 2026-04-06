@@ -58,7 +58,7 @@ Set required secrets (never commit these):
 
 ```bash
 export SESSION_SECRET=$(openssl rand -hex 32)
-echo "$SESSION_SECRET" | bunx wrangler secret put SESSION_SECRET --config backend/wrangler.toml
+echo "$SESSION_SECRET" | bunx wrangler secret put SESSION_SECRET --config backend/wrangler.toml --env=production
 ```
 
 ---
