@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { beforeNavigate } from '$app/navigation';
+  import { beforeNavigate, goto } from '$app/navigation';
   import { page } from '$app/state';
   import { registerServiceWorker, onDataUpdated } from '$lib/services/sw-bridge';
   import { connectionStatus } from '$lib/stores/connection-status.svelte';
@@ -8,11 +8,28 @@
   import { menuStore } from '$lib/stores/menu.svelte';
   import { customerStore } from '$lib/stores/customer.svelte';
   import { menuSync } from '$lib/services/version-sync';
+  import { createIdleTimer } from '$lib/services/idle-timer';
   import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
+  import IdleWarningOverlay from '$lib/components/IdleWarningOverlay.svelte';
+
+  function getUiText(settings: Record<string, string>, key: string, lang: string): string {
+    return settings[`ui:${key}:${lang}`] || settings[`ui:${key}:GB`] || key;
+  }
 
   let { children } = $props();
 
   let direction = $state<1 | -1>(1);
+  let warningVisible = $state(false);
+  let warningSeconds = $state(5);
+
+  const overlaySettings = $derived(
+    page.url.pathname === '/customer'
+      ? (customerStore.data?.settings ?? menuStore.settings)
+      : galleryStore.settings
+  );
+  const overlayLanguage = $derived(
+    page.url.pathname === '/customer' ? menuStore.selectedLanguage : galleryStore.selectedLanguage
+  );
 
   onMount(() => {
     registerServiceWorker();
@@ -33,10 +50,57 @@
     });
 
     const stopPolling = galleryStore.startSchedulePolling();
+
+    // Single app-wide idle timer
+    let isIdle = false;
+    let countdownInterval: ReturnType<typeof setInterval> | null = null;
+
+    menuSync.onAppVersionChange = () => {
+      if (isIdle) location.reload();
+    };
+
+    const idle = createIdleTimer({
+      timeoutMs: 60_000,
+      warningMs: 5_000,
+      onWarning: () => {
+        warningVisible = true;
+        warningSeconds = 5;
+        countdownInterval = setInterval(() => {
+          warningSeconds = Math.max(0, warningSeconds - 1);
+        }, 1000);
+      },
+      onDismiss: () => {
+        warningVisible = false;
+        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+      },
+      onIdle: () => {
+        isIdle = true;
+        warningVisible = false;
+        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+        if (menuSync.appVersionChanged) {
+          location.reload();
+          return;
+        }
+        customerStore.reset();
+        menuStore.resetToDefault();
+        galleryStore.resetToDefault();
+        if (page.url.pathname === '/customer') {
+          goto('/');
+        } else {
+          const scrollEl = document.querySelector('.scroll-container');
+          if (scrollEl) scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      },
+    });
+    const stopIdle = idle.start();
+
     return () => {
       unsubData();
       stopPolling();
+      stopIdle();
+      if (countdownInterval) clearInterval(countdownInterval);
       menuSync.onConnectionChange = null;
+      menuSync.onAppVersionChange = null;
     };
   });
 
@@ -75,6 +139,13 @@
 </div>
 
 <ConnectionStatus />
+
+<IdleWarningOverlay
+  visible={warningVisible}
+  secondsLeft={warningSeconds}
+  title={getUiText(overlaySettings, 'idle_warning_title', overlayLanguage)}
+  hint={getUiText(overlaySettings, 'idle_warning_hint', overlayLanguage)}
+/>
 
 <style>
   :global(*, *::before, *::after) {
