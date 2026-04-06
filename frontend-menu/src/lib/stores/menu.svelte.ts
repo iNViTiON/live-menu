@@ -1,5 +1,6 @@
 import { tick } from 'svelte';
 import type { MenuItemWithDetails, Language, PublicMenuResponse, TraitGroupWithDetails, OptionGroupWithDetails } from '@live-menu/shared';
+import { languageStore } from './language.svelte';
 
 class MenuStore {
   items = $state.raw<MenuItemWithDetails[]>([]);
@@ -7,9 +8,9 @@ class MenuStore {
   traitGroups = $state.raw<TraitGroupWithDetails[]>([]);
   optionGroups = $state.raw<OptionGroupWithDetails[]>([]);
   settings = $state.raw<Record<string, string>>({});
-  version = $state(0);
-  selectedLanguage = $state('GB');
   isLoading = $state(true);
+
+  get selectedLanguage() { return languageStore.selectedLanguage; }
   error = $state<string | null>(null);
 
   get baseLanguage() {
@@ -58,7 +59,6 @@ class MenuStore {
       this.traitGroups = data.traitGroups;
       this.optionGroups = data.optionGroups;
       this.settings = data.settings ?? {};
-      this.version = data.version;
 
       requestAnimationFrame(() => {
         if (scrollEl) (scrollEl as HTMLElement).scrollTop = savedScroll;
@@ -81,7 +81,7 @@ class MenuStore {
     const items = document.querySelectorAll<HTMLElement>('.media-item');
     items.forEach((el) => { el.style.minHeight = `${el.offsetHeight}px`; });
 
-    this.selectedLanguage = code;
+    languageStore.selectedLanguage = code;
 
     // tick() resolves after Svelte DOM update but before browser paint
     await tick();
@@ -94,7 +94,7 @@ class MenuStore {
   }
 
   resetToDefault() {
-    this.selectedLanguage = 'GB';
+    languageStore.resetToDefault();
   }
 }
 

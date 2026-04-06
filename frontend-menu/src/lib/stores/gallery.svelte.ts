@@ -1,14 +1,15 @@
 import { tick } from 'svelte';
 import type { GalleryPageWithDetails, Language, PublicGalleryResponse } from '@live-menu/shared';
 import { isScheduleVisible } from './schedule-utils';
+import { languageStore } from './language.svelte';
 
 class GalleryStore {
   pages = $state.raw<GalleryPageWithDetails[]>([]);
   languages = $state.raw<Language[]>([]);
   settings = $state.raw<Record<string, string>>({});
-  version = $state(0);
-  selectedLanguage = $state('GB');
   isLoading = $state(true);
+
+  get selectedLanguage() { return languageStore.selectedLanguage; }
   error = $state<string | null>(null);
   currentTime = $state(new Date());
 
@@ -54,8 +55,7 @@ class GalleryStore {
 
       this.pages = data.pages;
       this.languages = data.languages;
-      this.version = data.version;
-      this.settings = (data as PublicGalleryResponse & { settings?: Record<string, string> }).settings ?? {};
+      this.settings = data.settings ?? {};
 
       requestAnimationFrame(() => {
         if (scrollEl) (scrollEl as HTMLElement).scrollTop = savedScroll;
@@ -85,7 +85,7 @@ class GalleryStore {
     const items = document.querySelectorAll<HTMLElement>('.media-item');
     items.forEach((el) => { el.style.minHeight = `${el.offsetHeight}px`; });
 
-    this.selectedLanguage = code;
+    languageStore.selectedLanguage = code;
 
     await tick();
     if (scrollEl) scrollEl.scrollTop = savedScroll;
@@ -96,7 +96,7 @@ class GalleryStore {
   }
 
   resetToDefault() {
-    this.selectedLanguage = 'GB';
+    languageStore.resetToDefault();
   }
 }
 
