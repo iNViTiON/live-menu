@@ -104,6 +104,19 @@ Gallery pages (menu board display, served at `/`) support optional time-based vi
 - **Frontend-only enforcement**: backend serves schedule data via `/api/public/gallery`; the menu SPA evaluates `isScheduleVisible()` every 60 seconds and removes hidden pages from the DOM. All media is pre-cached regardless of schedule state.
 - **Admin**: `ScheduleEditor` component (generic, callback-based) in the gallery page editor for managing date windows and availability rules.
 
+### Offline PWA (menu frontend)
+
+The menu frontend is a fully offline-capable PWA after first visit. Three service worker caches (`menu-shell-v1`, `menu-manifest-v1`, `menu-media-v1`) handle shell assets, API data, and media respectively.
+
+- **Service worker** (`frontend-menu/static/sw.js`): hand-written (no Workbox). Shell assets precached from a build-time manifest. API data uses cache-then-network (return cached instantly, update in background). Media uses cache-first. Background updates notify the app via `postMessage`.
+- **Precache manifest**: `scripts/generate-precache-manifest.mjs` runs after SvelteKit build, scans `frontend-menu/build/`, and injects a `PRECACHE_MANIFEST` array into `build/sw.js`. Chained in `build:menu` script.
+- **Gallery + menu media**: all language variants are proactively pre-cached. Orphan eviction runs when both API responses are cached.
+- **Connection status** (`connection-status.svelte.ts`): combines `navigator.onLine` + WebSocket state (5s delay on WS disconnect to avoid flash). `ConnectionStatus.svelte` shows a fixed pill at bottom-left: red "Offline" or green "Back online" (auto-dismiss 3s).
+- **App version detection**: `GET /api/public/check-app-update` reads `_app/version.json` from ASSETS, compares with D1 `settings` key `app:build_version`. On mismatch, broadcasts `appVersion` via the DO version vector. Triggered by `deploy:notify` script (post-deploy curl) and as backup on WS reconnect.
+- **Auto-reload on deploy**: when `appVersion` changes via WS, kiosks reload on next idle (or immediately if already idle). Wired through `menuSync.onAppVersionChange` callback + idle timer integration in both pages.
+
+> **WARNING**: `deploy:notify` script hardcodes `https://menu.mitch.ee`. Update in `package.json` if the production domain changes.
+
 ## Conventions
 
 - **Package manager**: `bun` / `bunx` only — never npm, npx, yarn, pnpm
