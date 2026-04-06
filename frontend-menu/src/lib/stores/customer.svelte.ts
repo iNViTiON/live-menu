@@ -61,7 +61,7 @@ class CustomerStore {
   }
 
   surpriseMe() {
-    const items = this.filteredItems;
+    const items = this.filteredItems.filter((i) => !i.is_unavailable);
     if (items.length === 0) return;
     const random = items[Math.floor(Math.random() * items.length)];
     this.expandedItemId = random.id;
