@@ -57,7 +57,8 @@ bunx wrangler r2 bucket create live-menu-media
 Set required secrets (never commit these):
 
 ```bash
-bunx wrangler secret put SESSION_SECRET --config backend/wrangler.toml
+export SESSION_SECRET=$(openssl rand -hex 32)
+echo "$SESSION_SECRET" | bunx wrangler secret put SESSION_SECRET --config backend/wrangler.toml
 ```
 
 ---
