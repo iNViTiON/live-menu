@@ -1,5 +1,5 @@
 import type { VersionVector, VersionVectorMessage, ResourceKey } from '@live-menu/shared';
-import { browser, dev } from '$app/environment';
+import { browser } from '$app/environment';
 
 const STORAGE_KEY = 'version_vector';
 
@@ -42,8 +42,7 @@ class VersionSyncService {
 
     try {
       const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      const host = dev ? 'localhost:8787' : window.location.host;
-      const wsUrl = `${proto}://${host}/api/sync-ws?token=${encodeURIComponent(token)}`;
+      const wsUrl = `${proto}://${window.location.host}/api/sync-ws?token=${encodeURIComponent(token)}`;
 
       this.ws = new WebSocket(wsUrl);
 
