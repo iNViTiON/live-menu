@@ -113,34 +113,40 @@ async function fetchAndUpdate(request, resourceType, cache, cachedResponse) {
       return cachedResponse || response;
     }
 
-    // Compare versions to detect changes
-    const newData = await response.clone().json();
+    // Compare response bodies to detect actual data changes
+    const newText = await response.clone().text();
     let changed = true;
     if (cachedResponse) {
       try {
-        const oldData = await cachedResponse.clone().json();
-        changed = oldData.version !== newData.version;
+        const oldText = await cachedResponse.clone().text();
+        changed = newText !== oldText;
       } catch {
-        // Treat parse failure as changed
+        // Treat read failure as changed
       }
     }
+
+    const newData = JSON.parse(newText);
 
     // Update cache
     await cache.put(request, response.clone());
 
-    // Pre-cache media from this response
-    if (resourceType === 'menu') {
-      await cacheAllMenuMedia(newData);
-    } else if (resourceType === 'gallery') {
-      await cacheAllGalleryMedia(newData);
-    }
-
-    // Evict orphaned media (only when both endpoints are cached)
-    await evictOrphanMedia();
-
-    // Notify clients if data changed
+    // Notify clients if data changed (before media caching so a media error doesn't block it)
     if (changed && cachedResponse) {
       await notifyClients({ type: 'data-updated', resource: resourceType });
+    }
+
+    // Pre-cache media from this response
+    try {
+      if (resourceType === 'menu') {
+        await cacheAllMenuMedia(newData);
+      } else if (resourceType === 'gallery') {
+        await cacheAllGalleryMedia(newData);
+      }
+
+      // Evict orphaned media (only when both endpoints are cached)
+      await evictOrphanMedia();
+    } catch {
+      // Media caching failure is non-fatal
     }
 
     return response;
