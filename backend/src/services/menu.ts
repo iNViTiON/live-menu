@@ -300,9 +300,10 @@ export class MenuService {
     return item!;
   }
 
-  /** Update is_visible and/or base_price on a menu item */
+  /** Update is_visible, is_unavailable, and/or base_price on a menu item */
   async update(id: number, data: {
     is_visible?: boolean;
+    is_unavailable?: boolean;
     base_price?: number;
   }): Promise<MenuItem> {
     const now = Math.floor(Date.now() / 1000);
@@ -312,6 +313,10 @@ export class MenuService {
     if (data.is_visible !== undefined) {
       setClauses.push('is_visible = ?');
       binds.push(data.is_visible ? 1 : 0);
+    }
+    if (data.is_unavailable !== undefined) {
+      setClauses.push('is_unavailable = ?');
+      binds.push(data.is_unavailable ? 1 : 0);
     }
     if (data.base_price !== undefined) {
       setClauses.push('base_price = ?');

@@ -60,6 +60,7 @@ export interface MenuItem {
   id: number;
   sort_order: number;
   is_visible: boolean;
+  is_unavailable: boolean;
   base_price: number; // integer cents (e.g. 350 = £3.50)
   created_at: number;
   updated_at: number;

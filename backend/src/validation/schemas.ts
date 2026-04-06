@@ -58,6 +58,7 @@ export const languageCreateSchema = z.object({
 
 export const menuItemUpdateSchema = z.object({
   is_visible: z.boolean().optional(),
+  is_unavailable: z.boolean().optional(),
   base_price: z.number().int().min(0).optional(), // integer cents
 });
 
