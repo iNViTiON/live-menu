@@ -13,7 +13,7 @@
     "dev:backend": "bun run --filter backend dev",
     "dev:menu": "bun run --filter frontend-menu dev",
     "dev:admin": "bun run --filter frontend-admin dev",
-    "build:menu": "bun run --filter frontend-menu build",
+    "build:menu": "bun run --filter frontend-menu build && bun scripts/generate-precache-manifest.mjs",
     "build:admin": "bun run --filter frontend-admin build",
     "build:merge": "bun scripts/merge-dist.mjs",
     "build:all": "bun run build:menu & bun run build:admin & wait && bun run build:merge",
@@ -23,7 +23,8 @@
     "e2e": "bun run --filter e2e test",
     "db:migrate:local": "cd backend && bunx wrangler d1 migrations apply live_menu --local",
     "db:migrate:remote": "cd backend && bunx wrangler d1 migrations apply live_menu --remote",
-    "deploy": "bun run build:all && cd backend && bunx wrangler deploy"
+    "deploy:notify": "curl -sf https://menu.mitch.ee/api/public/check-app-update || true",
+    "deploy": "bun run build:all && cd backend && bunx wrangler deploy && bun run deploy:notify"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^3.2.4",

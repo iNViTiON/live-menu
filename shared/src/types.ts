@@ -269,7 +269,7 @@ export interface PublicGalleryResponse {
 }
 
 // === Realtime ===
-export type ResourceKey = 'menuItem' | 'media' | 'language' | 'user' | 'trait' | 'traitGroup' | 'option' | 'optionGroup' | 'setting' | 'gallery';
+export type ResourceKey = 'menuItem' | 'media' | 'language' | 'user' | 'trait' | 'traitGroup' | 'option' | 'optionGroup' | 'setting' | 'gallery' | 'appVersion';
 
 export interface VersionVector {
   [key: string]: number; // ResourceKey -> version timestamp
