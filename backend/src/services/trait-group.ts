@@ -5,30 +5,28 @@ export class TraitGroupService {
 
   /** List all groups with names and trait memberships (with trait names) */
   async list(): Promise<TraitGroupWithDetails[]> {
-    const groups = await this.db
-      .prepare('SELECT * FROM trait_groups ORDER BY sort_order')
-      .all<TraitGroup>();
-
-    if (groups.results.length === 0) return [];
-
-    const [names, allTraits, allTraitNames, junctions] = await this.db.batch([
+    const [groupsResult, names, allTraits, allTraitNames, junctions] = await this.db.batch([
+      this.db.prepare('SELECT * FROM trait_groups ORDER BY sort_order'),
       this.db.prepare('SELECT * FROM trait_group_names'),
       this.db.prepare('SELECT * FROM traits ORDER BY sort_order'),
       this.db.prepare('SELECT * FROM trait_names'),
       this.db.prepare('SELECT * FROM trait_group_traits ORDER BY sort_order'),
     ]) as [
+      D1Result<TraitGroup>,
       D1Result<TraitGroupName>,
       D1Result<Trait>,
       D1Result<TraitName>,
       D1Result<{ trait_group_id: number; trait_id: number; sort_order: number }>,
     ];
 
+    if (groupsResult.results.length === 0) return [];
+
     const namesByGroup = Map.groupBy(names.results, (n: TraitGroupName) => n.trait_group_id);
     const traitsById = new Map(allTraits.results.map((t) => [t.id, t]));
     const traitNamesByTrait = Map.groupBy(allTraitNames.results, (n: TraitName) => n.trait_id);
     const junctionsByGroup = Map.groupBy(junctions.results, (j: { trait_group_id: number; trait_id: number; sort_order: number }) => j.trait_group_id);
 
-    return groups.results.map((group) => ({
+    return groupsResult.results.map((group) => ({
       ...group,
       names: namesByGroup.get(group.id) ?? [],
       traits: (junctionsByGroup.get(group.id) ?? []).flatMap((j: { trait_group_id: number; trait_id: number; sort_order: number }) => {

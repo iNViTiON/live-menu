@@ -5,23 +5,20 @@ export class OptionGroupService {
 
   /** List all option groups with names and options (with option names) */
   async list(): Promise<OptionGroupWithDetails[]> {
-    const groups = await this.db
-      .prepare('SELECT * FROM option_groups ORDER BY sort_order')
-      .all<OptionGroup>();
-
-    if (groups.results.length === 0) return [];
-
-    const [names, options, optionNames] = await this.db.batch([
+    const [groupsResult, names, options, optionNames] = await this.db.batch([
+      this.db.prepare('SELECT * FROM option_groups ORDER BY sort_order'),
       this.db.prepare('SELECT * FROM option_group_names'),
       this.db.prepare('SELECT * FROM options ORDER BY sort_order'),
       this.db.prepare('SELECT * FROM option_names'),
-    ]) as [D1Result<OptionGroupName>, D1Result<Option>, D1Result<OptionName>];
+    ]) as [D1Result<OptionGroup>, D1Result<OptionGroupName>, D1Result<Option>, D1Result<OptionName>];
+
+    if (groupsResult.results.length === 0) return [];
 
     const namesByGroup = Map.groupBy(names.results, (n: OptionGroupName) => n.option_group_id);
     const optionsByGroup = Map.groupBy(options.results, (o: Option) => o.option_group_id);
     const namesByOption = Map.groupBy(optionNames.results, (n: OptionName) => n.option_id);
 
-    return groups.results.map((group) => ({
+    return groupsResult.results.map((group) => ({
       ...group,
       names: namesByGroup.get(group.id) ?? [],
       options: (optionsByGroup.get(group.id) ?? []).map((opt: Option) => ({
@@ -78,25 +75,14 @@ export class OptionGroupService {
   /** Create a new option group with sort_order = max + 1 */
   async create(): Promise<OptionGroup> {
     const now = Math.floor(Date.now() / 1000);
-
-    const maxRow = await this.db
-      .prepare('SELECT MAX(sort_order) as max_order FROM option_groups')
-      .first<{ max_order: number | null }>();
-
-    const sortOrder = (maxRow?.max_order ?? -1) + 1;
-
-    const result = await this.db
-      .prepare(
-        'INSERT INTO option_groups (multi_select, required, sort_order, created_at, updated_at) VALUES (0, 0, ?, ?, ?)'
-      )
-      .bind(sortOrder, now, now)
-      .run();
-
     const group = await this.db
-      .prepare('SELECT * FROM option_groups WHERE id = ?')
-      .bind(result.meta.last_row_id)
+      .prepare(
+        `INSERT INTO option_groups (multi_select, required, sort_order, created_at, updated_at)
+         VALUES (0, 0, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM option_groups), ?, ?)
+         RETURNING *`
+      )
+      .bind(now, now)
       .first<OptionGroup>();
-
     return group!;
   }
 
