@@ -2,8 +2,13 @@
   import { onMount } from 'svelte';
   import { beforeNavigate } from '$app/navigation';
   import { page } from '$app/state';
-  import { registerServiceWorker } from '$lib/services/sw-bridge';
+  import { registerServiceWorker, onDataUpdated } from '$lib/services/sw-bridge';
+  import { connectionStatus } from '$lib/stores/connection-status.svelte';
   import { galleryStore } from '$lib/stores/gallery.svelte';
+  import { menuStore } from '$lib/stores/menu.svelte';
+  import { customerStore } from '$lib/stores/customer.svelte';
+  import { menuSync } from '$lib/services/version-sync';
+  import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
 
   let { children } = $props();
 
@@ -11,7 +16,28 @@
 
   onMount(() => {
     registerServiceWorker();
-    return galleryStore.startSchedulePolling();
+    connectionStatus.init();
+
+    // Wire WS connection state into connection status
+    menuSync.onConnectionChange = (connected) => {
+      connectionStatus.setWsConnected(connected);
+    };
+
+    const unsubData = onDataUpdated((resource) => {
+      if (resource === 'gallery') galleryStore.load();
+      if (resource === 'menu') {
+        menuStore.load().then(() => {
+          if (customerStore.data) customerStore.load();
+        });
+      }
+    });
+
+    const stopPolling = galleryStore.startSchedulePolling();
+    return () => {
+      unsubData();
+      stopPolling();
+      menuSync.onConnectionChange = null;
+    };
   });
 
   beforeNavigate(({ from, to }) => {
@@ -47,6 +73,8 @@
     </div>
   {/key}
 </div>
+
+<ConnectionStatus />
 
 <style>
   :global(*, *::before, *::after) {

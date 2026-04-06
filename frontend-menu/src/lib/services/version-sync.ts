@@ -13,6 +13,11 @@ class MenuVersionSync {
   private reconnectDelay = 1000;
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  connected = false;
+  appVersionChanged = false;
+  onAppVersionChange: (() => void) | null = null;
+  onConnectionChange: ((connected: boolean) => void) | null = null;
+
   connect() {
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -23,6 +28,10 @@ class MenuVersionSync {
       this.ws.onopen = () => {
         console.log('[MenuSync] Connected');
         this.reconnectDelay = 1000; // Reset backoff
+        this.connected = true;
+        if (this.onConnectionChange) this.onConnectionChange(true);
+        // Trigger app version check (fire-and-forget backup for deploy:notify)
+        fetch('/api/public/check-app-update').catch(() => {});
       };
 
       this.ws.onmessage = (event) => {
@@ -38,7 +47,18 @@ class MenuVersionSync {
             const staleCustomer = CUSTOMER_RESOURCES.some(
               (key) => (msg.vector[key] || 0) > (this.localVector[key] || 0)
             );
+
+            // Check for app version update (new frontend deploy)
+            const staleApp = (msg.vector['appVersion'] || 0) > (this.localVector['appVersion'] || 0);
+
             this.localVector = { ...msg.vector };
+
+            if (staleApp) {
+              console.log('[MenuSync] App version changed, pending reload...');
+              this.appVersionChanged = true;
+              if (this.onAppVersionChange) this.onAppVersionChange();
+            }
+
             // Gallery is independent (different endpoint)
             if (staleGallery) {
               console.log('[MenuSync] Gallery data changed, refreshing...');
@@ -58,6 +78,8 @@ class MenuVersionSync {
       };
 
       this.ws.onclose = () => {
+        this.connected = false;
+        if (this.onConnectionChange) this.onConnectionChange(false);
         this.scheduleReconnect();
       };
 
@@ -65,12 +87,22 @@ class MenuVersionSync {
         // onclose will fire after onerror
       };
     } catch {
+      this.connected = false;
       this.scheduleReconnect();
     }
   }
 
+  reconnectNow() {
+    if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
+    this.reconnectTimeout = null;
+    this.reconnectDelay = 1000;
+    this.connect();
+  }
+
   private scheduleReconnect() {
     if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
+    // Don't waste resources reconnecting while offline
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
     const jitter = this.reconnectDelay * (0.75 + Math.random() * 0.5);
     this.reconnectTimeout = setTimeout(() => this.connect(), jitter);
     this.reconnectDelay = Math.min(this.reconnectDelay * 2, 30000);

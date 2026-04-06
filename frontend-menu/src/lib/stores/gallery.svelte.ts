@@ -61,7 +61,10 @@ class GalleryStore {
         if (scrollEl) (scrollEl as HTMLElement).scrollTop = savedScroll;
       });
     } catch (err: unknown) {
-      this.error = err instanceof Error ? err.message : 'Unknown error';
+      // Only show error if we have no cached data to display
+      if (this.pages.length === 0) {
+        this.error = err instanceof Error ? err.message : 'Unknown error';
+      }
       console.error('Failed to load gallery:', err);
     } finally {
       this.isLoading = false;

@@ -20,6 +20,12 @@
     customerStore.load();
     menuSync.connect();
 
+    let isIdle = false;
+
+    menuSync.onAppVersionChange = () => {
+      if (isIdle) location.reload();
+    };
+
     let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
     const idle = createIdleTimer({
@@ -37,8 +43,13 @@
         if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
       },
       onIdle: () => {
+        isIdle = true;
         warningVisible = false;
         if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+        if (menuSync.appVersionChanged) {
+          location.reload();
+          return;
+        }
         menuStore.resetToDefault();
         goto('/');
       },
@@ -48,6 +59,7 @@
     return () => {
       stopIdle();
       if (countdownInterval) clearInterval(countdownInterval);
+      menuSync.onAppVersionChange = null;
       menuSync.disconnect();
     };
   });
