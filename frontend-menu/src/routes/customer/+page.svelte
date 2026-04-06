@@ -166,18 +166,19 @@
           {@const name = customerStore.getName(item.names)}
           {@const desc = customerStore.getDescription(item.names)}
           {@const isExpanded = customerStore.expandedItemId === item.id}
+          <!-- svelte-ignore a11y_click_events_have_key_events -->
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div
             class="item-card"
             class:unavailable={item.is_unavailable}
             id="ci-item-{item.id}"
             in:fly={{ y: 18, duration: 300, delay: Math.min(i * 35, 280) }}
             out:fly={{ y: -10, duration: 180 }}
+            onclick={() => customerStore.toggleExpand(item.id)}
           >
             <button
               class="item-header"
-              onclick={() => !item.is_unavailable && customerStore.toggleExpand(item.id)}
               aria-expanded={isExpanded}
-              disabled={item.is_unavailable}
             >
               <span class="item-name" class:strikethrough={item.is_unavailable}>
                 {name}
@@ -501,14 +502,11 @@
     border: 1px solid #e8dfd0;
     border-left: 3px solid transparent;
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    cursor: pointer;
   }
 
   .item-card.unavailable {
     opacity: 0.6;
-  }
-
-  .item-card.unavailable .item-header {
-    cursor: default;
   }
 
   .strikethrough {
