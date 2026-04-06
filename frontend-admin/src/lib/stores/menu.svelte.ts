@@ -40,7 +40,7 @@ class MenuStore {
     });
   }
 
-  async updateItem(id: number, data: { is_visible?: boolean; base_price?: number }) {
+  async updateItem(id: number, data: { is_visible?: boolean; is_unavailable?: boolean; base_price?: number }) {
     await this.mutate(async () => {
       await api.patch(`/api/menu-items/${id}`, data);
       await this.loadItems();

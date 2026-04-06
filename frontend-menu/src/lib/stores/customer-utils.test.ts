@@ -16,6 +16,7 @@ function makeItem(id: number, traitIds: number[]): MenuItemWithDetails {
     id,
     sort_order: id,
     is_visible: true,
+    is_unavailable: false,
     base_price: 500,
     created_at: 0,
     updated_at: 0,
