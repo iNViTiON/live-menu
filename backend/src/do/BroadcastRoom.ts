@@ -3,6 +3,8 @@ import type { VersionVector, VersionVectorMessage, ResourceKey } from '@live-men
 import type { Env } from '../types';
 
 export class BroadcastRoom extends DurableObject {
+  private cachedVector: VersionVector | null = null;
+
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
   }
@@ -96,23 +98,26 @@ export class BroadcastRoom extends DurableObject {
     ws.close(1011, 'Internal error');
   }
 
-  // Get current version vector from DO storage
+  // Get current version vector — reads storage only on first call, then uses in-memory cache
   private async getVersionVector(): Promise<VersionVector> {
+    if (this.cachedVector) return this.cachedVector;
     const stored = await this.ctx.storage.get<VersionVector>('version_vector');
-    return stored || {};
+    this.cachedVector = stored || {};
+    return this.cachedVector;
   }
 
   // Update version vector and broadcast to all authenticated connections
   private async updateVersionVector(resources: ResourceKey[]) {
     const now = Date.now(); // Unix epoch milliseconds
-    const currentVector = await this.getVersionVector();
+    const currentVector = await this.getVersionVector(); // hits cache after first load
 
     // Update timestamps for changed resources
     for (const resource of resources) {
       currentVector[resource] = now;
     }
 
-    // Persist to DO storage
+    // Keep cache in sync and persist to DO storage (single storage op)
+    this.cachedVector = currentVector;
     await this.ctx.storage.put('version_vector', currentVector);
 
     // Broadcast to all authenticated connected WebSockets
