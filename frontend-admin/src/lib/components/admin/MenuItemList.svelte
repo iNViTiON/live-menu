@@ -13,6 +13,7 @@
 
   let expandedId = $state<number | null>(null);
   let togglingId = $state<number | null>(null);
+  let togglingUnavailableId = $state<number | null>(null);
   let deletingId = $state<number | null>(null);
   let error = $state<string | null>(null);
 
@@ -30,6 +31,17 @@
       error = err instanceof Error ? err.message : 'Failed to update visibility';
     } finally {
       togglingId = null;
+    }
+  }
+
+  async function toggleUnavailable(item: MenuItemWithDetails) {
+    togglingUnavailableId = item.id;
+    try {
+      await menuStore.updateItem(item.id, { is_unavailable: !item.is_unavailable });
+    } catch (err: unknown) {
+      error = err instanceof Error ? err.message : 'Failed to update availability';
+    } finally {
+      togglingUnavailableId = null;
     }
   }
 
@@ -96,6 +108,16 @@
               disabled={togglingId === item.id}
             />
             <span class="toggle-label">{item.is_visible ? 'Visible' : 'Hidden'}</span>
+          </label>
+
+          <label class="unavailable-toggle" class:is-unavailable={item.is_unavailable} title={item.is_unavailable ? 'Unavailable — click to mark available' : 'Available — click to mark unavailable'}>
+            <input
+              type="checkbox"
+              checked={item.is_unavailable}
+              onchange={() => toggleUnavailable(item)}
+              disabled={togglingUnavailableId === item.id}
+            />
+            <span class="toggle-label">{item.is_unavailable ? 'Unavailable' : 'Available'}</span>
           </label>
 
           <button
@@ -228,6 +250,24 @@
 
   .toggle-label {
     color: #666;
+  }
+
+  .unavailable-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+
+  .unavailable-toggle input {
+    cursor: pointer;
+    accent-color: #d97706;
+  }
+
+  .unavailable-toggle.is-unavailable .toggle-label {
+    color: #d97706;
+    font-weight: 600;
   }
 
   .btn-expand {
