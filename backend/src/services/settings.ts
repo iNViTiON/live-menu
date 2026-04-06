@@ -43,11 +43,4 @@ export class SettingsService {
     return row!;
   }
 
-  /** Delete a setting */
-  async delete(key: string): Promise<void> {
-    await this.db
-      .prepare('DELETE FROM settings WHERE key = ?')
-      .bind(key)
-      .run();
-  }
 }

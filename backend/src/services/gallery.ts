@@ -53,25 +53,14 @@ export class GalleryService {
   /** Create a new gallery page with sort_order = max + 1 */
   async create(): Promise<GalleryPage> {
     const now = new Date().toISOString();
-
-    const maxRow = await this.db
-      .prepare('SELECT MAX(sort_order) as max_order FROM gallery_pages')
-      .first<{ max_order: number | null }>();
-
-    const sortOrder = (maxRow?.max_order ?? -1) + 1;
-
-    const result = await this.db
-      .prepare(
-        'INSERT INTO gallery_pages (sort_order, is_visible, created_at, updated_at) VALUES (?, 1, ?, ?)'
-      )
-      .bind(sortOrder, now, now)
-      .run();
-
     const page = await this.db
-      .prepare('SELECT * FROM gallery_pages WHERE id = ?')
-      .bind(result.meta.last_row_id)
+      .prepare(
+        `INSERT INTO gallery_pages (sort_order, is_visible, created_at, updated_at)
+         VALUES ((SELECT COALESCE(MAX(sort_order), -1) + 1 FROM gallery_pages), 1, ?, ?)
+         RETURNING *`
+      )
+      .bind(now, now)
       .first<GalleryPage>();
-
     return page!;
   }
 
@@ -354,21 +343,47 @@ export class GalleryService {
       .prepare('SELECT * FROM gallery_pages WHERE is_visible = 1 ORDER BY sort_order')
       .all<GalleryPage>();
 
-    const [langResult, settingsResult] = await this.db.batch([
+    if (pagesResult.results.length === 0) {
+      const [langResult, settingsResult] = await this.db.batch([
+        this.db.prepare('SELECT * FROM languages ORDER BY sort_order'),
+        this.db.prepare('SELECT * FROM settings'),
+      ]);
+      const languages = langResult.results as Language[];
+      const settings = Object.fromEntries(
+        (settingsResult.results as Setting[]).map((s) => [s.key, s.value])
+      );
+      return { pages: [], languages, settings };
+    }
+
+    const ids = pagesResult.results.map((p) => p.id);
+    const placeholders = ids.map(() => '?').join(',');
+    const [namesResult, mediaResult, rulesResult, langResult, settingsResult] = await this.db.batch([
+      this.db.prepare(`SELECT * FROM gallery_page_names WHERE gallery_page_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare(`SELECT * FROM gallery_page_media WHERE gallery_page_id IN (${placeholders})`).bind(...ids),
+      this.db.prepare(`SELECT * FROM gallery_page_availability_rules WHERE gallery_page_id IN (${placeholders}) ORDER BY id`).bind(...ids),
       this.db.prepare('SELECT * FROM languages ORDER BY sort_order'),
       this.db.prepare('SELECT * FROM settings'),
     ]);
 
+    const allNames = namesResult.results as GalleryPageName[];
+    const allMedia = mediaResult.results as GalleryPageMedia[];
+    const allRules = rulesResult.results as GalleryAvailabilityRule[];
     const languages = langResult.results as Language[];
     const settings = Object.fromEntries(
       (settingsResult.results as Setting[]).map((s) => [s.key, s.value])
     );
 
-    if (pagesResult.results.length === 0) {
-      return { pages: [], languages, settings };
-    }
+    const namesByPage = Map.groupBy(allNames, (n: GalleryPageName) => n.gallery_page_id);
+    const mediaByPage = Map.groupBy(allMedia, (m: GalleryPageMedia) => m.gallery_page_id);
+    const rulesByPage = Map.groupBy(allRules, (r: GalleryAvailabilityRule) => r.gallery_page_id);
 
-    const pages = await this._hydrate(pagesResult.results);
+    const pages = pagesResult.results.map((page) => ({
+      ...page,
+      names: namesByPage.get(page.id) ?? [],
+      media: mediaByPage.get(page.id) ?? [],
+      availabilityRules: rulesByPage.get(page.id) ?? [],
+    }));
+
     return { pages, languages, settings };
   }
 
