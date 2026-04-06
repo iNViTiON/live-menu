@@ -16,7 +16,7 @@ run_worker_first = ["/api/*", "/media/*", "/admin", "/admin/*"]
 [[d1_databases]]
 binding = "DB"
 database_name = "live_menu"
-database_id = "1caf8ff8-22a3-41d3-b947-bb3863a9b16b "
+database_id = "1caf8ff8-22a3-41d3-b947-bb3863a9b16b"
 migrations_dir = "src/db/migrations"
 
 # R2 bucket for media uploads (images, videos).

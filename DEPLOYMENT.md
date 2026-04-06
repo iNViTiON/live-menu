@@ -54,13 +54,6 @@ Create the R2 bucket for media uploads:
 bunx wrangler r2 bucket create live-menu-media
 ```
 
-Set required secrets (never commit these):
-
-```bash
-export SESSION_SECRET=$(openssl rand -hex 32)
-echo "$SESSION_SECRET" | bunx wrangler secret put SESSION_SECRET --config backend/wrangler.toml --env=production
-```
-
 ---
 
 ## Step 2: Apply Migrations
@@ -171,12 +164,6 @@ All vars live in `backend/wrangler.toml` under `[vars]`. They are safe to commit
 | `WEBAUTHN_RP_ID` | `mitch.ee` | WebAuthn Relying Party ID — must match the domain (not subdomain) |
 | `WEBAUTHN_RP_NAME` | `Live Menu` | Human-readable name shown in the browser passkey prompt |
 | `WEBAUTHN_ORIGIN` | `https://menu.mitch.ee` | Exact origin the WebAuthn ceremony runs on — must match the browser address bar |
-
-Secrets (set via `wrangler secret put`, never in `wrangler.toml`):
-
-| Secret | Description |
-|--------|-------------|
-| `SESSION_SECRET` | Signing key for session tokens |
 
 ---
 
