@@ -35,7 +35,7 @@ class_name = "BroadcastRoom"
 
 [[migrations]]
 tag = "v1"
-new_classes = ["BroadcastRoom"]
+new_sqlite_classes = ["BroadcastRoom"]
 
 [triggers]
 crons = ["0 0 * * 0"]
