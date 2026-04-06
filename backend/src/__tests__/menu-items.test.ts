@@ -264,4 +264,133 @@ describe('Menu Items CRUD', () => {
     const gbName = item.names?.find((n) => n.language_code === 'GB');
     expect(gbName).toBeUndefined();
   });
+
+  describe('is_unavailable', () => {
+    it('new menu item defaults to is_unavailable = 0', async () => {
+      const res = await SELF.fetch('http://localhost/api/menu-items', {
+        method: 'POST',
+        headers: authHeader(adminToken),
+      });
+      expect(res.status).toBe(201);
+      const item = await res.json<{ id: number; is_unavailable: number }>();
+      expect(item.is_unavailable).toBe(0);
+    });
+
+    it('PATCH /:id with is_unavailable: true sets it to 1', async () => {
+      const createRes = await SELF.fetch('http://localhost/api/menu-items', {
+        method: 'POST',
+        headers: authHeader(adminToken),
+      });
+      const created = await createRes.json<{ id: number }>();
+
+      const res = await SELF.fetch(`http://localhost/api/menu-items/${created.id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_unavailable: true }),
+      });
+      expect(res.status).toBe(200);
+      const updated = await res.json<{ is_unavailable: number }>();
+      expect(updated.is_unavailable).toBe(1);
+    });
+
+    it('PATCH /:id with is_unavailable: false sets it back to 0', async () => {
+      const createRes = await SELF.fetch('http://localhost/api/menu-items', {
+        method: 'POST',
+        headers: authHeader(adminToken),
+      });
+      const created = await createRes.json<{ id: number }>();
+
+      // Set to unavailable first
+      await SELF.fetch(`http://localhost/api/menu-items/${created.id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_unavailable: true }),
+      });
+
+      // Toggle back
+      const res = await SELF.fetch(`http://localhost/api/menu-items/${created.id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_unavailable: false }),
+      });
+      expect(res.status).toBe(200);
+      const updated = await res.json<{ is_unavailable: number }>();
+      expect(updated.is_unavailable).toBe(0);
+    });
+
+    it('is_unavailable and is_visible are independent', async () => {
+      const createRes = await SELF.fetch('http://localhost/api/menu-items', {
+        method: 'POST',
+        headers: authHeader(adminToken),
+      });
+      const created = await createRes.json<{ id: number; is_visible: number; is_unavailable: number }>();
+      expect(created.is_visible).toBe(1);
+      expect(created.is_unavailable).toBe(0);
+
+      // Set unavailable — should not affect visibility
+      const res1 = await SELF.fetch(`http://localhost/api/menu-items/${created.id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_unavailable: true }),
+      });
+      const after1 = await res1.json<{ is_visible: number; is_unavailable: number }>();
+      expect(after1.is_unavailable).toBe(1);
+      expect(after1.is_visible).toBe(1);
+
+      // Set invisible — should not affect unavailable
+      const res2 = await SELF.fetch(`http://localhost/api/menu-items/${created.id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_visible: false }),
+      });
+      const after2 = await res2.json<{ is_visible: number; is_unavailable: number }>();
+      expect(after2.is_visible).toBe(0);
+      expect(after2.is_unavailable).toBe(1);
+    });
+
+    it('GET /api/public/menu includes unavailable items with is_unavailable flag', async () => {
+      // Create a visible + unavailable item with a name
+      const createRes = await SELF.fetch('http://localhost/api/menu-items', {
+        method: 'POST',
+        headers: authHeader(adminToken),
+      });
+      const created = await createRes.json<{ id: number }>();
+
+      await SELF.fetch(`http://localhost/api/menu-items/${created.id}/names/GB`, {
+        method: 'PUT',
+        headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Unavailable Public Item' }),
+      });
+
+      await SELF.fetch(`http://localhost/api/menu-items/${created.id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader(adminToken), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_unavailable: true }),
+      });
+
+      const res = await SELF.fetch('http://localhost/api/public/menu');
+      expect(res.status).toBe(200);
+      const body = await res.json<{ items: Array<{ id: number; is_unavailable: number }> }>();
+
+      // The unavailable item should still appear (it's visible)
+      const found = body.items.find((i) => i.id === created.id);
+      expect(found).toBeDefined();
+      expect(found!.is_unavailable).toBe(1);
+    });
+
+    it('GET /api/menu-items returns is_unavailable field on each item', async () => {
+      const res = await SELF.fetch('http://localhost/api/menu-items', {
+        headers: authHeader(adminToken),
+      });
+      expect(res.status).toBe(200);
+      const items = await res.json<Array<{ id: number; is_unavailable: number }>>();
+      expect(items.length).toBeGreaterThan(0);
+
+      // Every item should have the is_unavailable field defined
+      for (const item of items) {
+        expect(typeof item.is_unavailable).toBe('number');
+        expect([0, 1]).toContain(item.is_unavailable);
+      }
+    });
+  });
 });
