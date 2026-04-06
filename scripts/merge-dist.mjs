@@ -1,4 +1,4 @@
-import { cpSync, rmSync, mkdirSync, existsSync } from 'node:fs';
+import { cpSync, rmSync, mkdirSync, existsSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
@@ -24,5 +24,12 @@ cpSync(menuBuild, backendDist, { recursive: true });
 
 // Copy admin SPA to backend/dist/admin/
 cpSync(adminBuild, resolve(backendDist, 'admin'), { recursive: true });
+
+// Write _redirects for CF Pages SPA routing (after merge so adapter-static can't overwrite)
+writeFileSync(resolve(backendDist, '_redirects'), [
+  '/admin    /admin/index.html  200',
+  '/admin/*  /admin/index.html  200',
+  '/*        /index.html        200',
+].join('\n') + '\n');
 
 console.log('Merged frontend builds into backend/dist/');
