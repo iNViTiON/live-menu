@@ -109,7 +109,9 @@ async function cacheThenNetwork(event, resourceType) {
   }
 
   // Normal cache-then-network: start background fetch, return cached immediately
-  const networkPromise = fetchAndUpdate(event.request, resourceType, cache, cached);
+  // Clone cached for fetchAndUpdate — the original will be returned to the caller
+  // and its body consumed, which would make .clone() throw in fetchAndUpdate.
+  const networkPromise = fetchAndUpdate(event.request, resourceType, cache, cached?.clone());
   event.waitUntil(networkPromise);
 
   if (cached) {
@@ -182,7 +184,10 @@ async function cacheAllMenuMedia(menuData) {
       if (!existing) {
         try {
           const resp = await fetch(url);
-          if (resp.ok) await cache.put(url, resp);
+          if (resp.ok) {
+            await cache.put(url, resp);
+            await notifyClients({ type: 'media-cached', url });
+          }
         } catch {
           // Skip — will retry on next sync
         }
@@ -200,7 +205,10 @@ async function cacheAllGalleryMedia(galleryData) {
       if (!existing) {
         try {
           const resp = await fetch(url);
-          if (resp.ok) await cache.put(url, resp);
+          if (resp.ok) {
+            await cache.put(url, resp);
+            await notifyClients({ type: 'media-cached', url });
+          }
         } catch {
           // Skip
         }

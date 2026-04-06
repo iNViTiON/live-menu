@@ -12,37 +12,29 @@ async function isMediaCached(url: string): Promise<boolean> {
 
 export function createCachedMediaUrl(getDesiredUrl: () => string | null) {
   let displayedUrl = $state<string | null>(null);
-  let pollInterval: ReturnType<typeof setInterval> | null = null;
-
-  function cleanup() {
-    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-  }
 
   $effect(() => {
     const desired = getDesiredUrl();
 
-    // Same URL or cleared — update immediately
     if (desired === displayedUrl) return;
-    if (!desired) { cleanup(); displayedUrl = null; return; }
+    if (!desired) { displayedUrl = null; return; }
 
-    // Check if the new media is already in the SW cache
-    cleanup();
-    isMediaCached(desired).then(cached => {
-      if (cached) {
+    // Push-based: SW sends { type: 'media-cached', url } after each cache.put
+    function onMessage(event: MessageEvent) {
+      if (event.data?.type === 'media-cached' && event.data.url === desired) {
         displayedUrl = desired;
-      } else {
-        // Poll until the SW has cached it (background download in progress)
-        pollInterval = setInterval(async () => {
-          if (await isMediaCached(desired)) {
-            displayedUrl = desired;
-            cleanup();
-          }
-        }, 200);
       }
+    }
+
+    const sw = 'serviceWorker' in navigator ? navigator.serviceWorker : null;
+    sw?.addEventListener('message', onMessage);
+
+    // Also check immediately — media may already be cached (e.g. returning visitor)
+    isMediaCached(desired).then(cached => {
+      if (cached) displayedUrl = desired;
     });
 
-    // Cleanup on effect re-run or component destroy
-    return cleanup;
+    return () => sw?.removeEventListener('message', onMessage);
   });
 
   return {
