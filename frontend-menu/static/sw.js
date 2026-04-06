@@ -73,10 +73,12 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Navigation: serve index.html from shell cache (SPA fallback)
+  // Always fetch /index.html directly — never re-fetch the navigation request,
+  // which uses redirect:'manual' and breaks on CF Pages redirect responses.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       caches.match('/index.html', { cacheName: SHELL_CACHE })
-        .then((cached) => cached || fetch(event.request))
+        .then((cached) => cached || fetch('/index.html'))
     );
     return;
   }
