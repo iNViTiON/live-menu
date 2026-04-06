@@ -62,8 +62,8 @@ describe('Public routes', () => {
     );
     expect(hiddenItem).toBeUndefined();
 
-    // Version should be a recent timestamp
-    expect(body.version).toBeGreaterThan(0);
+    // Response should not include a version field (removed to prevent SW feedback loop)
+    expect(body.version).toBeUndefined();
   });
 
   it('GET /api/public/menu includes media array on each item', async () => {

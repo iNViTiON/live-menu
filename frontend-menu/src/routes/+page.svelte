@@ -38,6 +38,12 @@
     };
   }
 
+  let galleryScrollY = $state(0);
+
+  function onGalleryScroll(e: Event) {
+    galleryScrollY = (e.target as HTMLElement).scrollTop;
+  }
+
   onMount(() => {
     galleryStore.load();
     menuStore.load();
@@ -67,7 +73,7 @@
         {:else if galleryStore.error}
           <div class="error">{galleryStore.error}</div>
         {:else}
-          <div class="scroll-container">
+          <div class="scroll-container" onscroll={onGalleryScroll}>
             {#each galleryStore.visiblePages as gpage (gpage.id)}
               <GalleryMediaItem page={gpage} />
             {/each}
@@ -77,6 +83,7 @@
             languages={galleryStore.languages}
             selectedLanguage={galleryStore.selectedLanguage}
             onLanguageChange={(code) => galleryStore.setLanguage(code)}
+            scrollY={galleryScrollY}
           />
           <GalleryBar items={galleryStore.visiblePages} />
           <button class="customer-mode-btn" onclick={goToCustomer} aria-label="Interactive menu">

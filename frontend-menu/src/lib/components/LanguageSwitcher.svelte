@@ -1,10 +1,11 @@
 <script lang="ts">
   import type { Language } from '@live-menu/shared';
 
-  let { languages, selectedLanguage, onLanguageChange }: {
+  let { languages, selectedLanguage, onLanguageChange, scrollY = 0 }: {
     languages: Language[];
     selectedLanguage: string;
     onLanguageChange: (code: string) => void;
+    scrollY?: number;
   } = $props();
 
   // Convert country code to flag emoji (e.g. GB -> 🇬🇧)
@@ -24,10 +25,13 @@
       return a.sort_order - b.sort_order;
     })
   );
+
+  // Scale from 2× at top → 1× after scrolling 150px
+  const scale = $derived(Math.max(1, 2 - scrollY / 150));
 </script>
 
 {#if languages.length > 1}
-  <div class="lang-switcher">
+  <div class="lang-switcher" style:transform="scale({scale})" style:transform-origin="top right">
     {#each sorted as lang (lang.code)}
       <button
         class="lang-btn"
@@ -49,9 +53,10 @@
     top: 1rem;
     right: 1rem;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: 0.5rem;
     z-index: 100;
+    transition: transform 0.15s ease-out;
   }
 
   .lang-btn {

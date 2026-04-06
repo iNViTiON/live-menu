@@ -325,8 +325,8 @@ describe('Menu Items — Customer Interaction', () => {
       expect(Array.isArray(item!.optionGroups)).toBe(true);
       expect(item!.optionGroups.some((g) => g.id === groupId)).toBe(true);
 
-      // Verify version
-      expect(body.version).toBeGreaterThan(0);
+      // version field was removed (staleness handled by WS version vectors)
+      expect(body.version).toBeUndefined();
     });
   });
 });

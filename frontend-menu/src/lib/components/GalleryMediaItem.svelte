@@ -86,7 +86,7 @@
 </script>
 
 <div bind:this={element} class="media-item" id="item-{page.id}">
-  {#if desiredUrl}
+  {#if cachedMedia.url}
     <video
       bind:this={videoEl}
       muted
@@ -102,10 +102,6 @@
       class:hidden={isVideo}
       onload={() => { imageReady = true; }}
     />
-  {:else}
-    <div class="placeholder">
-      <span>{altText || 'No media'}</span>
-    </div>
   {/if}
 </div>
 
@@ -115,6 +111,10 @@
     flex-shrink: 0;
     position: relative;
     background: #111;
+  }
+
+  .media-item:empty {
+    display: none;
   }
 
   .media-content {
@@ -127,13 +127,4 @@
     display: none;
   }
 
-  .placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    color: #555;
-    font-size: 1.2rem;
-  }
 </style>

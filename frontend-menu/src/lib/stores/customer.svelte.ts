@@ -43,7 +43,6 @@ class CustomerStore {
         traitGroups: menuStore.traitGroups,
         optionGroups: menuStore.optionGroups,
         settings: menuStore.settings,
-        version: menuStore.version,
       };
     } catch (err) {
       this.error = err instanceof Error ? err.message : 'Unknown error';

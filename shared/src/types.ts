@@ -259,14 +259,12 @@ export interface PublicMenuResponse {
   traitGroups: TraitGroupWithDetails[];
   optionGroups: OptionGroupWithDetails[];
   settings: Record<string, string>;
-  version: number; // unix timestamp for cache diffing
 }
 
 export interface PublicGalleryResponse {
   pages: GalleryPageWithDetails[];
   languages: Language[];
   settings: Record<string, string>;
-  version: number;
 }
 
 // === Realtime ===

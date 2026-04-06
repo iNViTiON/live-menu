@@ -19,7 +19,6 @@ publicRoutes.get('/menu', async (c) => {
     traitGroups,
     optionGroups,
     settings,
-    version: Math.floor(Date.now() / 1000),
   });
 });
 
@@ -32,7 +31,6 @@ publicRoutes.get('/gallery', async (c) => {
     pages,
     languages,
     settings,
-    version: Math.floor(Date.now() / 1000),
   });
 });
 

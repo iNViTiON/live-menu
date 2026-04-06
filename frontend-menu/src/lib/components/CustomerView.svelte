@@ -7,6 +7,12 @@
 
   let { onBack } = $props<{ onBack: () => void }>();
 
+  let customerScrollY = $state(0);
+
+  function onCustomerScroll(e: Event) {
+    customerScrollY = (e.target as HTMLElement).scrollTop;
+  }
+
   function getUiText(settings: Record<string, string>, key: string, lang: string): string {
     return settings[`ui:${key}:${lang}`] || settings[`ui:${key}:GB`] || key;
   }
@@ -22,7 +28,7 @@
   {:else if customerStore.error}
     <div class="error">{customerStore.error}</div>
   {:else if customerStore.data}
-    <div class="scroll-container">
+    <div class="scroll-container" onscroll={onCustomerScroll}>
 
       <header class="page-header">
         <button class="back-btn" onclick={onBack} aria-label="Back to menu">
@@ -36,6 +42,7 @@
           languages={customerStore.data.languages}
           selectedLanguage={menuStore.selectedLanguage}
           onLanguageChange={(code) => menuStore.setLanguage(code)}
+          scrollY={customerScrollY}
         />
       {/if}
 
@@ -540,8 +547,8 @@
     gap: 0.9rem;
   }
 
-  /* 2-column layout when media is present */
-  .option-groups.has-media {
+  /* 2-column layout only when media is actually rendered (not just data-present) */
+  .option-groups.has-media:has(.item-media :global(.item-media-el)) {
     display: flex;
     flex-direction: row;
     gap: 1rem;
@@ -564,10 +571,10 @@
 
   /* Narrow screens: fall back to single column */
   @media (max-width: 640px) {
-    .option-groups.has-media {
+    .option-groups.has-media:has(.item-media :global(.item-media-el)) {
       flex-direction: column;
     }
-    .option-groups.has-media .item-media {
+    .option-groups.has-media:has(.item-media :global(.item-media-el)) .item-media {
       order: -1;
     }
   }
@@ -651,6 +658,11 @@
 
   /* ── Item media ── */
   /* Default (no has-media parent): full-width banner above options */
+  /* Hide container until CachedMedia renders an actual element */
+  .item-media:not(:has(:global(.item-media-el))) {
+    display: none;
+  }
+
   .item-media {
     margin: -0.75rem -1rem 0.75rem;
     overflow: hidden;
