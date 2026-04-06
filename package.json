@@ -22,9 +22,9 @@
     "test:admin": "bun run --filter frontend-admin test",
     "e2e": "bun run --filter e2e test",
     "db:migrate:local": "cd backend && bunx wrangler d1 migrations apply live_menu --local",
-    "db:migrate:remote": "cd backend && bunx wrangler d1 migrations apply live_menu --remote",
+    "db:migrate:remote": "cd backend && bunx wrangler d1 migrations apply live_menu --remote --env=production",
     "deploy:notify": "curl -sf https://menu.mitch.ee/api/public/check-app-update || true",
-    "deploy": "bun run build:all && cd backend && bunx wrangler deploy && bun run deploy:notify"
+    "deploy": "bun run build:all && cd backend && bunx wrangler deploy --env=production && bun run deploy:notify"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^3.2.4",
