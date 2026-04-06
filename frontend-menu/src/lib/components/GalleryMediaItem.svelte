@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { GalleryPageWithDetails } from '@live-menu/shared';
   import { galleryStore } from '$lib/stores/gallery.svelte';
+  import { createCachedMediaUrl } from '$lib/services/cached-media.svelte';
 
   let { page }: { page: GalleryPageWithDetails } = $props();
 
@@ -9,7 +10,8 @@
   let videoEl: HTMLVideoElement = $state()!;
 
   const media = $derived(galleryStore.getMediaVariant(page, galleryStore.selectedLanguage));
-  const mediaUrl = $derived(media ? `/media/${media.r2_key}` : null);
+  const desiredUrl = $derived(media ? `/media/${media.r2_key}` : null);
+  const cachedMedia = createCachedMediaUrl(() => desiredUrl);
   const isVideo = $derived(media?.media_type === 'video');
   const altText = $derived(galleryStore.getName(page, galleryStore.selectedLanguage));
 
@@ -25,15 +27,17 @@
   });
 
   // Manage video source changes seamlessly (handles initial load + language switches)
+  // Uses cachedMedia.url so the src only changes once the new media is in the SW cache,
+  // keeping the old video playing until the replacement is ready.
   let loadedSrc: string | null = null;
   let loadedEl: HTMLVideoElement | null = null;
   $effect(() => {
-    if (!videoEl || !isVideo || !mediaUrl) return;
+    if (!videoEl || !isVideo || !cachedMedia.url) return;
     if (videoEl !== loadedEl) {
       loadedSrc = null;
       loadedEl = videoEl;
     }
-    if (mediaUrl === loadedSrc) return;
+    if (cachedMedia.url === loadedSrc) return;
 
     const el = videoEl;
     const savedTime = el.currentTime || 0;
@@ -48,8 +52,8 @@
       } catch {}
     }
 
-    loadedSrc = mediaUrl;
-    el.src = mediaUrl;
+    loadedSrc = cachedMedia.url;
+    el.src = cachedMedia.url;
 
     const onReady = () => {
       if (savedTime > 0) el.currentTime = savedTime;
@@ -82,7 +86,7 @@
 </script>
 
 <div bind:this={element} class="media-item" id="item-{page.id}">
-  {#if mediaUrl}
+  {#if desiredUrl}
     <video
       bind:this={videoEl}
       muted
@@ -92,7 +96,7 @@
       class:hidden={!isVideo && imageReady}
     ></video>
     <img
-      src={isVideo ? undefined : mediaUrl}
+      src={isVideo || !cachedMedia.url ? undefined : cachedMedia.url}
       alt={altText}
       class="media-content"
       class:hidden={isVideo}

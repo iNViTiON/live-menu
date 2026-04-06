@@ -3,6 +3,7 @@
   import { customerStore } from '$lib/stores/customer.svelte';
   import { menuStore } from '$lib/stores/menu.svelte';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+  import CachedMedia from '$lib/components/CachedMedia.svelte';
 
   let { onBack } = $props<{ onBack: () => void }>();
 
@@ -177,11 +178,16 @@
                 </div>
                 {#if itemMedia}
                   <div class="item-media">
-                    {#if itemMedia.media_type === 'video'}
-                      <video src="/media/{itemMedia.r2_key}" autoplay loop muted playsinline class="item-media-el"></video>
-                    {:else}
-                      <img src="/media/{itemMedia.r2_key}" alt={name} class="item-media-el" />
-                    {/if}
+                    <CachedMedia
+                      src="/media/{itemMedia.r2_key}"
+                      type={itemMedia.media_type}
+                      alt={name}
+                      class="item-media-el"
+                      autoplay
+                      loop
+                      muted
+                      playsinline
+                    />
                   </div>
                 {/if}
               </div>
@@ -651,7 +657,7 @@
     background: #1a1412;
   }
 
-  .item-media-el {
+  :global(.item-media-el) {
     width: 100%;
     height: auto;
     max-height: 260px;
@@ -660,7 +666,7 @@
   }
 
   /* 2-column variant: fill column width, keep natural aspect ratio */
-  .option-groups.has-media .item-media-el {
+  .option-groups.has-media :global(.item-media-el) {
     width: 100%;
     height: auto;
     max-height: none;
