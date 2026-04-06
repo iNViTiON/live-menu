@@ -201,18 +201,10 @@ export class AuthService {
       if (sessionCache.size > SESSION_CACHE_MAX_SIZE) {
         const now = Date.now();
         for (const [key, value] of sessionCache) {
-          if (now >= value.expiresAt) {
+          if (now >= value.expiresAt || sessionCache.size > SESSION_CACHE_MAX_SIZE) {
             sessionCache.delete(key);
           }
-        }
-        if (sessionCache.size > SESSION_CACHE_MAX_SIZE) {
-          const entriesToDelete = sessionCache.size - SESSION_CACHE_MAX_SIZE;
-          let deleted = 0;
-          for (const key of sessionCache.keys()) {
-            if (deleted >= entriesToDelete) break;
-            sessionCache.delete(key);
-            deleted++;
-          }
+          if (sessionCache.size <= SESSION_CACHE_MAX_SIZE) break;
         }
       }
     }

@@ -289,25 +289,14 @@ export class MenuService {
   /** Create a new menu item with sort_order = max + 1 */
   async create(): Promise<MenuItem> {
     const now = Math.floor(Date.now() / 1000);
-
-    const maxRow = await this.db
-      .prepare('SELECT MAX(sort_order) as max_order FROM menu_items')
-      .first<{ max_order: number | null }>();
-
-    const sortOrder = (maxRow?.max_order ?? -1) + 1;
-
-    const result = await this.db
-      .prepare(
-        'INSERT INTO menu_items (sort_order, is_visible, base_price, created_at, updated_at) VALUES (?, 1, 0, ?, ?)'
-      )
-      .bind(sortOrder, now, now)
-      .run();
-
     const item = await this.db
-      .prepare('SELECT * FROM menu_items WHERE id = ?')
-      .bind(result.meta.last_row_id)
+      .prepare(
+        `INSERT INTO menu_items (sort_order, is_visible, base_price, created_at, updated_at)
+         VALUES ((SELECT COALESCE(MAX(sort_order), -1) + 1 FROM menu_items), 1, 0, ?, ?)
+         RETURNING *`
+      )
+      .bind(now, now)
       .first<MenuItem>();
-
     return item!;
   }
 

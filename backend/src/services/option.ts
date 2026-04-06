@@ -35,26 +35,14 @@ export class OptionService {
   /** Create a new option in a group with sort_order = max + 1 */
   async create(groupId: number): Promise<Option> {
     const now = Math.floor(Date.now() / 1000);
-
-    const maxRow = await this.db
-      .prepare('SELECT MAX(sort_order) as max_order FROM options WHERE option_group_id = ?')
-      .bind(groupId)
-      .first<{ max_order: number | null }>();
-
-    const sortOrder = (maxRow?.max_order ?? -1) + 1;
-
-    const result = await this.db
-      .prepare(
-        'INSERT INTO options (option_group_id, price_delta, sort_order, created_at, updated_at) VALUES (?, 0, ?, ?, ?)'
-      )
-      .bind(groupId, sortOrder, now, now)
-      .run();
-
     const option = await this.db
-      .prepare('SELECT * FROM options WHERE id = ?')
-      .bind(result.meta.last_row_id)
+      .prepare(
+        `INSERT INTO options (option_group_id, price_delta, sort_order, created_at, updated_at)
+         VALUES (?, 0, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM options WHERE option_group_id = ?), ?, ?)
+         RETURNING *`
+      )
+      .bind(groupId, groupId, now, now)
       .first<Option>();
-
     return option!;
   }
 

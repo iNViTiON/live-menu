@@ -21,41 +21,26 @@ export class TraitService {
 
   /** Get a single trait with names */
   async getById(id: number): Promise<TraitWithDetails | null> {
-    const trait = await this.db
-      .prepare('SELECT * FROM traits WHERE id = ?')
-      .bind(id)
-      .first<Trait>();
-
+    const [traitResult, namesResult] = await this.db.batch([
+      this.db.prepare('SELECT * FROM traits WHERE id = ?').bind(id),
+      this.db.prepare('SELECT * FROM trait_names WHERE trait_id = ?').bind(id),
+    ]);
+    const trait = traitResult.results[0] as Trait | undefined;
     if (!trait) return null;
-
-    const names = await this.db
-      .prepare('SELECT * FROM trait_names WHERE trait_id = ?')
-      .bind(id)
-      .all<TraitName>();
-
-    return { ...trait, names: names.results };
+    return { ...trait, names: namesResult.results as TraitName[] };
   }
 
   /** Create a new trait with sort_order = max + 1 */
   async create(): Promise<Trait> {
     const now = Math.floor(Date.now() / 1000);
-
-    const maxRow = await this.db
-      .prepare('SELECT MAX(sort_order) as max_order FROM traits')
-      .first<{ max_order: number | null }>();
-
-    const sortOrder = (maxRow?.max_order ?? -1) + 1;
-
-    const result = await this.db
-      .prepare('INSERT INTO traits (sort_order, created_at, updated_at) VALUES (?, ?, ?)')
-      .bind(sortOrder, now, now)
-      .run();
-
     const trait = await this.db
-      .prepare('SELECT * FROM traits WHERE id = ?')
-      .bind(result.meta.last_row_id)
+      .prepare(
+        `INSERT INTO traits (sort_order, created_at, updated_at)
+         VALUES ((SELECT COALESCE(MAX(sort_order), -1) + 1 FROM traits), ?, ?)
+         RETURNING *`
+      )
+      .bind(now, now)
       .first<Trait>();
-
     return trait!;
   }
 
