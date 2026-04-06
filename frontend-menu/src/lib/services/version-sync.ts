@@ -39,17 +39,19 @@ class MenuVersionSync {
               (key) => (msg.vector[key] || 0) > (this.localVector[key] || 0)
             );
             this.localVector = { ...msg.vector };
+            // Gallery is independent (different endpoint)
             if (staleGallery) {
               console.log('[MenuSync] Gallery data changed, refreshing...');
               galleryStore.load();
             }
-            if (staleMenu) {
-              console.log('[MenuSync] Menu data changed, refreshing...');
-              menuStore.load();
-            }
-            if ((staleMenu || staleCustomer) && customerStore.data) {
-              console.log('[MenuSync] Customer data changed, refreshing...');
-              customerStore.load();
+            // Menu and customer share the same /api/public/menu endpoint.
+            // Customer store reads FROM menuStore, so menu must load first.
+            const needsMenuReload = staleMenu || staleCustomer;
+            if (needsMenuReload) {
+              console.log('[MenuSync] Menu/customer data changed, refreshing...');
+              menuStore.load().then(() => {
+                if (customerStore.data) customerStore.load();
+              });
             }
           }
         } catch {}
