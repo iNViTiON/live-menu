@@ -1,26 +1,14 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
   import { fly, slide } from 'svelte/transition';
   import { customerStore } from '$lib/stores/customer.svelte';
   import { menuStore } from '$lib/stores/menu.svelte';
-  import { menuSync } from '$lib/services/version-sync';
   import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+
+  let { onBack } = $props<{ onBack: () => void }>();
 
   function getUiText(settings: Record<string, string>, key: string, lang: string): string {
     return settings[`ui:${key}:${lang}`] || settings[`ui:${key}:GB`] || key;
   }
-
-  onMount(() => {
-    customerStore.load();
-    menuSync.connect();
-    return () => {
-      menuSync.disconnect();
-    };
-  });
-
-  onDestroy(() => {
-    customerStore.reset();
-  });
 </script>
 
 <svelte:head>
@@ -36,9 +24,9 @@
     <div class="scroll-container">
 
       <header class="page-header">
-        <a href="/" class="back-btn" aria-label="Back to menu">
+        <button class="back-btn" onclick={onBack} aria-label="Back to menu">
           <span class="back-icon">‹</span> {getUiText(customerStore.data.settings, 'menu', menuStore.selectedLanguage)}
-        </a>
+        </button>
         <h1 class="page-title">{getUiText(customerStore.data.settings, 'find_your_drink', menuStore.selectedLanguage)}</h1>
       </header>
 
@@ -251,6 +239,7 @@
     border-radius: 99px;
     border: 1.5px solid #c9aa78;
     background: transparent;
+    cursor: pointer;
     transition: background 0.15s, color 0.15s;
     white-space: nowrap;
     flex-shrink: 0;
