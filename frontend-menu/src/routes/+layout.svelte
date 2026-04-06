@@ -8,6 +8,7 @@
   import { viewStore } from '$lib/stores/view.svelte';
   import { menuSync } from '$lib/services/version-sync';
   import { createIdleTimer } from '$lib/services/idle-timer';
+  import { languageStore } from '$lib/stores/language.svelte';
   import ConnectionStatus from '$lib/components/ConnectionStatus.svelte';
   import IdleWarningOverlay from '$lib/components/IdleWarningOverlay.svelte';
 
@@ -60,6 +61,16 @@
     const idle = createIdleTimer({
       timeoutMs: 60_000,
       warningMs: 5_000,
+      shouldWarn: () => {
+        // Skip warning if the app is already in the reset/home state.
+        const scrollEl = document.querySelector('.scroll-container');
+        const scrollTop = scrollEl?.scrollTop ?? 0;
+        const alreadyHome =
+          viewStore.activeView === 'gallery' &&
+          languageStore.selectedLanguage === 'GB' &&
+          scrollTop <= 5;
+        return !alreadyHome;
+      },
       onWarning: () => {
         warningVisible = true;
         warningSeconds = 5;
@@ -75,18 +86,16 @@
         isIdle = true;
         warningVisible = false;
         if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
-        if (menuSync.appVersionChanged) {
-          location.reload();
-          return;
-        }
+        // Always do the smooth reset first so there's no blink.
         customerStore.reset();
         menuStore.resetToDefault();
         galleryStore.resetToDefault();
-        if (viewStore.activeView === 'customer') {
-          viewStore.setGallery();
-        } else {
-          const scrollEl = document.querySelector('.scroll-container');
-          if (scrollEl) scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
+        viewStore.setGallery();
+        const scrollEl = document.querySelector('.scroll-container');
+        if (scrollEl) scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
+        // Reload after the transition completes if a new app version is waiting.
+        if (menuSync.appVersionChanged) {
+          setTimeout(() => location.reload(), 500);
         }
       },
     });

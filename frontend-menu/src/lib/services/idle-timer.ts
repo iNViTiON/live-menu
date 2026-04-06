@@ -4,10 +4,12 @@ export interface IdleTimerOptions {
   onWarning: () => void;
   onDismiss: () => void;
   onIdle: () => void;
+  /** Return false to suppress the warning and silently restart the countdown. */
+  shouldWarn?: () => boolean;
 }
 
 export function createIdleTimer(options: IdleTimerOptions): { start: () => () => void } {
-  const { timeoutMs, warningMs, onWarning, onDismiss, onIdle } = options;
+  const { timeoutMs, warningMs, onWarning, onDismiss, onIdle, shouldWarn } = options;
   let warningTimer: ReturnType<typeof setTimeout> | null = null;
   let idleTimer: ReturnType<typeof setTimeout> | null = null;
   let isWarning = false;
@@ -22,6 +24,10 @@ export function createIdleTimer(options: IdleTimerOptions): { start: () => () =>
     }
 
     warningTimer = setTimeout(() => {
+      if (shouldWarn && !shouldWarn()) {
+        reset();
+        return;
+      }
       isWarning = true;
       onWarning();
     }, timeoutMs - warningMs);
@@ -35,7 +41,7 @@ export function createIdleTimer(options: IdleTimerOptions): { start: () => () =>
   function start(): () => void {
     const events = ['touchstart', 'touchmove', 'scroll', 'click', 'mousemove'];
     events.forEach((e) => document.addEventListener(e, reset, { passive: true }));
-    reset();
+    // Don't start timers immediately — wait for first user interaction.
 
     return () => {
       if (warningTimer !== null) clearTimeout(warningTimer);
