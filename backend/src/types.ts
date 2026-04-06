@@ -6,7 +6,6 @@ export interface Env {
   DB: D1Database;
   MEDIA_BUCKET: R2Bucket;
   BROADCAST_ROOM: DurableObjectNamespace;
-  ASSETS: Fetcher;
   FRONTEND_URL: string;
   WEBAUTHN_RP_ID: string;
   WEBAUTHN_RP_NAME: string;

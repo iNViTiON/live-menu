@@ -25,25 +25,31 @@ cd backend && bunx wrangler d1 execute live_menu --local --file=src/db/seed.sql 
 
 # Build + Deploy
 bun run build:all        # Build both SPAs → merge into backend/dist/
-bun run deploy           # build:all + wrangler deploy
+bun run deploy           # build:all + wrangler deploy (worker) + wrangler pages deploy + deploy:notify
 ```
 
 ## Architecture
 
-Single Cloudflare Worker (`backend/src/index.ts`) handles all routing:
+**Cloudflare Pages** (`menu.mitch.ee`) serves both SPAs (static files). A **Cloudflare Worker** (`live-menu-api`) handles only API and media routes, intercepting before CF Pages via Worker Routes:
 
-1. `/api/sync-ws` + WebSocket upgrade → validate session → forward to `BroadcastRoom` Durable Object
-2. `/media/*` → R2 proxy with immutable cache headers
-3. `/api/*` → Hono app (middleware chain: security → cors → db PRAGMA → services → auth)
-4. `/admin/*` → ASSETS binding with SPA fallback to `/admin/index.html`
-5. `/*` → ASSETS binding (menu SPA)
+1. `/api/public/sync-ws` + WebSocket upgrade → forward to `BroadcastRoom` Durable Object (public clients)
+2. `/api/sync-ws` + WebSocket upgrade → forward to `BroadcastRoom` Durable Object (admin, origin-checked)
+3. `/media/*` → R2 proxy with immutable cache headers
+4. `/api/*` → Hono app (middleware chain: security → cors → db PRAGMA → services → auth)
+5. Everything else → CF Pages (`/*` and `/admin/*` via `_redirects` SPA fallback)
 
-Both SPAs are built as static files and merged into `backend/dist/` via `scripts/merge-dist.mjs`. The Worker serves them through the `ASSETS` binding with `run_worker_first` for API/media/admin paths.
+Both SPAs are built as static files and merged into `backend/dist/` via `scripts/merge-dist.mjs`, then deployed to CF Pages (`live-menu` project). Worker routes only cover `menu.mitch.ee/api/*` and `menu.mitch.ee/media/*`.
+
+**CF Pages project**: `live-menu`. Custom domain: `menu.mitch.ee`. SPA routing via `frontend-menu/static/_redirects` (copied into build output):
+```
+/admin/*  /admin/index.html  200
+/*        /index.html        200
+```
 
 ### Key type: `HonoEnv`
 
 All Hono middleware and routes use `HonoEnv` from `backend/src/types.ts`:
-- `Bindings`: `DB` (D1), `MEDIA_BUCKET` (R2), `BROADCAST_ROOM` (DO), `ASSETS` (Fetcher), plus WebAuthn vars
+- `Bindings`: `DB` (D1), `MEDIA_BUCKET` (R2), `BROADCAST_ROOM` (DO), plus WebAuthn vars
 - `Variables`: `user` (AuthUser), `authService` (AuthService), `versionVectorService` (VersionVectorService)
 
 Access via `c.env.DB`, `c.get('user')`, `c.get('authService')`, etc.
@@ -116,7 +122,7 @@ The menu frontend is a fully offline-capable PWA after first visit. Three servic
 - **Precache manifest**: `scripts/generate-precache-manifest.mjs` runs after SvelteKit build, scans `frontend-menu/build/`, and injects a `PRECACHE_MANIFEST` array into `build/sw.js`. Chained in `build:menu` script.
 - **Gallery + menu media**: all language variants are proactively pre-cached. Orphan eviction runs when both API responses are cached.
 - **Connection status** (`connection-status.svelte.ts`): combines `navigator.onLine` + WebSocket state (5s delay on WS disconnect to avoid flash). `ConnectionStatus.svelte` shows a fixed pill at bottom-left: red "Offline" or green "Back online" (auto-dismiss 3s).
-- **App version detection**: `GET /api/public/check-app-update` reads `_app/version.json` from ASSETS, compares with D1 `settings` key `app:build_version`. On mismatch, broadcasts `appVersion` via the DO version vector. Triggered by `deploy:notify` script (post-deploy curl) and as backup on WS reconnect.
+- **App version detection**: `GET /api/public/check-app-update` fetches `/_app/version.json` from CF Pages (via outbound HTTP to `FRONTEND_URL`), compares with D1 `settings` key `app:build_version`. On mismatch, broadcasts `appVersion` via the DO version vector. Triggered by `deploy:notify` script (post-deploy curl) and as backup on WS reconnect.
 - **Auto-reload on deploy**: when `appVersion` changes via WS, kiosks reload on next idle (or immediately if already idle). Wired through `menuSync.onAppVersionChange` callback + idle timer integration in both pages.
 
 > **WARNING**: `deploy:notify` script hardcodes `https://menu.mitch.ee`. Update in `package.json` if the production domain changes.

@@ -34,10 +34,10 @@ publicRoutes.get('/gallery', async (c) => {
   });
 });
 
-// GET /check-app-update — public, compares ASSETS build version against D1; broadcasts appVersion on new deploy
+// GET /check-app-update — public, fetches version.json from CF Pages, broadcasts appVersion on new deploy
 publicRoutes.get('/check-app-update', async (c) => {
-  const versionRes = await c.env.ASSETS.fetch(
-    new Request(new URL('/_app/version.json', c.req.url))
+  const versionRes = await fetch(
+    new URL('/_app/version.json', c.env.FRONTEND_URL).href
   );
   if (!versionRes.ok) return c.json({ version: null });
   const { version } = (await versionRes.json()) as { version: string };

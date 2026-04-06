@@ -4,13 +4,6 @@ account_id = "4aab1c14a3d2994422d51d0ac84a16d1"
 compatibility_date = "2026-04-01"
 compatibility_flags = ["nodejs_compat"]
 
-[assets]
-directory = "./dist/"
-not_found_handling = "none"
-binding = "ASSETS"
-# both "/admin" and "/admin/*" needed: bare path handles redirect, wildcard handles SPA routes
-run_worker_first = ["/api/*", "/media/*", "/admin", "/admin/*"]
-
 # Run: bunx wrangler d1 create live_menu
 # Then paste the database_id here
 [[d1_databases]]
@@ -38,7 +31,7 @@ tag = "v1"
 new_sqlite_classes = ["BroadcastRoom"]
 
 [triggers]
-crons = ["0 0 * * 0"]
+crons = ["0 0 * * SUN"]
 
 [vars]
 FRONTEND_URL = "http://localhost:5173"
@@ -47,7 +40,24 @@ WEBAUTHN_RP_NAME = "Live Menu (Dev)"
 WEBAUTHN_ORIGIN = "http://localhost:5173"
 
 [env.production]
-routes = [{ pattern = "menu.mitch.ee/*", zone_name = "mitch.ee" }]
+routes = [
+  { pattern = "menu.mitch.ee/api/*", zone_name = "mitch.ee" },
+  { pattern = "menu.mitch.ee/media/*", zone_name = "mitch.ee" },
+]
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "live_menu"
+database_id = "1caf8ff8-22a3-41d3-b947-bb3863a9b16b"
+migrations_dir = "src/db/migrations"
+
+[[env.production.r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "live-menu-media"
+
+[[env.production.durable_objects.bindings]]
+name = "BROADCAST_ROOM"
+class_name = "BroadcastRoom"
 
 [env.production.vars]
 FRONTEND_URL = "https://menu.mitch.ee"

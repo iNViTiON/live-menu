@@ -96,20 +96,11 @@ export default {
       return new Response(object.body, { headers });
     }
 
-    // All /api/* routes handled by Hono; everything else → ASSETS (SvelteKit SPA)
     if (url.pathname.startsWith('/api/')) {
       return app.fetch(request, env, ctx);
     }
 
-    // Admin SPA — static assets have file extensions, SPA routes don't
-    if (url.pathname.startsWith('/admin/') || url.pathname === '/admin') {
-      if (url.pathname.match(/\.[a-z0-9]+$/i)) {
-        return env.ASSETS.fetch(request);
-      }
-      return env.ASSETS.fetch(new Request(new URL('/admin/', request.url), request));
-    }
-
-    return env.ASSETS.fetch(request);
+    return new Response('Not Found', { status: 404 });
   },
 
   // Runs weekly — cron: "0 0 * * 0" (Sunday midnight UTC)
