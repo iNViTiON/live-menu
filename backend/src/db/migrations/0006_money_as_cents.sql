@@ -31,3 +31,7 @@ DROP TABLE options;
 ALTER TABLE options_new RENAME TO options;
 CREATE INDEX IF NOT EXISTS idx_options_group ON options(option_group_id);
 CREATE INDEX IF NOT EXISTS idx_options_group_order ON options(option_group_id, sort_order);
+
+-- DOWN MIGRATION:
+-- Reverse: recreate menu_items and options with REAL price columns and INTEGER timestamps
+-- Not safely reversible: cent values cannot be losslessly converted back to euros

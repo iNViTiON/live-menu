@@ -23,3 +23,7 @@ CREATE TABLE IF NOT EXISTS menu_item_availability_rules (
 );
 
 CREATE INDEX IF NOT EXISTS idx_availability_rules_item ON menu_item_availability_rules(menu_item_id);
+
+-- DOWN MIGRATION:
+-- DROP TABLE IF EXISTS menu_item_availability_rules;
+-- Recreate menu_items without schedule_start/schedule_end columns (table recreation required)

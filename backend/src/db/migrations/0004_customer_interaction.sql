@@ -145,3 +145,19 @@ CREATE TABLE IF NOT EXISTS menu_item_option_groups (
 -- Extend existing tables
 ALTER TABLE menu_items ADD COLUMN base_price REAL NOT NULL DEFAULT 0;
 ALTER TABLE menu_item_names ADD COLUMN description TEXT;
+
+-- DOWN MIGRATION:
+-- DROP TABLE IF EXISTS menu_item_option_groups;
+-- DROP TABLE IF EXISTS menu_item_traits;
+-- DROP TABLE IF EXISTS option_names;
+-- DROP TABLE IF EXISTS options;
+-- DROP TABLE IF EXISTS option_group_names;
+-- DROP TABLE IF EXISTS option_groups;
+-- DROP TABLE IF EXISTS trait_group_traits;
+-- DROP TABLE IF EXISTS trait_group_names;
+-- DROP TABLE IF EXISTS trait_groups;
+-- DROP TABLE IF EXISTS trait_names;
+-- DROP TABLE IF EXISTS traits;
+-- DROP TABLE IF EXISTS settings;
+-- ALTER TABLE menu_items DROP COLUMN base_price; (not supported in SQLite)
+-- ALTER TABLE menu_item_names DROP COLUMN description; (not supported in SQLite)

@@ -78,3 +78,10 @@ CREATE INDEX IF NOT EXISTS idx_menu_items_order ON menu_items(sort_order);
 
 -- Drop old availability rules table (scheduling moved to gallery pages)
 DROP TABLE IF EXISTS menu_item_availability_rules;
+
+-- DOWN MIGRATION:
+-- DROP TABLE IF EXISTS gallery_page_availability_rules;
+-- DROP TABLE IF EXISTS gallery_page_media;
+-- DROP TABLE IF EXISTS gallery_page_names;
+-- DROP TABLE IF EXISTS gallery_pages;
+-- Recreate menu_items with schedule_start/schedule_end columns (table recreation required)
