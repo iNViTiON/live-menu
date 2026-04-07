@@ -37,21 +37,17 @@ export class OptionGroupService {
 
     if (!group) return null;
 
-    const [names, options] = await Promise.all([
-      this.db
-        .prepare('SELECT * FROM option_group_names WHERE option_group_id = ?')
-        .bind(id)
-        .all<OptionGroupName>(),
-      this.db
-        .prepare('SELECT * FROM options WHERE option_group_id = ? ORDER BY sort_order')
-        .bind(id)
-        .all<Option>(),
+    const [namesResult, optionsResult] = await this.db.batch([
+      this.db.prepare('SELECT * FROM option_group_names WHERE option_group_id = ?').bind(id),
+      this.db.prepare('SELECT * FROM options WHERE option_group_id = ? ORDER BY sort_order').bind(id),
     ]);
 
-    const optionIds = options.results.map((o) => o.id);
+    const names = namesResult.results as OptionGroupName[];
+    const options = optionsResult.results as Option[];
+    const optionIds = options.map((o) => o.id);
 
     if (optionIds.length === 0) {
-      return { ...group, names: names.results, options: [] };
+      return { ...group, names, options: [] };
     }
 
     const placeholders = optionIds.map(() => '?').join(',');
@@ -64,8 +60,8 @@ export class OptionGroupService {
 
     return {
       ...group,
-      names: names.results,
-      options: options.results.map((opt: Option) => ({
+      names,
+      options: options.map((opt: Option) => ({
         ...opt,
         names: namesByOption.get(opt.id) ?? [],
       })),
@@ -103,14 +99,9 @@ export class OptionGroupService {
     setClauses.push('updated_at = ?');
     binds.push(now);
 
-    await this.db
-      .prepare(`UPDATE option_groups SET ${setClauses.join(', ')} WHERE id = ?`)
-      .bind(...binds, id)
-      .run();
-
     const group = await this.db
-      .prepare('SELECT * FROM option_groups WHERE id = ?')
-      .bind(id)
+      .prepare(`UPDATE option_groups SET ${setClauses.join(', ')} WHERE id = ? RETURNING *`)
+      .bind(...binds, id)
       .first<OptionGroup>();
 
     return group!;
@@ -145,19 +136,15 @@ export class OptionGroupService {
   ): Promise<OptionGroupName> {
     const now = Math.floor(Date.now() / 1000);
 
-    await this.db
+    const row = await this.db
       .prepare(
         `INSERT INTO option_group_names (option_group_id, language_code, name, description, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?)
          ON CONFLICT(option_group_id, language_code) DO UPDATE
-           SET name = excluded.name, description = excluded.description, updated_at = excluded.updated_at`
+           SET name = excluded.name, description = excluded.description, updated_at = excluded.updated_at
+         RETURNING *`
       )
       .bind(groupId, langCode, name, description, now, now)
-      .run();
-
-    const row = await this.db
-      .prepare('SELECT * FROM option_group_names WHERE option_group_id = ? AND language_code = ?')
-      .bind(groupId, langCode)
       .first<OptionGroupName>();
 
     return row!;

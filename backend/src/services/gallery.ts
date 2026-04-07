@@ -94,14 +94,12 @@ export class GalleryService {
     setClauses.push('updated_at = ?');
     binds.push(now);
 
-    const result = await this.db
-      .prepare(`UPDATE gallery_pages SET ${setClauses.join(', ')} WHERE id = ?`)
+    const page = await this.db
+      .prepare(`UPDATE gallery_pages SET ${setClauses.join(', ')} WHERE id = ? RETURNING *`)
       .bind(...binds, id)
-      .run();
+      .first<GalleryPage>();
 
-    if (result.meta.changes === 0) return null;
-
-    return this.db.prepare('SELECT * FROM gallery_pages WHERE id = ?').bind(id).first<GalleryPage>();
+    return page ?? null;
   }
 
   /**
@@ -145,19 +143,15 @@ export class GalleryService {
   ): Promise<GalleryPageName> {
     const now = new Date().toISOString();
 
-    await this.db
+    const row = await this.db
       .prepare(
         `INSERT INTO gallery_page_names (gallery_page_id, language_code, name, description, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?)
          ON CONFLICT(gallery_page_id, language_code) DO UPDATE
-           SET name = excluded.name, description = excluded.description, updated_at = excluded.updated_at`
+           SET name = excluded.name, description = excluded.description, updated_at = excluded.updated_at
+         RETURNING *`
       )
       .bind(pageId, languageCode, name, description, now, now)
-      .run();
-
-    const row = await this.db
-      .prepare('SELECT * FROM gallery_page_names WHERE gallery_page_id = ? AND language_code = ?')
-      .bind(pageId, languageCode)
       .first<GalleryPageName>();
 
     return row!;
@@ -205,18 +199,14 @@ export class GalleryService {
     await this.bucket.put(r2Key, file.stream(), { httpMetadata: { contentType } });
 
     const now = new Date().toISOString();
-    const result = await this.db
+    const media = await this.db
       .prepare(
         `INSERT INTO gallery_page_media
            (gallery_page_id, language_code, media_type, r2_key, original_filename, content_type, file_size, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         RETURNING *`
       )
       .bind(pageId, languageCode, mediaType, r2Key, file.name ?? '', contentType, file.size, now, now)
-      .run();
-
-    const media = await this.db
-      .prepare('SELECT * FROM gallery_page_media WHERE id = ?')
-      .bind(result.meta.last_row_id)
       .first<GalleryPageMedia>();
 
     return media!;
@@ -262,18 +252,14 @@ export class GalleryService {
     day_sat: number;
   }): Promise<GalleryAvailabilityRule> {
     const now = new Date().toISOString();
-    const result = await this.db
+    const rule = await this.db
       .prepare(
         `INSERT INTO gallery_page_availability_rules
          (gallery_page_id, start_time, end_time, day_sun, day_mon, day_tue, day_wed, day_thu, day_fri, day_sat, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         RETURNING *`
       )
       .bind(pageId, data.start_time, data.end_time, data.day_sun, data.day_mon, data.day_tue, data.day_wed, data.day_thu, data.day_fri, data.day_sat, now, now)
-      .run();
-
-    const rule = await this.db
-      .prepare('SELECT * FROM gallery_page_availability_rules WHERE id = ?')
-      .bind(result.meta.last_row_id)
       .first<GalleryAvailabilityRule>();
 
     return rule!;
@@ -308,17 +294,12 @@ export class GalleryService {
     setClauses.push('updated_at = ?');
     binds.push(now);
 
-    const result = await this.db
-      .prepare(`UPDATE gallery_page_availability_rules SET ${setClauses.join(', ')} WHERE id = ?`)
+    const rule = await this.db
+      .prepare(`UPDATE gallery_page_availability_rules SET ${setClauses.join(', ')} WHERE id = ? RETURNING *`)
       .bind(...binds, ruleId)
-      .run();
-
-    if (result.meta.changes === 0) return null;
-
-    return this.db
-      .prepare('SELECT * FROM gallery_page_availability_rules WHERE id = ?')
-      .bind(ruleId)
       .first<GalleryAvailabilityRule>();
+
+    return rule ?? null;
   }
 
   /** Delete an availability rule — returns false if not found */

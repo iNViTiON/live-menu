@@ -26,18 +26,14 @@ export class SettingsService {
   async set(key: string, value: string): Promise<Setting> {
     const now = Math.floor(Date.now() / 1000);
 
-    await this.db
+    const row = await this.db
       .prepare(
         `INSERT INTO settings (key, value, updated_at)
          VALUES (?, ?, ?)
-         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+         RETURNING *`
       )
       .bind(key, value, now)
-      .run();
-
-    const row = await this.db
-      .prepare('SELECT * FROM settings WHERE key = ?')
-      .bind(key)
       .first<Setting>();
 
     return row!;

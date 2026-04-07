@@ -17,25 +17,14 @@ export class LanguageService {
   /** Add a new language. code must be exactly 2 chars. */
   async add(code: string, displayName: string): Promise<Language> {
     const now = Math.floor(Date.now() / 1000);
-
-    const maxRow = await this.db
-      .prepare('SELECT MAX(sort_order) as max_order FROM languages')
-      .first<{ max_order: number | null }>();
-
-    const sortOrder = (maxRow?.max_order ?? -1) + 1;
-
-    await this.db
-      .prepare(
-        'INSERT INTO languages (code, display_name, is_base, sort_order, created_at) VALUES (?, ?, 0, ?, ?)'
-      )
-      .bind(code, displayName, sortOrder, now)
-      .run();
-
     const lang = await this.db
-      .prepare('SELECT * FROM languages WHERE code = ?')
-      .bind(code)
+      .prepare(
+        `INSERT INTO languages (code, display_name, is_base, sort_order, created_at)
+         VALUES (?, ?, 0, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM languages), ?)
+         RETURNING *`
+      )
+      .bind(code, displayName, now)
       .first<Language>();
-
     return lang!;
   }
 

@@ -46,44 +46,34 @@ export class TraitGroupService {
 
     if (!group) return null;
 
-    const [names, junctions] = await Promise.all([
-      this.db
-        .prepare('SELECT * FROM trait_group_names WHERE trait_group_id = ?')
-        .bind(id)
-        .all<TraitGroupName>(),
-      this.db
-        .prepare(
-          'SELECT * FROM trait_group_traits WHERE trait_group_id = ? ORDER BY sort_order'
-        )
-        .bind(id)
-        .all<{ trait_group_id: number; trait_id: number; sort_order: number }>(),
+    const [namesResult, junctionsResult] = await this.db.batch([
+      this.db.prepare('SELECT * FROM trait_group_names WHERE trait_group_id = ?').bind(id),
+      this.db.prepare('SELECT * FROM trait_group_traits WHERE trait_group_id = ? ORDER BY sort_order').bind(id),
     ]);
 
-    const traitIds = junctions.results.map((j) => j.trait_id);
+    const names = namesResult.results as TraitGroupName[];
+    const junctions = junctionsResult.results as { trait_group_id: number; trait_id: number; sort_order: number }[];
+    const traitIds = junctions.map((j) => j.trait_id);
 
     if (traitIds.length === 0) {
-      return { ...group, names: names.results, traits: [] };
+      return { ...group, names, traits: [] };
     }
 
     const placeholders = traitIds.map(() => '?').join(',');
-    const [allTraits, allTraitNames] = await Promise.all([
-      this.db
-        .prepare(`SELECT * FROM traits WHERE id IN (${placeholders})`)
-        .bind(...traitIds)
-        .all<Trait>(),
-      this.db
-        .prepare(`SELECT * FROM trait_names WHERE trait_id IN (${placeholders})`)
-        .bind(...traitIds)
-        .all<TraitName>(),
+    const [allTraitsResult, allTraitNamesResult] = await this.db.batch([
+      this.db.prepare(`SELECT * FROM traits WHERE id IN (${placeholders})`).bind(...traitIds),
+      this.db.prepare(`SELECT * FROM trait_names WHERE trait_id IN (${placeholders})`).bind(...traitIds),
     ]);
 
-    const traitsById = new Map(allTraits.results.map((t) => [t.id, t]));
-    const traitNamesByTrait = Map.groupBy(allTraitNames.results, (n: TraitName) => n.trait_id);
+    const allTraits = allTraitsResult.results as Trait[];
+    const allTraitNames = allTraitNamesResult.results as TraitName[];
+    const traitsById = new Map(allTraits.map((t) => [t.id, t]));
+    const traitNamesByTrait = Map.groupBy(allTraitNames, (n: TraitName) => n.trait_id);
 
     return {
       ...group,
-      names: names.results,
-      traits: junctions.results.flatMap((j) => {
+      names,
+      traits: junctions.flatMap((j) => {
         const trait = traitsById.get(j.trait_id);
         if (!trait) return [];
         return [{ ...trait, names: traitNamesByTrait.get(j.trait_id) ?? [] }];
@@ -94,23 +84,14 @@ export class TraitGroupService {
   /** Create a new trait group with sort_order = max + 1 */
   async create(): Promise<TraitGroup> {
     const now = Math.floor(Date.now() / 1000);
-
-    const maxRow = await this.db
-      .prepare('SELECT MAX(sort_order) as max_order FROM trait_groups')
-      .first<{ max_order: number | null }>();
-
-    const sortOrder = (maxRow?.max_order ?? -1) + 1;
-
-    const result = await this.db
-      .prepare('INSERT INTO trait_groups (sort_order, created_at, updated_at) VALUES (?, ?, ?)')
-      .bind(sortOrder, now, now)
-      .run();
-
     const group = await this.db
-      .prepare('SELECT * FROM trait_groups WHERE id = ?')
-      .bind(result.meta.last_row_id)
+      .prepare(
+        `INSERT INTO trait_groups (sort_order, created_at, updated_at)
+         VALUES ((SELECT COALESCE(MAX(sort_order), -1) + 1 FROM trait_groups), ?, ?)
+         RETURNING *`
+      )
+      .bind(now, now)
       .first<TraitGroup>();
-
     return group!;
   }
 
@@ -143,19 +124,15 @@ export class TraitGroupService {
   ): Promise<TraitGroupName> {
     const now = Math.floor(Date.now() / 1000);
 
-    await this.db
+    const row = await this.db
       .prepare(
         `INSERT INTO trait_group_names (trait_group_id, language_code, name, description, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?)
          ON CONFLICT(trait_group_id, language_code) DO UPDATE
-           SET name = excluded.name, description = excluded.description, updated_at = excluded.updated_at`
+           SET name = excluded.name, description = excluded.description, updated_at = excluded.updated_at
+         RETURNING *`
       )
       .bind(groupId, langCode, name, description, now, now)
-      .run();
-
-    const row = await this.db
-      .prepare('SELECT * FROM trait_group_names WHERE trait_group_id = ? AND language_code = ?')
-      .bind(groupId, langCode)
       .first<TraitGroupName>();
 
     return row!;
@@ -171,20 +148,11 @@ export class TraitGroupService {
 
   /** Add a trait to a group (idempotent) */
   async addTrait(groupId: number, traitId: number): Promise<void> {
-    const maxRow = await this.db
-      .prepare(
-        'SELECT MAX(sort_order) as max_order FROM trait_group_traits WHERE trait_group_id = ?'
-      )
-      .bind(groupId)
-      .first<{ max_order: number | null }>();
-
-    const sortOrder = (maxRow?.max_order ?? -1) + 1;
-
     await this.db
       .prepare(
-        'INSERT OR IGNORE INTO trait_group_traits (trait_group_id, trait_id, sort_order) VALUES (?, ?, ?)'
+        'INSERT OR IGNORE INTO trait_group_traits (trait_group_id, trait_id, sort_order) VALUES (?, ?, (SELECT COALESCE(MAX(sort_order), -1) + 1 FROM trait_group_traits WHERE trait_group_id = ?))'
       )
-      .bind(groupId, traitId, sortOrder)
+      .bind(groupId, traitId, groupId)
       .run();
   }
 

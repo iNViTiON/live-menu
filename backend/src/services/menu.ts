@@ -325,14 +325,9 @@ export class MenuService {
     setClauses.push('updated_at = ?');
     binds.push(now);
 
-    await this.db
-      .prepare(`UPDATE menu_items SET ${setClauses.join(', ')} WHERE id = ?`)
-      .bind(...binds, id)
-      .run();
-
     const item = await this.db
-      .prepare('SELECT * FROM menu_items WHERE id = ?')
-      .bind(id)
+      .prepare(`UPDATE menu_items SET ${setClauses.join(', ')} WHERE id = ? RETURNING *`)
+      .bind(...binds, id)
       .first<MenuItem>();
 
     return item!;
@@ -380,19 +375,15 @@ export class MenuService {
   ): Promise<MenuItemName> {
     const now = Math.floor(Date.now() / 1000);
 
-    await this.db
+    const row = await this.db
       .prepare(
         `INSERT INTO menu_item_names (menu_item_id, language_code, name, description, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?)
          ON CONFLICT(menu_item_id, language_code) DO UPDATE
-           SET name = excluded.name, description = excluded.description, updated_at = excluded.updated_at`
+           SET name = excluded.name, description = excluded.description, updated_at = excluded.updated_at
+         RETURNING *`
       )
       .bind(menuItemId, languageCode, name, description, now, now)
-      .run();
-
-    const row = await this.db
-      .prepare('SELECT * FROM menu_item_names WHERE menu_item_id = ? AND language_code = ?')
-      .bind(menuItemId, languageCode)
       .first<MenuItemName>();
 
     return row!;

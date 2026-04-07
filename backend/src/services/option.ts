@@ -51,10 +51,11 @@ export class OptionService {
     const now = Math.floor(Date.now() / 1000);
 
     if (data.price_delta !== undefined) {
-      await this.db
-        .prepare('UPDATE options SET price_delta = ?, updated_at = ? WHERE id = ?')
+      const option = await this.db
+        .prepare('UPDATE options SET price_delta = ?, updated_at = ? WHERE id = ? RETURNING *')
         .bind(data.price_delta, now, id)
-        .run();
+        .first<Option>();
+      return option!;
     }
 
     const option = await this.db
@@ -94,19 +95,15 @@ export class OptionService {
   ): Promise<OptionName> {
     const now = Math.floor(Date.now() / 1000);
 
-    await this.db
+    const row = await this.db
       .prepare(
         `INSERT INTO option_names (option_id, language_code, name, description, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?)
          ON CONFLICT(option_id, language_code) DO UPDATE
-           SET name = excluded.name, description = excluded.description, updated_at = excluded.updated_at`
+           SET name = excluded.name, description = excluded.description, updated_at = excluded.updated_at
+         RETURNING *`
       )
       .bind(optionId, langCode, name, description, now, now)
-      .run();
-
-    const row = await this.db
-      .prepare('SELECT * FROM option_names WHERE option_id = ? AND language_code = ?')
-      .bind(optionId, langCode)
       .first<OptionName>();
 
     return row!;
