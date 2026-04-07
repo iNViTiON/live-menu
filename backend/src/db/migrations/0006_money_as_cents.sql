@@ -1,3 +1,7 @@
+-- WARNING: This migration was applied without BEGIN/COMMIT transaction wrapping.
+-- A crash mid-execution could cause data loss. Already applied — do not modify.
+-- Future table-recreation migrations MUST use BEGIN/COMMIT.
+
 -- Convert base_price from REAL (euros) to INTEGER (cents)
 -- and price_delta from REAL (euros) to INTEGER (cents)
 

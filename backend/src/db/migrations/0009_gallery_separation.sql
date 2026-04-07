@@ -1,3 +1,7 @@
+-- WARNING: This migration was applied without BEGIN/COMMIT transaction wrapping.
+-- A crash mid-execution could cause data loss. Already applied — do not modify.
+-- Future table-recreation migrations MUST use BEGIN/COMMIT.
+
 -- Separate gallery pages from menu items (products)
 -- Gallery pages are media boards displayed on the menu screen with scheduling
 -- Products (menu_items) no longer have scheduling
