@@ -25,7 +25,7 @@
     "db:migrate:remote": "cd backend && bunx wrangler d1 migrations apply live_menu --remote --env=production",
     "deploy:notify": "curl -sf https://menu.mitch.ee/api/public/check-app-update || true",
     "deploy:worker": "(cd backend && bunx wrangler deploy --env=production)",
-    "deploy:pages": "bunx wrangler pages deploy backend/dist/ --project-name=live-menu --branch=main",
+    "deploy:pages": "bunx wrangler pages deploy dist/ --project-name=live-menu --branch=main",
     "deploy": "bun run build:all && bun run deploy:worker && bun run deploy:pages && bun run deploy:notify"
   },
   "devDependencies": {
