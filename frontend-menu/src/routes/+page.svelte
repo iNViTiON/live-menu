@@ -25,12 +25,12 @@
   }
 
   // Reset scroll tracking when view changes (e.g. idle timer navigates back to gallery)
+  // Both values must reset — the outgoing scroll container can fire events during
+  // the 600ms exit transition, re-setting the value after only one is cleared.
   $effect(() => {
-    if (viewStore.activeView === 'gallery') {
-      customerScrollY = 0;
-    } else {
-      galleryScrollY = 0;
-    }
+    viewStore.activeView; // track
+    galleryScrollY = 0;
+    customerScrollY = 0;
   });
 
   // Pure translateX slide — no opacity, pages appear connected side-by-side
