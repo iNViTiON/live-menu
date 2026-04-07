@@ -51,7 +51,7 @@
     const stopPolling = galleryStore.startSchedulePolling();
 
     // Single app-wide idle timer
-    let isIdle = false;
+    let isIdle = true;
     let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
     menuSync.onAppVersionChange = () => {
@@ -81,6 +81,9 @@
       onDismiss: () => {
         warningVisible = false;
         if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+      },
+      onActivity: () => {
+        isIdle = false;
       },
       onIdle: () => {
         isIdle = true;

@@ -169,13 +169,19 @@
                         <ul class="options-list">
                           {#each og.options as opt (opt.id)}
                             {@const optName = customerStore.getName(opt.names)}
+                            {@const optDesc = customerStore.getDescription(opt.names)}
                             {@const delta = customerStore.formatDelta(opt.price_delta)}
                             <li class="option-item">
                               <span class="opt-dot">○</span>
-                              <span class="opt-name">{optName}</span>
-                              {#if delta}
-                                <span class="opt-delta">{delta}</span>
-                              {/if}
+                              <span class="opt-info">
+                                <span class="opt-name">{optName}</span>
+                                {#if delta}
+                                  <span class="opt-delta"> ({delta})</span>
+                                {/if}
+                                {#if optDesc}
+                                  <span class="opt-desc"> {optDesc}</span>
+                                {/if}
+                              </span>
                             </li>
                           {/each}
                         </ul>
@@ -573,6 +579,7 @@
   @media (max-width: 640px) {
     .option-groups.has-media:has(.item-media :global(.item-media-el)) {
       flex-direction: column;
+      align-items: stretch;
     }
     .option-groups.has-media:has(.item-media :global(.item-media-el)) .item-media {
       order: -1;
@@ -643,17 +650,19 @@
   }
 
   .opt-name {
-    flex: 1;
+    font-weight: 500;
+    color: #3a2e1e;
   }
 
   .opt-delta {
-    font-size: 0.8rem;
+    color: #5a7a3a;
     font-weight: 600;
-    color: #7c5c2e;
-    background: #f5eddf;
-    border-radius: 0.3rem;
-    padding: 0.1rem 0.4rem;
-    white-space: nowrap;
+  }
+
+  .opt-desc {
+    font-size: 0.85em;
+    color: #888;
+    font-style: italic;
   }
 
   /* ── Item media ── */

@@ -4,19 +4,27 @@ export interface IdleTimerOptions {
   onWarning: () => void;
   onDismiss: () => void;
   onIdle: () => void;
+  /** Called when user interaction resumes after idle fired. */
+  onActivity?: () => void;
   /** Return false to suppress the warning and silently restart the countdown. */
   shouldWarn?: () => boolean;
 }
 
 export function createIdleTimer(options: IdleTimerOptions): { start: () => () => void } {
-  const { timeoutMs, warningMs, onWarning, onDismiss, onIdle, shouldWarn } = options;
+  const { timeoutMs, warningMs, onWarning, onDismiss, onIdle, onActivity, shouldWarn } = options;
   let warningTimer: ReturnType<typeof setTimeout> | null = null;
   let idleTimer: ReturnType<typeof setTimeout> | null = null;
   let isWarning = false;
+  let isFiredIdle = false;
 
   function reset() {
     if (warningTimer !== null) clearTimeout(warningTimer);
     if (idleTimer !== null) clearTimeout(idleTimer);
+
+    if (isFiredIdle) {
+      isFiredIdle = false;
+      if (onActivity) onActivity();
+    }
 
     if (isWarning) {
       isWarning = false;
@@ -34,6 +42,7 @@ export function createIdleTimer(options: IdleTimerOptions): { start: () => () =>
 
     idleTimer = setTimeout(() => {
       isWarning = false;
+      isFiredIdle = true;
       onIdle();
     }, timeoutMs);
   }

@@ -45,7 +45,7 @@ class MenuVersionSync {
             );
 
             // Check for app version update (new frontend deploy)
-            const staleApp = (msg.vector['appVersion'] || 0) > (this.localVector['appVersion'] || 0);
+            const staleApp = !!this.localVector['appVersion'] && (msg.vector['appVersion'] || 0) > (this.localVector['appVersion'] || 0);
 
             this.localVector = { ...msg.vector };
 
