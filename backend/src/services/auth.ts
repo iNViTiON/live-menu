@@ -238,6 +238,9 @@ export class AuthService {
 
     let userId: number;
     if (existingUser) {
+      if (existingUser.has_passkey) {
+        throw new Error('User already has a registered passkey');
+      }
       userId = existingUser.id;
     } else {
       userId = await this.createUser(preFilledName, role);
