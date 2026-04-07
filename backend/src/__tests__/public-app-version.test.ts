@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest';
-import { env, SELF, fetchMock } from 'cloudflare:test';
+import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
+import { env, SELF } from 'cloudflare:test';
 import { setupTestEnv } from './setup';
 
 const MOCK_VERSION = 'test-build-version-abc123';
+const originalFetch = globalThis.fetch;
 
 describe('GET /api/public/check-app-update', () => {
   beforeAll(async () => {
@@ -12,23 +13,22 @@ describe('GET /api/public/check-app-update', () => {
     await env.DB.prepare(
       "DELETE FROM settings WHERE key = 'app:build_version'"
     ).run();
-
-    // Mock CF Pages version.json endpoint
-    fetchMock.activate();
-    fetchMock.disableNetConnect();
   });
 
   afterEach(() => {
-    fetchMock.resetHandlers();
+    globalThis.fetch = originalFetch;
   });
 
   function mockVersion(version: string = MOCK_VERSION) {
-    fetchMock
-      .get('http://localhost:5173')
-      .intercept({ path: '/_app/version.json' })
-      .reply(200, JSON.stringify({ version }), {
-        headers: { 'content-type': 'application/json' },
-      });
+    globalThis.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes('/_app/version.json')) {
+        return Promise.resolve(new Response(JSON.stringify({ version }), {
+          headers: { 'content-type': 'application/json' },
+        }));
+      }
+      return originalFetch(input);
+    }) as typeof fetch;
   }
 
   it('returns 200 with a version string', async () => {
@@ -80,7 +80,9 @@ describe('GET /api/public/check-app-update', () => {
   });
 
   it('returns null version when CF Pages is unreachable', async () => {
-    // No mock registered — fetchMock will reject the request
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve(new Response('Not Found', { status: 404 }))
+    ) as typeof fetch;
     const res = await SELF.fetch('http://localhost/api/public/check-app-update');
     expect(res.status).toBe(200);
     const body = await res.json<{ version: string | null }>();
