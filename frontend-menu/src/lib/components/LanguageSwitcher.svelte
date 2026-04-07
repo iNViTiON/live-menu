@@ -10,6 +10,7 @@
   } = $props();
 
   let expanded = $state(false);
+  let hideCollapsed = $state(true);
 
   // Codes that should show text labels instead of flag emoji (e.g. to avoid displaying a country flag)
   const textLabels: Record<string, string> = {
@@ -42,12 +43,24 @@
     expanded = false;
   });
 
+  let collapseTimer: ReturnType<typeof setTimeout> | null = null;
+
+  $effect(() => {
+    if (expanded) {
+      // Show immediately on expand
+      if (collapseTimer) { clearTimeout(collapseTimer); collapseTimer = null; }
+      hideCollapsed = false;
+    } else {
+      // Hide after animation completes on collapse
+      collapseTimer = setTimeout(() => { hideCollapsed = true; }, 250);
+    }
+  });
+
   function handleClick(code: string) {
     if (!expanded) {
       expanded = true;
     } else {
       onLanguageChange(code);
-      // expanded will be set to false by the $effect above
     }
   }
 
@@ -62,7 +75,10 @@
 
   onMount(() => {
     document.addEventListener('click', onDocClick, true);
-    return () => document.removeEventListener('click', onDocClick, true);
+    return () => {
+      document.removeEventListener('click', onDocClick, true);
+      if (collapseTimer) clearTimeout(collapseTimer);
+    };
   });
 
   // Interpolate from large (top) → normal (scrolled 150px)
@@ -70,9 +86,6 @@
   const fontSize = $derived(2 - t * 1);
   const btnSize = $derived(3.5 - t * 1.75);
   const gap = $derived(0.7 - t * 0.35);
-
-  // Stacked offset for collapsed buttons (px)
-  const stackOffset = 6;
 </script>
 
 {#if languages.length > 1}
@@ -80,18 +93,19 @@
     {#each ordered as lang, i (lang.code)}
       {@const isActive = lang.code === selectedLanguage}
       {@const collapsed = !expanded && !isActive}
+      {@const hidden = hideCollapsed && !isActive}
       {#if textLabels[lang.code]}
         <button
           class="lang-btn lang-text"
           class:active={isActive}
           class:collapsed
+          class:hidden
           onclick={() => handleClick(lang.code)}
           title={lang.display_name}
           aria-label={lang.display_name}
           aria-pressed={isActive}
           style:font-size="{fontSize * 0.32}rem"
           style:height="{btnSize}rem"
-          style:--stack-offset="{collapsed ? i * stackOffset : 0}px"
           style:z-index={isActive ? 10 : 10 - i}
         >
           {#each textLabels[lang.code].split('\n') as line}
@@ -103,6 +117,7 @@
           class="lang-btn"
           class:active={isActive}
           class:collapsed
+          class:hidden
           onclick={() => handleClick(lang.code)}
           title={lang.display_name}
           aria-label={lang.display_name}
@@ -110,7 +125,6 @@
           style:font-size="{fontSize}rem"
           style:width="{btnSize}rem"
           style:height="{btnSize}rem"
-          style:--stack-offset="{collapsed ? i * stackOffset : 0}px"
           style:z-index={isActive ? 10 : 10 - i}
         >
           {toFlag(lang.code)}
@@ -135,7 +149,7 @@
   .lang-btn {
     border: none;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     cursor: pointer;
     display: flex;
@@ -148,12 +162,16 @@
       width 0.15s ease-out,
       height 0.15s ease-out,
       margin-top 0.25s ease-out,
-      opacity 0.25s ease-out;
+      background 0.25s ease-out;
   }
 
   .lang-btn.collapsed {
-    margin-top: calc(-100% + var(--stack-offset));
+    margin-top: -100%;
     pointer-events: none;
+  }
+
+  .lang-btn.hidden {
+    visibility: hidden;
   }
 
   .lang-btn.lang-text {
@@ -168,7 +186,7 @@
   }
 
   .lang-btn.lang-text.collapsed {
-    margin-top: calc(-100% + var(--stack-offset));
+    margin-top: -100%;
   }
 
   .lang-btn:hover {
@@ -184,6 +202,7 @@
   }
 
   .lang-switcher:not(.expanded) .lang-btn.active {
+    background: rgba(0, 0, 0, 0.85);
     box-shadow: none;
   }
 </style>
