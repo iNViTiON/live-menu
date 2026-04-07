@@ -21,7 +21,7 @@
 - Cloudflare account with Workers and Pages enabled
 - Wrangler CLI (included in project deps — no separate install needed)
 - Bun installed (`https://bun.sh`)
-- Domain `menu.mitch.ee` added to your Cloudflare account
+- Domains `menu.mitch.ee` and `menu-admin.mitch.ee` added to your Cloudflare account
 
 ---
 
@@ -82,26 +82,32 @@ This populates the menu with the default drink menu including traits, options, a
 
 ## Step 3: Build and Deploy
 
-Build both frontends (menu + admin), merge their output, then deploy the Worker:
+Build both frontends and deploy the Worker + both CF Pages projects:
 
 ```bash
 bun run deploy
 ```
 
-This runs `build:all` (menu build → admin build → dist merge) followed by `bunx wrangler deploy` from the `backend/` directory.
+This runs `build:all` (menu + admin builds in parallel), then deploys the Worker, menu SPA to CF Pages (`live-menu`), admin SPA to CF Pages (`live-menu-admin`), and triggers deploy notification.
 
 The deployment includes a cron trigger configured in `backend/wrangler.toml` that runs the `scheduled` handler every Sunday at midnight UTC to clean up expired sessions and challenges.
 
 ---
 
-## Step 4: Configure Custom Domain
+## Step 4: Configure Custom Domains
 
+### Menu SPA (CF Pages: `live-menu`)
 1. Open the Cloudflare dashboard.
-2. Navigate to **Workers & Pages** → **live-menu-api** → **Settings** → **Domains & Routes**.
-3. Under **Custom Domains**, click **Add Custom Domain**.
-4. Enter `menu.mitch.ee` and save.
+2. Navigate to **Workers & Pages** → **live-menu** → **Custom domains**.
+3. Add `menu.mitch.ee` and save.
 
-Cloudflare provisions the TLS certificate automatically. DNS propagation may take a few minutes.
+### Admin SPA (CF Pages: `live-menu-admin`)
+1. Navigate to **Workers & Pages** → **live-menu-admin** → **Custom domains**.
+2. Add `menu-admin.mitch.ee` and save.
+
+Worker routes for `/api/*` and `/media/*` on both domains are configured in `backend/wrangler.toml` and deployed automatically with `bun run deploy:worker`.
+
+Cloudflare provisions TLS certificates automatically. DNS propagation may take a few minutes.
 
 ---
 
@@ -134,9 +140,9 @@ bunx wrangler d1 execute live_menu --remote --command \
 
 **5d. Register a passkey:**
 
-Visit `https://menu.mitch.ee/admin/register?token=<token>` in a browser that supports WebAuthn (Chrome, Safari, Firefox). Complete the passkey registration flow. After success, `has_passkey` is automatically set to `1` via database trigger and the token is marked used.
+Visit `https://menu-admin.mitch.ee/register?token=<token>` in a browser that supports WebAuthn (Chrome, Safari, Firefox). Complete the passkey registration flow. After success, `has_passkey` is automatically set to `1` via database trigger and the token is marked used.
 
-You can now log in at `https://menu.mitch.ee/admin` using your passkey.
+You can now log in at `https://menu-admin.mitch.ee` using your passkey.
 
 **5e. Invite additional users:**
 
@@ -149,8 +155,9 @@ Use the admin panel to generate registration tokens for other admin or staff acc
 | URL | Expected |
 |-----|----------|
 | `https://menu.mitch.ee` | Public menu (empty until content is added) |
-| `https://menu.mitch.ee/admin` | Admin login page |
-| `https://menu.mitch.ee/api/health` | `{"ok":true}` (if the route exists) |
+| `https://menu-admin.mitch.ee` | Admin login page |
+| `https://menu.mitch.ee/api/health` | `{"status":"ok"}` |
+| `https://menu-admin.mitch.ee/api/health` | `{"status":"ok"}` |
 
 ---
 
@@ -160,10 +167,11 @@ All vars live in `backend/wrangler.toml` under `[vars]`. They are safe to commit
 
 | Variable | Value | Description |
 |----------|-------|-------------|
-| `FRONTEND_URL` | `https://menu.mitch.ee` | Allowed CORS origin and redirect base for the frontend |
-| `WEBAUTHN_RP_ID` | `mitch.ee` | WebAuthn Relying Party ID — must match the domain (not subdomain) |
+| `FRONTEND_URL` | `https://menu.mitch.ee` | Menu SPA origin — used for CORS, CSRF, and app version checks |
+| `ADMIN_URL` | `https://menu-admin.mitch.ee` | Admin SPA origin — used for CORS, CSRF, WebSocket origin, WebAuthn, and registration links |
+| `WEBAUTHN_RP_ID` | `mitch.ee` | WebAuthn Relying Party ID — must match the domain (covers both subdomains) |
 | `WEBAUTHN_RP_NAME` | `Live Menu` | Human-readable name shown in the browser passkey prompt |
-| `WEBAUTHN_ORIGIN` | `https://menu.mitch.ee` | Exact origin the WebAuthn ceremony runs on — must match the browser address bar |
+| `WEBAUTHN_ORIGIN` | `https://menu.mitch.ee` | Legacy — WebAuthn now uses `ADMIN_URL` as expected origin |
 
 ---
 

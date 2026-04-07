@@ -11,7 +11,7 @@ dev-menu                 # vite dev on :5173 (proxy → :8787)
 dev-admin                # vite dev on :5174 (proxy → :8787)
 
 # Testing
-bun run test:backend     # 266 integration tests (vitest + @cloudflare/vitest-pool-workers)
+bun run test:backend     # 290 integration tests (vitest + @cloudflare/vitest-pool-workers)
 e2e                      # 22 Playwright tests (requires Nix devShell for Chromium)
 e2e --headed             # Playwright in browser
 e2e tests/admin-menu.spec.ts   # Single test file
@@ -24,32 +24,40 @@ db execute live_menu --local --command "SQL"  # Query local D1
 cd backend && bunx wrangler d1 execute live_menu --local --file=src/db/seed.sql  # Seed menu data
 
 # Build + Deploy
-bun run build:all        # Build both SPAs → merge into backend/dist/
-bun run deploy           # build:all + wrangler deploy (worker) + wrangler pages deploy + deploy:notify
+bun run build:all        # Build both SPAs (menu + admin, in parallel)
+bun run deploy           # build:all + wrangler deploy (worker) + deploy:pages + deploy:admin + deploy:notify
+bun run deploy:pages     # Deploy menu SPA to CF Pages (live-menu)
+bun run deploy:admin     # Deploy admin SPA to CF Pages (live-menu-admin)
 ```
 
 ## Architecture
 
-**Cloudflare Pages** (`menu.mitch.ee`) serves both SPAs (static files). A **Cloudflare Worker** (`live-menu-api`) handles only API and media routes, intercepting before CF Pages via Worker Routes:
+Two **Cloudflare Pages** projects serve the SPAs as static files. A single **Cloudflare Worker** (`live-menu-api`) handles API and media routes on both domains, intercepting before CF Pages via Worker Routes:
 
 1. `/api/public/sync-ws` + WebSocket upgrade → forward to `BroadcastRoom` Durable Object (public clients)
-2. `/api/sync-ws` + WebSocket upgrade → forward to `BroadcastRoom` Durable Object (admin, origin-checked)
+2. `/api/sync-ws` + WebSocket upgrade → forward to `BroadcastRoom` Durable Object (admin, origin-checked against both `FRONTEND_URL` and `ADMIN_URL`)
 3. `/media/*` → R2 proxy with immutable cache headers
 4. `/api/*` → Hono app (middleware chain: security → cors → db PRAGMA → services → auth)
-5. Everything else → CF Pages (`/*` and `/admin/*` via `_redirects` SPA fallback)
+5. Everything else → CF Pages (SPA fallback via `_redirects`)
 
-Both SPAs are built as static files and merged into `backend/dist/` via `scripts/merge-dist.mjs`, then deployed to CF Pages (`live-menu` project). Worker routes only cover `menu.mitch.ee/api/*` and `menu.mitch.ee/media/*`.
+**CF Pages project `live-menu`**: Custom domain `menu.mitch.ee`. Serves the menu SPA (gallery, customer). Deployed from `frontend-menu/build/`. SPA routing via `frontend-menu/static/_redirects`:
+```
+/*  /index.html  200
+```
 
-**CF Pages project**: `live-menu`. Custom domain: `menu.mitch.ee`. SPA routing via `frontend-menu/static/_redirects` (copied into build output):
+**CF Pages project `live-menu-admin`**: Custom domain `menu-admin.mitch.ee`. Serves the admin SPA. Deployed from `frontend-admin/build/`. SPA routing via `frontend-admin/static/_redirects`:
 ```
-/admin/*  /admin/index.html  200
-/*        /index.html        200
+/*  /index.html  200
 ```
+
+**Worker routes** cover both domains: `menu.mitch.ee/api/*`, `menu.mitch.ee/media/*`, `menu-admin.mitch.ee/api/*`, `menu-admin.mitch.ee/media/*`.
+
+**Multi-origin**: Backend accepts requests from both `FRONTEND_URL` (menu) and `ADMIN_URL` (admin) for CORS, CSRF, and WebSocket origin checks. Registration links use `ADMIN_URL`. WebAuthn uses `ADMIN_URL` as expected origin (`WEBAUTHN_RP_ID=mitch.ee` covers both subdomains).
 
 ### Key type: `HonoEnv`
 
 All Hono middleware and routes use `HonoEnv` from `backend/src/types.ts`:
-- `Bindings`: `DB` (D1), `MEDIA_BUCKET` (R2), `BROADCAST_ROOM` (DO), plus WebAuthn vars
+- `Bindings`: `DB` (D1), `MEDIA_BUCKET` (R2), `BROADCAST_ROOM` (DO), `FRONTEND_URL`, `ADMIN_URL`, plus WebAuthn vars
 - `Variables`: `user` (AuthUser), `authService` (AuthService), `versionVectorService` (VersionVectorService)
 
 Access via `c.env.DB`, `c.get('user')`, `c.get('authService')`, etc.

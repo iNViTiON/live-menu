@@ -46,8 +46,8 @@ bun run test:backend         # run backend integration tests
 bun run e2e                  # run Playwright e2e suite
 bun run db:migrate:local     # apply D1 migrations locally
 bun run db:migrate:remote    # apply D1 migrations to production
-bun run build:all            # build both frontends + merge dist
-bun run deploy               # build:all + wrangler deploy
+bun run build:all            # build both frontends (menu + admin, in parallel)
+bun run deploy               # build:all + deploy worker + deploy menu Pages + deploy admin Pages
 ```
 
 ---
@@ -125,7 +125,7 @@ bunx wrangler d1 create live_menu
 
 ## Testing
 
-### Backend integration tests (266 tests)
+### Backend integration tests (290 tests)
 
 ```bash
 bun run test:backend
@@ -211,7 +211,7 @@ live-menu-cf/
 │   ├── global-setup.ts
 │   └── playwright.config.ts
 ├── scripts/
-│   └── merge-dist.mjs  # Merges frontend builds for static asset serving
+│   └── generate-precache-manifest.mjs  # Injects precache list into menu SW
 ├── flake.nix          # Nix devShell with wrapper scripts
 └── package.json       # Bun workspace root
 ```

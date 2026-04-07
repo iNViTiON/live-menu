@@ -15,8 +15,7 @@
     "dev:admin": "bun run --filter frontend-admin dev",
     "build:menu": "bun run --filter frontend-menu build && bun scripts/generate-precache-manifest.mjs",
     "build:admin": "bun run --filter frontend-admin build",
-    "build:merge": "bun scripts/merge-dist.mjs",
-    "build:all": "bun run build:menu & bun run build:admin & wait && bun run build:merge",
+    "build:all": "bun run build:menu & bun run build:admin & wait",
     "test:backend": "bun run --filter backend test",
     "test:menu": "bun run --filter frontend-menu test",
     "test:admin": "bun run --filter frontend-admin test",
@@ -25,8 +24,9 @@
     "db:migrate:remote": "cd backend && bunx wrangler d1 migrations apply live_menu --remote --env=production",
     "deploy:notify": "curl -sf https://menu.mitch.ee/api/public/check-app-update || true",
     "deploy:worker": "(cd backend && bunx wrangler deploy --env=production)",
-    "deploy:pages": "bunx wrangler pages deploy dist/ --project-name=live-menu --branch=main",
-    "deploy": "bun run build:all && bun run deploy:worker && bun run deploy:pages && bun run deploy:notify"
+    "deploy:pages": "bunx wrangler pages deploy frontend-menu/build/ --project-name=live-menu --branch=main",
+    "deploy:admin": "bunx wrangler pages deploy frontend-admin/build/ --project-name=live-menu-admin --branch=main",
+    "deploy": "bun run build:all && bun run deploy:worker && bun run deploy:pages && bun run deploy:admin && bun run deploy:notify"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^3.2.4",

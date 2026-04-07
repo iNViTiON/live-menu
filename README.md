@@ -1,19 +1,22 @@
 # Live Menu
 
-Cloudflare-native restaurant digital menu display system with admin management. Replaces a Firebase-based Angular app. Deployed at [menu.mitch.ee](https://menu.mitch.ee).
+Cloudflare-native restaurant digital menu display system with admin management. Replaces a Firebase-based Angular app.
 
-A single Cloudflare Worker serves the entire stack:
+- Menu: [menu.mitch.ee](https://menu.mitch.ee)
+- Admin: [menu-admin.mitch.ee](https://menu-admin.mitch.ee)
 
-| Path | Handled by |
-|------|------------|
-| `/api/*` | Hono API (D1 database, WebAuthn auth) |
-| `/api/public/menu` | Public Find Your Drink products (customer page) |
-| `/api/public/gallery` | Public gallery pages with schedule data (menu board) |
-| `/media/*` | R2 media proxy (immutable cache) |
-| `/admin/*` | Admin SPA (SvelteKit 5, passkey login) |
-| `/customer` | Customer interaction (trait-based drink finder) |
-| `/*` | Menu PWA (SvelteKit 5, fullscreen) |
-| `GET /api/sync-ws` | Durable Object WebSocket (realtime sync) |
+A single Cloudflare Worker serves API/media routes on both domains. Two CF Pages projects serve the SPAs:
+
+| Domain | Path | Handled by |
+|--------|------|------------|
+| `menu.mitch.ee` | `/api/*` | Hono API (D1 database, WebAuthn auth) |
+| `menu.mitch.ee` | `/media/*` | R2 media proxy (immutable cache) |
+| `menu.mitch.ee` | `/customer` | Customer interaction (trait-based drink finder) |
+| `menu.mitch.ee` | `/*` | Menu PWA (SvelteKit 5, fullscreen) |
+| `menu-admin.mitch.ee` | `/api/*` | Same Hono API (shared Worker) |
+| `menu-admin.mitch.ee` | `/media/*` | Same R2 media proxy |
+| `menu-admin.mitch.ee` | `/*` | Admin SPA (SvelteKit 5, passkey login) |
+| both | `/api/sync-ws` | Durable Object WebSocket (realtime sync) |
 
 ---
 
@@ -54,7 +57,7 @@ live-menu-cf/
 │   │   ├── validation/    # Zod schemas
 │   │   └── types.ts
 │   └── wrangler.toml
-├── frontend-admin/        # Admin SPA → served at /admin/
+├── frontend-admin/        # Admin SPA → served at menu-admin.mitch.ee
 │   └── src/
 │       ├── routes/        # login, register/[token], users, languages, customer-menu, gallery
 │       └── lib/
@@ -74,7 +77,7 @@ live-menu-cf/
 ├── e2e/                   # Playwright end-to-end tests
 │   └── tests/             # admin-auth, admin-menu, admin-languages, admin-users, public-menu, public-pwa
 ├── scripts/
-│   └── merge-dist.mjs     # Copies both SPA builds into backend/dist/
+│   └── generate-precache-manifest.mjs  # Injects precache list into menu SW
 └── package.json           # Bun workspace root
 ```
 
@@ -148,7 +151,7 @@ bunx wrangler d1 execute live_menu --local \
   --command "INSERT INTO registration_tokens (token, user_id, pre_filled_name, role, expires_at, created_by, created_at) VALUES ('setup-token', (SELECT id FROM users WHERE name = 'Admin' AND role = 'admin'), 'Admin', 'admin', unixepoch()+21600, (SELECT id FROM users WHERE name = 'Admin' AND role = 'admin'), unixepoch())"
 ```
 
-Then open `http://localhost:5174/admin/register/setup-token` to complete passkey registration. The token expires in 6 hours.
+Then open `http://localhost:5174/register/setup-token` to complete passkey registration. The token expires in 6 hours.
 
 ---
 
@@ -201,15 +204,16 @@ Menu items can be toggled visible/hidden without deleting them. The public API o
 | `bun run dev:admin` | Start admin frontend (vite dev) |
 | `bun run build:menu` | Build menu SPA |
 | `bun run build:admin` | Build admin SPA |
-| `bun run build:merge` | Merge both builds into `backend/dist/` |
-| `bun run build:all` | Build everything (menu + admin + merge) |
+| `bun run build:all` | Build both SPAs (menu + admin, in parallel) |
 | `bun run test:backend` | Vitest (Cloudflare Workers pool) |
 | `bun run test:menu` | Vitest (menu frontend) |
 | `bun run test:admin` | Vitest (admin frontend) |
 | `bun run e2e` | Playwright end-to-end tests |
 | `bun run db:migrate:local` | Apply D1 migrations locally |
 | `bun run db:migrate:remote` | Apply D1 migrations to production |
-| `bun run deploy` | Build all + `wrangler deploy` |
+| `bun run deploy` | Build all + deploy Worker + deploy menu Pages + deploy admin Pages |
+| `bun run deploy:pages` | Deploy menu SPA to CF Pages (`live-menu`) |
+| `bun run deploy:admin` | Deploy admin SPA to CF Pages (`live-menu-admin`) |
 
 ---
 

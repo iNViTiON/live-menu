@@ -35,6 +35,7 @@ crons = ["0 0 * * SUN"]
 
 [vars]
 FRONTEND_URL = "http://localhost:5173"
+ADMIN_URL = "http://localhost:5174"
 WEBAUTHN_RP_ID = "localhost"
 WEBAUTHN_RP_NAME = "Live Menu (Dev)"
 WEBAUTHN_ORIGIN = "http://localhost:5173"
@@ -43,6 +44,8 @@ WEBAUTHN_ORIGIN = "http://localhost:5173"
 routes = [
   { pattern = "menu.mitch.ee/api/*", zone_name = "mitch.ee" },
   { pattern = "menu.mitch.ee/media/*", zone_name = "mitch.ee" },
+  { pattern = "menu-admin.mitch.ee/api/*", zone_name = "mitch.ee" },
+  { pattern = "menu-admin.mitch.ee/media/*", zone_name = "mitch.ee" },
 ]
 
 [[env.production.d1_databases]]
@@ -61,6 +64,7 @@ class_name = "BroadcastRoom"
 
 [env.production.vars]
 FRONTEND_URL = "https://menu.mitch.ee"
+ADMIN_URL = "https://menu-admin.mitch.ee"
 WEBAUTHN_RP_ID = "mitch.ee"
 WEBAUTHN_RP_NAME = "Live Menu"
 WEBAUTHN_ORIGIN = "https://menu.mitch.ee"
