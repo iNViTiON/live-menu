@@ -39,9 +39,17 @@
   }
 
   let galleryScrollY = $state(0);
+  let customerScrollY = $state(0);
+
+  // Use whichever scroll position is relevant for the current view
+  const activeScrollY = $derived(viewStore.activeView === 'gallery' ? galleryScrollY : customerScrollY);
 
   function onGalleryScroll(e: Event) {
     galleryScrollY = (e.target as HTMLElement).scrollTop;
+  }
+
+  function onCustomerScroll(e: Event) {
+    customerScrollY = (e.target as HTMLElement).scrollTop;
   }
 
   onMount(() => {
@@ -59,6 +67,15 @@
     <title>Menu</title>
   {/if}
 </svelte:head>
+
+{#if galleryStore.languages.length > 1}
+  <LanguageSwitcher
+    languages={galleryStore.languages}
+    selectedLanguage={galleryStore.selectedLanguage}
+    onLanguageChange={(code) => galleryStore.setLanguage(code)}
+    scrollY={activeScrollY}
+  />
+{/if}
 
 {#key viewStore.activeView}
   <div
@@ -79,12 +96,6 @@
             {/each}
           </div>
 
-          <LanguageSwitcher
-            languages={galleryStore.languages}
-            selectedLanguage={galleryStore.selectedLanguage}
-            onLanguageChange={(code) => galleryStore.setLanguage(code)}
-            scrollY={galleryScrollY}
-          />
           <GalleryBar items={galleryStore.visiblePages} />
           <button class="customer-mode-btn" onclick={goToCustomer} aria-label="Interactive menu">
             <span>{getUiText(menuStore.settings, 'find_your_drink', galleryStore.selectedLanguage)}</span>
@@ -92,7 +103,7 @@
         {/if}
       </main>
     {:else}
-      <CustomerView onBack={goToGallery} />
+      <CustomerView onBack={goToGallery} onScroll={onCustomerScroll} />
     {/if}
   </div>
 {/key}

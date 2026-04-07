@@ -27,11 +27,11 @@
   );
 
   // Interpolate from large (top) → normal (scrolled 150px)
-  // At scrollY=0: fontSize=2.8rem, size=5rem; at scrollY≥150: fontSize=1.4rem, size=2.5rem
+  // ~70% of original: large=2rem/3.5rem, small=1rem/1.75rem
   const t = $derived(Math.min(1, scrollY / 150));
-  const fontSize = $derived(2.8 - t * 1.4);
-  const btnSize = $derived(5 - t * 2.5);
-  const gap = $derived(1 - t * 0.5);
+  const fontSize = $derived(2 - t * 1);
+  const btnSize = $derived(3.5 - t * 1.75);
+  const gap = $derived(0.7 - t * 0.35);
 </script>
 
 {#if languages.length > 1}

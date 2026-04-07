@@ -2,18 +2,15 @@
   import { fly, slide } from 'svelte/transition';
   import { customerStore } from '$lib/stores/customer.svelte';
   import { menuStore } from '$lib/stores/menu.svelte';
-  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
   import CachedMedia from '$lib/components/CachedMedia.svelte';
 
-  let { onBack } = $props<{ onBack: () => void }>();
+  let { onBack, onScroll }: {
+    onBack: () => void;
+    onScroll?: (e: Event) => void;
+  } = $props();
 
-  let customerScrollY = $state(0);
   // Tracks which card keeps full-width grid span during collapse animation
   let collapsingItemId = $state<number | null>(null);
-
-  function onCustomerScroll(e: Event) {
-    customerScrollY = (e.target as HTMLElement).scrollTop;
-  }
 
   function getUiText(settings: Record<string, string>, key: string, lang: string): string {
     return settings[`ui:${key}:${lang}`] || settings[`ui:${key}:GB`] || key;
@@ -30,7 +27,7 @@
   {:else if customerStore.error}
     <div class="error">{customerStore.error}</div>
   {:else if customerStore.data}
-    <div class="scroll-container" onscroll={onCustomerScroll}>
+    <div class="scroll-container" onscroll={onScroll}>
 
       <header class="page-header">
         <button class="back-btn" onclick={onBack} aria-label="Back to menu">
@@ -38,15 +35,6 @@
         </button>
         <h1 class="page-title">{getUiText(customerStore.data.settings, 'find_your_drink', menuStore.selectedLanguage)}</h1>
       </header>
-
-      {#if customerStore.data.languages.length > 1}
-        <LanguageSwitcher
-          languages={customerStore.data.languages}
-          selectedLanguage={menuStore.selectedLanguage}
-          onLanguageChange={(code) => menuStore.setLanguage(code)}
-          scrollY={customerScrollY}
-        />
-      {/if}
 
       <!-- Trait filters -->
       <section class="filters">
