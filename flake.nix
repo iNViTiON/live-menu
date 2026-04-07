@@ -38,7 +38,7 @@
         '';
         db = pkgs.writeShellScriptBin "db" ''
           export PATH="''${LIVE_MENU_ROOT:-$PWD}/node_modules/.bin:$PATH"
-          wrangler d1 "$@"
+          cd "''${LIVE_MENU_ROOT:-$PWD}/backend" && wrangler d1 "$@"
         '';
       in
       {
