@@ -99,7 +99,7 @@
         {#if media}
           {#if media.media_type === 'video'}
             <video
-              src={`/media/${media.r2_key}`}
+              src={`/media/${media.r2_key}#t=0.001`}
               muted
               playsinline
               preload="metadata"
