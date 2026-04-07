@@ -15,6 +15,11 @@ const PRECACHE_URLS = new Set(PRECACHE_MANIFEST.map((entry) => entry.url));
 const recentlyUpdated = new Map(); // url → timestamp
 const RECENT_THRESHOLD_MS = 750;
 
+// Module-level active media URL sets — populated during caching, used by evictOrphanMedia
+// null = not yet initialised (both APIs must be seen before orphan eviction runs)
+let menuMediaUrls = null;
+let galleryMediaUrls = null;
+
 // ── Lifecycle ──
 
 self.addEventListener('install', (event) => {
@@ -187,78 +192,57 @@ async function cacheFirstMedia(request) {
 
 // ── Media pre-caching ──
 
+// Fetch up to `concurrency` URLs at a time; skip already-cached entries.
+// Calls onCached(url) after each successful cache.put.
+async function cacheUrlsConcurrently(urls, cache, concurrency = 4, onCached) {
+  for (let i = 0; i < urls.length; i += concurrency) {
+    await Promise.all(urls.slice(i, i + concurrency).map(async (url) => {
+      if (await cache.match(url)) return;
+      try {
+        const resp = await fetch(url);
+        if (resp.ok) {
+          await cache.put(url, resp);
+          if (onCached) await onCached(url);
+        }
+      } catch {
+        // Skip — will retry on next sync
+      }
+    }));
+  }
+}
+
 async function cacheAllMenuMedia(menuData) {
   const cache = await caches.open(MEDIA_CACHE);
+  const urls = [];
   for (const item of menuData.items || []) {
     for (const media of item.media || []) {
-      const url = '/media/' + media.r2_key;
-      const existing = await cache.match(url);
-      if (!existing) {
-        try {
-          const resp = await fetch(url);
-          if (resp.ok) {
-            await cache.put(url, resp);
-            await notifyClients({ type: 'media-cached', url });
-          }
-        } catch {
-          // Skip — will retry on next sync
-        }
-      }
+      urls.push('/media/' + media.r2_key);
     }
   }
+  // Update module-level set so evictOrphanMedia doesn't need to re-parse
+  menuMediaUrls = new Set(urls);
+  await cacheUrlsConcurrently(urls, cache, 4, (url) => notifyClients({ type: 'media-cached', url }));
 }
 
 async function cacheAllGalleryMedia(galleryData) {
   const cache = await caches.open(MEDIA_CACHE);
+  const urls = [];
   for (const page of galleryData.pages || []) {
     for (const media of page.media || []) {
-      const url = '/media/' + media.r2_key;
-      const existing = await cache.match(url);
-      if (!existing) {
-        try {
-          const resp = await fetch(url);
-          if (resp.ok) {
-            await cache.put(url, resp);
-            await notifyClients({ type: 'media-cached', url });
-          }
-        } catch {
-          // Skip
-        }
-      }
+      urls.push('/media/' + media.r2_key);
     }
   }
+  // Update module-level set so evictOrphanMedia doesn't need to re-parse
+  galleryMediaUrls = new Set(urls);
+  await cacheUrlsConcurrently(urls, cache, 4, (url) => notifyClients({ type: 'media-cached', url }));
 }
 
 async function evictOrphanMedia() {
-  const manifestCache = await caches.open(MANIFEST_CACHE);
+  // Only evict once both API responses have been processed (sets are populated)
+  if (!menuMediaUrls || !galleryMediaUrls) return;
+
   const mediaCache = await caches.open(MEDIA_CACHE);
-
-  // Only evict if both API responses are cached
-  const menuResp = await manifestCache.match(MENU_API);
-  const galleryResp = await manifestCache.match(GALLERY_API);
-  if (!menuResp || !galleryResp) return;
-
-  const neededUrls = new Set();
-
-  // Collect from menu data
-  try {
-    const menuData = await menuResp.clone().json();
-    for (const item of menuData.items || []) {
-      for (const media of item.media || []) {
-        neededUrls.add('/media/' + media.r2_key);
-      }
-    }
-  } catch {}
-
-  // Collect from gallery data
-  try {
-    const galleryData = await galleryResp.clone().json();
-    for (const page of galleryData.pages || []) {
-      for (const media of page.media || []) {
-        neededUrls.add('/media/' + media.r2_key);
-      }
-    }
-  } catch {}
+  const neededUrls = new Set([...menuMediaUrls, ...galleryMediaUrls]);
 
   // Delete orphans
   const keys = await mediaCache.keys();
