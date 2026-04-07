@@ -16,6 +16,15 @@ export async function registerServiceWorker() {
     console.error('SW registration failed:', err);
   }
 
+  // On first SW activation (controller was null), re-fetch API data through the SW
+  // so cacheThenNetwork runs, media pre-caching triggers, and media-cached messages arrive.
+  if (!navigator.serviceWorker.controller) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      fetch('/api/public/menu');
+      fetch('/api/public/gallery');
+    }, { once: true });
+  }
+
   // Listen for messages from SW (cache-then-network background updates)
   navigator.serviceWorker.addEventListener('message', (event) => {
     const data = event.data;
