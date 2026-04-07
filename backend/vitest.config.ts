@@ -19,6 +19,7 @@ export default defineConfig(async () => {
           },
           bindings: {
             FRONTEND_URL: 'http://localhost:5173',
+            ADMIN_URL: 'http://localhost:5174',
             WEBAUTHN_RP_ID: 'localhost',
             WEBAUTHN_RP_NAME: 'Live Menu Test',
             WEBAUTHN_ORIGIN: 'http://localhost:5173',
