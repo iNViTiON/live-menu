@@ -83,6 +83,7 @@
     right: calc(1rem + env(safe-area-inset-right, 0px));
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     z-index: 100;
   }
 
