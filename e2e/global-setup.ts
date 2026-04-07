@@ -76,7 +76,6 @@ async function globalSetup(): Promise<void> {
       'wrangler', 'dev', '--port', '8787',
       '--var', 'WEBAUTHN_RP_ID:localhost',
       '--var', 'WEBAUTHN_RP_NAME:Live Menu Test',
-      '--var', 'WEBAUTHN_ORIGIN:http://localhost:8787',
       '--var', 'FRONTEND_URL:http://localhost:8787/admin',
     ],
     { cwd: BACKEND, stdio: 'pipe', detached: true },

@@ -10,7 +10,6 @@ export interface Env {
   ADMIN_URL: string;
   WEBAUTHN_RP_ID: string;
   WEBAUTHN_RP_NAME: string;
-  WEBAUTHN_ORIGIN: string;
 }
 
 export interface AuthUser {

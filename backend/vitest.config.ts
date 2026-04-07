@@ -22,7 +22,6 @@ export default defineConfig(async () => {
             ADMIN_URL: 'http://localhost:5174',
             WEBAUTHN_RP_ID: 'localhost',
             WEBAUTHN_RP_NAME: 'Live Menu Test',
-            WEBAUTHN_ORIGIN: 'http://localhost:5173',
             TEST_MIGRATIONS: JSON.stringify(migrations),
           },
         },

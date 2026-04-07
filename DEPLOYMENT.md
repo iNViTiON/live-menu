@@ -171,7 +171,6 @@ All vars live in `backend/wrangler.toml` under `[vars]`. They are safe to commit
 | `ADMIN_URL` | `https://menu-admin.mitch.ee` | Admin SPA origin — used for CORS, CSRF, WebSocket origin, WebAuthn, and registration links |
 | `WEBAUTHN_RP_ID` | `mitch.ee` | WebAuthn Relying Party ID — must match the domain (covers both subdomains) |
 | `WEBAUTHN_RP_NAME` | `Live Menu` | Human-readable name shown in the browser passkey prompt |
-| `WEBAUTHN_ORIGIN` | `https://menu.mitch.ee` | Legacy — WebAuthn now uses `ADMIN_URL` as expected origin |
 
 ---
 

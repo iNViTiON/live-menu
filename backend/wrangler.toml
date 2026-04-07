@@ -38,7 +38,6 @@ FRONTEND_URL = "http://localhost:5173"
 ADMIN_URL = "http://localhost:5174"
 WEBAUTHN_RP_ID = "localhost"
 WEBAUTHN_RP_NAME = "Live Menu (Dev)"
-WEBAUTHN_ORIGIN = "http://localhost:5173"
 
 [env.production]
 routes = [
@@ -67,4 +66,3 @@ FRONTEND_URL = "https://menu.mitch.ee"
 ADMIN_URL = "https://menu-admin.mitch.ee"
 WEBAUTHN_RP_ID = "mitch.ee"
 WEBAUTHN_RP_NAME = "Live Menu"
-WEBAUTHN_ORIGIN = "https://menu.mitch.ee"
