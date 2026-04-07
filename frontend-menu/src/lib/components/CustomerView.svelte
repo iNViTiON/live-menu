@@ -583,6 +583,7 @@
     }
     .option-groups.has-media:has(.item-media :global(.item-media-el)) .item-media {
       order: -1;
+      flex: none;
     }
   }
 
