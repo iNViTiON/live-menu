@@ -8,6 +8,11 @@
     scrollY?: number;
   } = $props();
 
+  // Codes that should show text labels instead of flag emoji (e.g. to avoid displaying a country flag)
+  const textLabels: Record<string, string> = {
+    RU: 'Українська\nРусский'
+  };
+
   // Convert country code to flag emoji (e.g. GB -> 🇬🇧)
   function toFlag(code: string): string {
     return code
@@ -37,19 +42,36 @@
 {#if languages.length > 1}
   <div class="lang-switcher" style:gap="{gap}rem">
     {#each sorted as lang (lang.code)}
-      <button
-        class="lang-btn"
-        class:active={selectedLanguage === lang.code}
-        onclick={() => onLanguageChange(lang.code)}
-        title={lang.display_name}
-        aria-label={lang.display_name}
-        aria-pressed={selectedLanguage === lang.code}
-        style:font-size="{fontSize}rem"
-        style:width="{btnSize}rem"
-        style:height="{btnSize}rem"
-      >
-        {toFlag(lang.code)}
-      </button>
+      {#if textLabels[lang.code]}
+        <button
+          class="lang-btn lang-text"
+          class:active={selectedLanguage === lang.code}
+          onclick={() => onLanguageChange(lang.code)}
+          title={lang.display_name}
+          aria-label={lang.display_name}
+          aria-pressed={selectedLanguage === lang.code}
+          style:font-size="{fontSize * 0.32}rem"
+          style:height="{btnSize}rem"
+        >
+          {#each textLabels[lang.code].split('\n') as line}
+            <span>{line}</span>
+          {/each}
+        </button>
+      {:else}
+        <button
+          class="lang-btn"
+          class:active={selectedLanguage === lang.code}
+          onclick={() => onLanguageChange(lang.code)}
+          title={lang.display_name}
+          aria-label={lang.display_name}
+          aria-pressed={selectedLanguage === lang.code}
+          style:font-size="{fontSize}rem"
+          style:width="{btnSize}rem"
+          style:height="{btnSize}rem"
+        >
+          {toFlag(lang.code)}
+        </button>
+      {/if}
     {/each}
   </div>
 {/if}
@@ -75,6 +97,17 @@
     justify-content: center;
     padding: 0;
     transition: font-size 0.15s ease-out, width 0.15s ease-out, height 0.15s ease-out;
+  }
+
+  .lang-btn.lang-text {
+    border-radius: 1rem;
+    flex-direction: column;
+    padding: 0.15rem 0.5rem;
+    width: auto;
+    line-height: 1.2;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
   }
 
   .lang-btn:hover {

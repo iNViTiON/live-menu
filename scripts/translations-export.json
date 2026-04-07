@@ -1,0 +1,940 @@
+{
+  "exported_at": "2026-04-07T18:40:01.209Z",
+  "ui_settings": [
+    {
+      "key": "ui:clear_all:EE",
+      "value": "Tühjenda kõik"
+    },
+    {
+      "key": "ui:clear_all:GB",
+      "value": "Clear all"
+    },
+    {
+      "key": "ui:drinks:EE",
+      "value": "jooki"
+    },
+    {
+      "key": "ui:drinks:GB",
+      "value": "drinks"
+    },
+    {
+      "key": "ui:filters_active:EE",
+      "value": "filter(it) aktiivne(d)"
+    },
+    {
+      "key": "ui:filters_active:GB",
+      "value": "filter(s) active"
+    },
+    {
+      "key": "ui:find_your_drink:EE",
+      "value": "Leia oma jook"
+    },
+    {
+      "key": "ui:find_your_drink:GB",
+      "value": "Find your drink"
+    },
+    {
+      "key": "ui:idle_warning_hint:EE",
+      "value": "Puuduta kuhugi, et jätkata"
+    },
+    {
+      "key": "ui:idle_warning_hint:GB",
+      "value": "Tap anywhere to continue"
+    },
+    {
+      "key": "ui:idle_warning_title:EE",
+      "value": "Oled sa endiselt siin?"
+    },
+    {
+      "key": "ui:idle_warning_title:GB",
+      "value": "Are you still there?"
+    },
+    {
+      "key": "ui:loading:EE",
+      "value": "Laadimine…"
+    },
+    {
+      "key": "ui:loading:GB",
+      "value": "Loading…"
+    },
+    {
+      "key": "ui:menu:EE",
+      "value": "Menüü"
+    },
+    {
+      "key": "ui:menu:GB",
+      "value": "Menu"
+    },
+    {
+      "key": "ui:no_options:EE",
+      "value": "Kohandamisvalikud puuduvad"
+    },
+    {
+      "key": "ui:no_options:GB",
+      "value": "No customisation options"
+    },
+    {
+      "key": "ui:no_results:EE",
+      "value": "Ükski jook ei vasta — proovi filtrit tühjendada"
+    },
+    {
+      "key": "ui:no_results:GB",
+      "value": "No drinks match — try clearing a filter"
+    },
+    {
+      "key": "ui:of:EE",
+      "value": "/"
+    },
+    {
+      "key": "ui:of:GB",
+      "value": "of"
+    },
+    {
+      "key": "ui:preferences_prompt:EE",
+      "value": "Räägi meile oma eelistustest"
+    },
+    {
+      "key": "ui:preferences_prompt:GB",
+      "value": "Tell us some of your preferences"
+    },
+    {
+      "key": "ui:reset:EE",
+      "value": "Alusta uuesti"
+    },
+    {
+      "key": "ui:reset:GB",
+      "value": "Reset"
+    },
+    {
+      "key": "ui:surprise_me:EE",
+      "value": "Üllata mind!"
+    },
+    {
+      "key": "ui:surprise_me:GB",
+      "value": "Surprise me!"
+    },
+    {
+      "key": "ui:unavailable:EE",
+      "value": "pole saadaval"
+    },
+    {
+      "key": "ui:unavailable:GB",
+      "value": "unavailable"
+    }
+  ],
+  "menu_item_names": [
+    {
+      "menu_item_id": 1,
+      "language_code": "EE",
+      "name": "Puhas Matcha",
+      "description": "Matcha veega, ilma piimata"
+    },
+    {
+      "menu_item_id": 1,
+      "language_code": "GB",
+      "name": "Clear Matcha",
+      "description": "Matcha with water, no milk"
+    },
+    {
+      "menu_item_id": 2,
+      "language_code": "EE",
+      "name": "matcha latte",
+      "description": "matcha piimaga"
+    },
+    {
+      "menu_item_id": 2,
+      "language_code": "GB",
+      "name": "matcha latte",
+      "description": "matcha with milk"
+    },
+    {
+      "menu_item_id": 3,
+      "language_code": "EE",
+      "name": "Matcha maasikapiim",
+      "description": "Meie kodune maasikapüree"
+    },
+    {
+      "menu_item_id": 3,
+      "language_code": "GB",
+      "name": "Matcha strawberry milk",
+      "description": "Our homemade strawberry purée"
+    },
+    {
+      "menu_item_id": 4,
+      "language_code": "EE",
+      "name": "Matcha mangopiim",
+      "description": "Meie kodune mangopüree"
+    },
+    {
+      "menu_item_id": 4,
+      "language_code": "GB",
+      "name": "Matcha mango milk",
+      "description": "Our homemade mango purée"
+    },
+    {
+      "menu_item_id": 5,
+      "language_code": "EE",
+      "name": "Matcha pruuni suhkru piim",
+      "description": "Meie kodune muscovado siirup"
+    },
+    {
+      "menu_item_id": 5,
+      "language_code": "GB",
+      "name": "Matcha brown sugar milk",
+      "description": "Our homemade brown sugar syrup"
+    },
+    {
+      "menu_item_id": 6,
+      "language_code": "EE",
+      "name": "Matcha mango-ja maasika-piim",
+      "description": "Meie kodune mango-ja maasikapüree"
+    },
+    {
+      "menu_item_id": 6,
+      "language_code": "GB",
+      "name": "Matcha mango strawberry milk",
+      "description": "Our homemade mango and strawberry purée"
+    },
+    {
+      "menu_item_id": 7,
+      "language_code": "EE",
+      "name": "Matcha Yuzu",
+      "description": "Yuzu on Jaapani tsitrusvili ereda ja värskendava hapususega"
+    },
+    {
+      "menu_item_id": 7,
+      "language_code": "GB",
+      "name": "Matcha Yuzu",
+      "description": "Yuzu is a Japanese citrus fruit with a bright, refreshing tartness and a unique aromatic flavor"
+    },
+    {
+      "menu_item_id": 8,
+      "language_code": "EE",
+      "name": "Matcha ananassimuhlaga",
+      "description": null
+    },
+    {
+      "menu_item_id": 8,
+      "language_code": "GB",
+      "name": "Matcha pineapple juice",
+      "description": null
+    },
+    {
+      "menu_item_id": 9,
+      "language_code": "EE",
+      "name": "BOLD MATCHA LATTE",
+      "description": "MATCHA×2 ainult piimaga—ilma veeta\nBOLD maitse—soovitatav vaid kogenud matcha-armastajatele"
+    },
+    {
+      "menu_item_id": 9,
+      "language_code": "GB",
+      "name": "BOLD MATCHA LATTE",
+      "description": "MATCHA×2 made only with milk—no water\nBOLD flavour—only recommended for seasoned matcha lovers"
+    },
+    {
+      "menu_item_id": 10,
+      "language_code": "EE",
+      "name": "Matcha mee ja sidruniga",
+      "description": null
+    },
+    {
+      "menu_item_id": 10,
+      "language_code": "GB",
+      "name": "Matcha Honey Lemon",
+      "description": null
+    },
+    {
+      "menu_item_id": 11,
+      "language_code": "EE",
+      "name": "Hojicha latte",
+      "description": null
+    },
+    {
+      "menu_item_id": 11,
+      "language_code": "GB",
+      "name": "Hojicha latte",
+      "description": null
+    },
+    {
+      "menu_item_id": 12,
+      "language_code": "EE",
+      "name": "Hojicha maasikapiim",
+      "description": null
+    },
+    {
+      "menu_item_id": 12,
+      "language_code": "GB",
+      "name": "Hojicha strawberry milk",
+      "description": null
+    },
+    {
+      "menu_item_id": 13,
+      "language_code": "EE",
+      "name": "Genmaicha latte",
+      "description": null
+    },
+    {
+      "menu_item_id": 13,
+      "language_code": "GB",
+      "name": "Genmaicha latte",
+      "description": null
+    },
+    {
+      "menu_item_id": 14,
+      "language_code": "EE",
+      "name": "Tai piimatee",
+      "description": null
+    },
+    {
+      "menu_item_id": 14,
+      "language_code": "GB",
+      "name": "Thai milk tea",
+      "description": null
+    },
+    {
+      "menu_item_id": 15,
+      "language_code": "EE",
+      "name": "Pruuni suhkru piim",
+      "description": null
+    },
+    {
+      "menu_item_id": 15,
+      "language_code": "GB",
+      "name": "Brown sugar milk",
+      "description": null
+    },
+    {
+      "menu_item_id": 16,
+      "language_code": "EE",
+      "name": "Kakao latte",
+      "description": null
+    },
+    {
+      "menu_item_id": 16,
+      "language_code": "GB",
+      "name": "Cocoa latte",
+      "description": null
+    },
+    {
+      "menu_item_id": 17,
+      "language_code": "EE",
+      "name": "Maasikapiim",
+      "description": null
+    },
+    {
+      "menu_item_id": 17,
+      "language_code": "GB",
+      "name": "Strawberry milk",
+      "description": null
+    },
+    {
+      "menu_item_id": 18,
+      "language_code": "EE",
+      "name": "Mangopiim",
+      "description": null
+    },
+    {
+      "menu_item_id": 18,
+      "language_code": "GB",
+      "name": "Mango milk",
+      "description": null
+    },
+    {
+      "menu_item_id": 19,
+      "language_code": "EE",
+      "name": "Es Yen (kohv)",
+      "description": "Tai jääkohv piimaga"
+    },
+    {
+      "menu_item_id": 19,
+      "language_code": "GB",
+      "name": "Es Yen (coffee)",
+      "description": "Thai iced milk coffee"
+    }
+  ],
+  "gallery_page_names": [
+    {
+      "gallery_page_id": 1,
+      "language_code": "EE",
+      "name": "Värsked magustoidud!"
+    },
+    {
+      "gallery_page_id": 1,
+      "language_code": "GB",
+      "name": "Fresh desserts!"
+    },
+    {
+      "gallery_page_id": 2,
+      "language_code": "EE",
+      "name": "Traditsiooniline matcha"
+    },
+    {
+      "gallery_page_id": 2,
+      "language_code": "GB",
+      "name": "Traditional matcha"
+    },
+    {
+      "gallery_page_id": 3,
+      "language_code": "EE",
+      "name": "Eriline matcha ja muud teed"
+    },
+    {
+      "gallery_page_id": 3,
+      "language_code": "GB",
+      "name": "Fancy matcha & other teas"
+    },
+    {
+      "gallery_page_id": 4,
+      "language_code": "EE",
+      "name": "Kofeiinivaba ja kohv"
+    },
+    {
+      "gallery_page_id": 4,
+      "language_code": "GB",
+      "name": "Caffeine-free & Coffee"
+    }
+  ],
+  "trait_names": [
+    {
+      "trait_id": 1,
+      "language_code": "EE",
+      "name": "Traditsiooniline"
+    },
+    {
+      "trait_id": 1,
+      "language_code": "GB",
+      "name": "Traditional"
+    },
+    {
+      "trait_id": 2,
+      "language_code": "EE",
+      "name": "Uhke"
+    },
+    {
+      "trait_id": 2,
+      "language_code": "GB",
+      "name": "Fancy"
+    },
+    {
+      "trait_id": 3,
+      "language_code": "EE",
+      "name": "Piimaga"
+    },
+    {
+      "trait_id": 3,
+      "language_code": "GB",
+      "name": "Milk"
+    },
+    {
+      "trait_id": 4,
+      "language_code": "EE",
+      "name": "Ilma piimata"
+    },
+    {
+      "trait_id": 4,
+      "language_code": "GB",
+      "name": "No milk"
+    },
+    {
+      "trait_id": 5,
+      "language_code": "EE",
+      "name": "ilma matchata"
+    },
+    {
+      "trait_id": 5,
+      "language_code": "GB",
+      "name": "no matcha"
+    },
+    {
+      "trait_id": 6,
+      "language_code": "EE",
+      "name": "matchaga"
+    },
+    {
+      "trait_id": 6,
+      "language_code": "GB",
+      "name": "with matcha"
+    },
+    {
+      "trait_id": 7,
+      "language_code": "EE",
+      "name": "tseremoniaalse matcha pulbriga"
+    },
+    {
+      "trait_id": 7,
+      "language_code": "GB",
+      "name": "with ceremonial grade matcha powder"
+    },
+    {
+      "trait_id": 8,
+      "language_code": "EE",
+      "name": "puudub"
+    },
+    {
+      "trait_id": 8,
+      "language_code": "GB",
+      "name": "none"
+    },
+    {
+      "trait_id": 9,
+      "language_code": "EE",
+      "name": "madal"
+    },
+    {
+      "trait_id": 9,
+      "language_code": "GB",
+      "name": "low"
+    },
+    {
+      "trait_id": 10,
+      "language_code": "EE",
+      "name": "keskmine"
+    },
+    {
+      "trait_id": 10,
+      "language_code": "GB",
+      "name": "medium"
+    },
+    {
+      "trait_id": 11,
+      "language_code": "EE",
+      "name": "kõrge"
+    },
+    {
+      "trait_id": 11,
+      "language_code": "GB",
+      "name": "high"
+    }
+  ],
+  "trait_group_names": [
+    {
+      "trait_group_id": 1,
+      "language_code": "EE",
+      "name": "Matcha?"
+    },
+    {
+      "trait_group_id": 1,
+      "language_code": "GB",
+      "name": "Matcha?"
+    },
+    {
+      "trait_group_id": 2,
+      "language_code": "EE",
+      "name": "Kofeiinitase"
+    },
+    {
+      "trait_group_id": 2,
+      "language_code": "GB",
+      "name": "Caffeine level"
+    },
+    {
+      "trait_group_id": 3,
+      "language_code": "EE",
+      "name": "Piimaga või ilma?"
+    },
+    {
+      "trait_group_id": 3,
+      "language_code": "GB",
+      "name": "Milk or No milk?"
+    },
+    {
+      "trait_group_id": 4,
+      "language_code": "EE",
+      "name": "Traditsiooniline või uhke?"
+    },
+    {
+      "trait_group_id": 4,
+      "language_code": "GB",
+      "name": "Traditional or Fancy"
+    }
+  ],
+  "option_group_names": [
+    {
+      "option_group_id": 1,
+      "language_code": "EE",
+      "name": "Matcha pulber"
+    },
+    {
+      "option_group_id": 1,
+      "language_code": "GB",
+      "name": "matcha powder"
+    },
+    {
+      "option_group_id": 2,
+      "language_code": "EE",
+      "name": "Matcha pulber"
+    },
+    {
+      "option_group_id": 2,
+      "language_code": "GB",
+      "name": "Matcha powder"
+    },
+    {
+      "option_group_id": 3,
+      "language_code": "EE",
+      "name": "Matcha pulber"
+    },
+    {
+      "option_group_id": 3,
+      "language_code": "GB",
+      "name": "MATCHA POWDER"
+    },
+    {
+      "option_group_id": 4,
+      "language_code": "EE",
+      "name": "Piim"
+    },
+    {
+      "option_group_id": 4,
+      "language_code": "GB",
+      "name": "Milk"
+    },
+    {
+      "option_group_id": 5,
+      "language_code": "EE",
+      "name": "Magusustase"
+    },
+    {
+      "option_group_id": 5,
+      "language_code": "GB",
+      "name": "Sweetness"
+    },
+    {
+      "option_group_id": 6,
+      "language_code": "EE",
+      "name": "Magusustase"
+    },
+    {
+      "option_group_id": 6,
+      "language_code": "GB",
+      "name": "Sweetness"
+    },
+    {
+      "option_group_id": 7,
+      "language_code": "EE",
+      "name": "Temperatuur"
+    },
+    {
+      "option_group_id": 7,
+      "language_code": "GB",
+      "name": "Temperature"
+    },
+    {
+      "option_group_id": 8,
+      "language_code": "EE",
+      "name": "Temperatuur"
+    },
+    {
+      "option_group_id": 8,
+      "language_code": "GB",
+      "name": "Temperature"
+    }
+  ],
+  "option_names": [
+    {
+      "option_id": 1,
+      "language_code": "EE",
+      "name": "Tavaline piim"
+    },
+    {
+      "option_id": 1,
+      "language_code": "GB",
+      "name": "Regular Milk"
+    },
+    {
+      "option_id": 2,
+      "language_code": "EE",
+      "name": "Päris Tai"
+    },
+    {
+      "option_id": 2,
+      "language_code": "GB",
+      "name": "Real Thai"
+    },
+    {
+      "option_id": 3,
+      "language_code": "EE",
+      "name": "Ilma magusata"
+    },
+    {
+      "option_id": 3,
+      "language_code": "GB",
+      "name": "No sweet"
+    },
+    {
+      "option_id": 4,
+      "language_code": "EE",
+      "name": "Laktoosivaba piim"
+    },
+    {
+      "option_id": 4,
+      "language_code": "GB",
+      "name": "Lactose-free milk"
+    },
+    {
+      "option_id": 5,
+      "language_code": "EE",
+      "name": "Vähem magus"
+    },
+    {
+      "option_id": 5,
+      "language_code": "GB",
+      "name": "Less sweet"
+    },
+    {
+      "option_id": 6,
+      "language_code": "EE",
+      "name": "Kaerapiim"
+    },
+    {
+      "option_id": 6,
+      "language_code": "GB",
+      "name": "Oat Milk"
+    },
+    {
+      "option_id": 7,
+      "language_code": "EE",
+      "name": "Tavaline magusus"
+    },
+    {
+      "option_id": 7,
+      "language_code": "GB",
+      "name": "Regular sweet"
+    },
+    {
+      "option_id": 8,
+      "language_code": "EE",
+      "name": "Kookospiim"
+    },
+    {
+      "option_id": 8,
+      "language_code": "GB",
+      "name": "Coconut Milk"
+    },
+    {
+      "option_id": 9,
+      "language_code": "EE",
+      "name": "Rohkem maiustusi"
+    },
+    {
+      "option_id": 9,
+      "language_code": "GB",
+      "name": "More sweet"
+    },
+    {
+      "option_id": 10,
+      "language_code": "EE",
+      "name": "Soe"
+    },
+    {
+      "option_id": 10,
+      "language_code": "GB",
+      "name": "Warm"
+    },
+    {
+      "option_id": 11,
+      "language_code": "EE",
+      "name": "Külm"
+    },
+    {
+      "option_id": 11,
+      "language_code": "GB",
+      "name": "Cold"
+    },
+    {
+      "option_id": 12,
+      "language_code": "EE",
+      "name": "Vähem jääga"
+    },
+    {
+      "option_id": 12,
+      "language_code": "GB",
+      "name": "Less iced"
+    },
+    {
+      "option_id": 13,
+      "language_code": "EE",
+      "name": "Jääga"
+    },
+    {
+      "option_id": 13,
+      "language_code": "GB",
+      "name": "Iced"
+    },
+    {
+      "option_id": 14,
+      "language_code": "EE",
+      "name": "haruka"
+    },
+    {
+      "option_id": 14,
+      "language_code": "GB",
+      "name": "haruka"
+    },
+    {
+      "option_id": 15,
+      "language_code": "EE",
+      "name": "Haruka"
+    },
+    {
+      "option_id": 15,
+      "language_code": "GB",
+      "name": "Haruka"
+    },
+    {
+      "option_id": 16,
+      "language_code": "EE",
+      "name": "HARUKA"
+    },
+    {
+      "option_id": 16,
+      "language_code": "GB",
+      "name": "HARUKA"
+    },
+    {
+      "option_id": 17,
+      "language_code": "EE",
+      "name": "asatsuyu"
+    },
+    {
+      "option_id": 17,
+      "language_code": "GB",
+      "name": "asatsuyu"
+    },
+    {
+      "option_id": 18,
+      "language_code": "EE",
+      "name": "Asatsuyu"
+    },
+    {
+      "option_id": 18,
+      "language_code": "GB",
+      "name": "Asatsuyu"
+    },
+    {
+      "option_id": 19,
+      "language_code": "EE",
+      "name": "ASATSUYU"
+    },
+    {
+      "option_id": 19,
+      "language_code": "GB",
+      "name": "ASATSUYU"
+    },
+    {
+      "option_id": 20,
+      "language_code": "EE",
+      "name": "saemidori"
+    },
+    {
+      "option_id": 20,
+      "language_code": "GB",
+      "name": "saemidori"
+    },
+    {
+      "option_id": 21,
+      "language_code": "EE",
+      "name": "Saemidori"
+    },
+    {
+      "option_id": 21,
+      "language_code": "GB",
+      "name": "Saemidori"
+    },
+    {
+      "option_id": 22,
+      "language_code": "EE",
+      "name": "SAEMIDORI"
+    },
+    {
+      "option_id": 22,
+      "language_code": "GB",
+      "name": "SAEMIDORI"
+    },
+    {
+      "option_id": 24,
+      "language_code": "GB",
+      "name": "mystic"
+    },
+    {
+      "option_id": 25,
+      "language_code": "GB",
+      "name": "Mystic"
+    },
+    {
+      "option_id": 26,
+      "language_code": "GB",
+      "name": "MYSTIC"
+    },
+    {
+      "option_id": 27,
+      "language_code": "EE",
+      "name": "Külm"
+    },
+    {
+      "option_id": 27,
+      "language_code": "GB",
+      "name": "Cold"
+    },
+    {
+      "option_id": 28,
+      "language_code": "EE",
+      "name": "Vähem jääga"
+    },
+    {
+      "option_id": 28,
+      "language_code": "GB",
+      "name": "Less iced"
+    },
+    {
+      "option_id": 29,
+      "language_code": "EE",
+      "name": "Jääga"
+    },
+    {
+      "option_id": 29,
+      "language_code": "GB",
+      "name": "Iced"
+    },
+    {
+      "option_id": 30,
+      "language_code": "EE",
+      "name": "Vähem magus"
+    },
+    {
+      "option_id": 30,
+      "language_code": "GB",
+      "name": "Less sweet"
+    },
+    {
+      "option_id": 31,
+      "language_code": "EE",
+      "name": "Tavaline magusus"
+    },
+    {
+      "option_id": 31,
+      "language_code": "GB",
+      "name": "Regular sweet"
+    },
+    {
+      "option_id": 32,
+      "language_code": "EE",
+      "name": "Rohkem maiustusi"
+    },
+    {
+      "option_id": 32,
+      "language_code": "GB",
+      "name": "More sweet"
+    },
+    {
+      "option_id": 33,
+      "language_code": "EE",
+      "name": "Ilma magusata"
+    },
+    {
+      "option_id": 33,
+      "language_code": "GB",
+      "name": "No sweet"
+    }
+  ]
+}
