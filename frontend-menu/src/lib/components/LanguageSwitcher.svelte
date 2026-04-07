@@ -26,12 +26,16 @@
     })
   );
 
-  // Scale from 2× at top → 1× after scrolling 150px
-  const scale = $derived(Math.max(1, 2 - scrollY / 150));
+  // Interpolate from large (top) → normal (scrolled 150px)
+  // At scrollY=0: fontSize=2.8rem, size=5rem; at scrollY≥150: fontSize=1.4rem, size=2.5rem
+  const t = $derived(Math.min(1, scrollY / 150));
+  const fontSize = $derived(2.8 - t * 1.4);
+  const btnSize = $derived(5 - t * 2.5);
+  const gap = $derived(1 - t * 0.5);
 </script>
 
 {#if languages.length > 1}
-  <div class="lang-switcher" style:transform="scale({scale})" style:transform-origin="top right">
+  <div class="lang-switcher" style:gap="{gap}rem">
     {#each sorted as lang (lang.code)}
       <button
         class="lang-btn"
@@ -40,6 +44,9 @@
         title={lang.display_name}
         aria-label={lang.display_name}
         aria-pressed={selectedLanguage === lang.code}
+        style:font-size="{fontSize}rem"
+        style:width="{btnSize}rem"
+        style:height="{btnSize}rem"
       >
         {toFlag(lang.code)}
       </button>
@@ -54,25 +61,20 @@
     right: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
     z-index: 100;
-    transition: transform 0.15s ease-out;
   }
 
   .lang-btn {
-    width: 2.5rem;
-    height: 2.5rem;
     border: none;
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     cursor: pointer;
-    font-size: 1.4rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.15s;
     padding: 0;
+    transition: font-size 0.15s ease-out, width 0.15s ease-out, height 0.15s ease-out;
   }
 
   .lang-btn:hover {
