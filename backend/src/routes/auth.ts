@@ -250,7 +250,7 @@ auth.post('/registration-links', async (c) => {
       preFilledName.trim()
     );
 
-    const url = `${c.env.FRONTEND_URL}/register/${token}`;
+    const url = `${c.env.ADMIN_URL}/register/${token}`;
     await versionVectorService.notifyChange(['user']);
 
     return c.json({

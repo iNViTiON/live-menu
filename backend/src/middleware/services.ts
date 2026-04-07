@@ -13,7 +13,7 @@ export const servicesMiddleware = createMiddleware<HonoEnv>(async (c, next) => {
     c.env.DB,
     c.env.WEBAUTHN_RP_NAME,
     c.env.WEBAUTHN_RP_ID,
-    c.env.WEBAUTHN_ORIGIN
+    c.env.ADMIN_URL
   );
   const versionVectorService = new VersionVectorService(c.env.BROADCAST_ROOM);
   c.set('authService', authService);

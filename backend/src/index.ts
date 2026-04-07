@@ -27,8 +27,8 @@ app.use('*', securityHeaders);
 app.use('*', corsMiddleware);
 app.use('/api/*', csrf({
   origin: (origin, c) => {
-    const frontendUrl = (c.env as HonoEnv['Bindings']).FRONTEND_URL;
-    return origin === frontendUrl || origin === new URL(c.req.url).origin;
+    const env = c.env as HonoEnv['Bindings'];
+    return origin === env.FRONTEND_URL || origin === env.ADMIN_URL || origin === new URL(c.req.url).origin;
   },
 }));
 app.use('/api/*', dbMiddleware);
@@ -68,8 +68,8 @@ export default {
     // Admin WebSocket — forward to BroadcastRoom DO; auth handled via {type:"auth",token} message
     if (url.pathname === '/api/sync-ws' && request.headers.get('Upgrade') === 'websocket') {
       const origin = request.headers.get('Origin');
-      const frontendUrl = env.FRONTEND_URL;
-      if (origin && origin !== frontendUrl) {
+      const allowedOrigins = [env.FRONTEND_URL, env.ADMIN_URL];
+      if (origin && !allowedOrigins.includes(origin)) {
         return new Response('Forbidden', { status: 403 });
       }
       const id = env.BROADCAST_ROOM.idFromName('global');

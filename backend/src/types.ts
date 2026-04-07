@@ -7,6 +7,7 @@ export interface Env {
   MEDIA_BUCKET: R2Bucket;
   BROADCAST_ROOM: DurableObjectNamespace;
   FRONTEND_URL: string;
+  ADMIN_URL: string;
   WEBAUTHN_RP_ID: string;
   WEBAUTHN_RP_NAME: string;
   WEBAUTHN_ORIGIN: string;
