@@ -24,6 +24,15 @@
     viewStore.setGallery();
   }
 
+  // Reset scroll tracking when view changes (e.g. idle timer navigates back to gallery)
+  $effect(() => {
+    if (viewStore.activeView === 'gallery') {
+      customerScrollY = 0;
+    } else {
+      galleryScrollY = 0;
+    }
+  });
+
   // Pure translateX slide — no opacity, pages appear connected side-by-side
   function slideX(_node: Element, { x, duration }: { x: number; duration: number }) {
     return {
