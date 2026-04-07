@@ -8,6 +8,8 @@
   let { onBack } = $props<{ onBack: () => void }>();
 
   let customerScrollY = $state(0);
+  // Tracks which card keeps full-width grid span during collapse animation
+  let collapsingItemId = $state<number | null>(null);
 
   function onCustomerScroll(e: Event) {
     customerScrollY = (e.target as HTMLElement).scrollTop;
@@ -116,15 +118,21 @@
           {@const name = customerStore.getName(item.names)}
           {@const desc = customerStore.getDescription(item.names)}
           {@const isExpanded = customerStore.expandedItemId === item.id}
+          {@const keepWide = isExpanded || collapsingItemId === item.id}
+          {@const itemMedia = menuStore.getMediaVariant(item)}
           <!-- svelte-ignore a11y_click_events_have_key_events -->
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div
             class="item-card"
+            class:wide={keepWide}
             class:unavailable={item.is_unavailable}
             id="ci-item-{item.id}"
             in:fly={{ y: 18, duration: 300, delay: Math.min(i * 35, 280) }}
             out:fly={{ y: -10, duration: 180 }}
-            onclick={() => customerStore.toggleExpand(item.id)}
+            onclick={() => {
+              if (isExpanded) collapsingItemId = item.id;
+              customerStore.toggleExpand(item.id);
+            }}
           >
             <button
               class="item-header"
@@ -146,65 +154,74 @@
               <p class="item-desc">{desc}</p>
             {/if}
 
-            {#if isExpanded}
-              {@const itemMedia = menuStore.getMediaVariant(item)}
-              <div class="option-groups" class:has-media={itemMedia} transition:slide={{ duration: 300 }}>
-                <div class="option-content">
-                  {#if item.optionGroups.length === 0}
-                    <p class="no-options">{getUiText(customerStore.data.settings, 'no_options', menuStore.selectedLanguage)}</p>
-                  {:else}
-                    {#each item.optionGroups as og (og.id)}
-                      {@const ogName = customerStore.getName(og.names)}
-                      {@const ogDesc = customerStore.getDescription(og.names)}
-                      <div class="option-group">
-                        <h3 class="og-name">
-                          {ogName}
-                          {#if og.multi_select}
-                            <span class="og-badge">multi</span>
+            <div
+              class="expand-container"
+              class:open={isExpanded}
+              ontransitionend={(e) => {
+                if (e.propertyName === 'grid-template-rows' && collapsingItemId === item.id) {
+                  collapsingItemId = null;
+                }
+              }}
+            >
+              <div class="expand-inner">
+                <div class="option-groups" class:has-media={itemMedia}>
+                  <div class="option-content">
+                    {#if item.optionGroups.length === 0}
+                      <p class="no-options">{getUiText(customerStore.data.settings, 'no_options', menuStore.selectedLanguage)}</p>
+                    {:else}
+                      {#each item.optionGroups as og (og.id)}
+                        {@const ogName = customerStore.getName(og.names)}
+                        {@const ogDesc = customerStore.getDescription(og.names)}
+                        <div class="option-group">
+                          <h3 class="og-name">
+                            {ogName}
+                            {#if og.multi_select}
+                              <span class="og-badge">multi</span>
+                            {/if}
+                          </h3>
+                          {#if ogDesc}
+                            <p class="og-desc">{ogDesc}</p>
                           {/if}
-                        </h3>
-                        {#if ogDesc}
-                          <p class="og-desc">{ogDesc}</p>
-                        {/if}
-                        <ul class="options-list">
-                          {#each og.options as opt (opt.id)}
-                            {@const optName = customerStore.getName(opt.names)}
-                            {@const optDesc = customerStore.getDescription(opt.names)}
-                            {@const delta = customerStore.formatDelta(opt.price_delta)}
-                            <li class="option-item">
-                              <span class="opt-dot">○</span>
-                              <span class="opt-info">
-                                <span class="opt-name">{optName}</span>
-                                {#if delta}
-                                  <span class="opt-delta"> ({delta})</span>
-                                {/if}
-                                {#if optDesc}
-                                  <span class="opt-desc"> {optDesc}</span>
-                                {/if}
-                              </span>
-                            </li>
-                          {/each}
-                        </ul>
-                      </div>
-                    {/each}
+                          <ul class="options-list">
+                            {#each og.options as opt (opt.id)}
+                              {@const optName = customerStore.getName(opt.names)}
+                              {@const optDesc = customerStore.getDescription(opt.names)}
+                              {@const delta = customerStore.formatDelta(opt.price_delta)}
+                              <li class="option-item">
+                                <span class="opt-dot">○</span>
+                                <span class="opt-info">
+                                  <span class="opt-name">{optName}</span>
+                                  {#if delta}
+                                    <span class="opt-delta"> ({delta})</span>
+                                  {/if}
+                                  {#if optDesc}
+                                    <span class="opt-desc"> {optDesc}</span>
+                                  {/if}
+                                </span>
+                              </li>
+                            {/each}
+                          </ul>
+                        </div>
+                      {/each}
+                    {/if}
+                  </div>
+                  {#if itemMedia}
+                    <div class="item-media">
+                      <CachedMedia
+                        src="/media/{itemMedia.r2_key}"
+                        type={itemMedia.media_type}
+                        alt={name}
+                        class="item-media-el"
+                        autoplay
+                        loop
+                        muted
+                        playsinline
+                      />
+                    </div>
                   {/if}
                 </div>
-                {#if itemMedia}
-                  <div class="item-media">
-                    <CachedMedia
-                      src="/media/{itemMedia.r2_key}"
-                      type={itemMedia.media_type}
-                      alt={name}
-                      class="item-media-el"
-                      autoplay
-                      loop
-                      muted
-                      playsinline
-                    />
-                  </div>
-                {/if}
               </div>
-            {/if}
+            </div>
           </div>
         {/each}
         </div>
@@ -437,8 +454,8 @@
     gap: 0.75rem;
   }
 
-  /* Expanded cards span full width */
-  .items-grid .item-card:has(.item-header[aria-expanded="true"]) {
+  /* Expanded cards span full width (kept during collapse animation) */
+  .items-grid .item-card.wide {
     grid-column: 1 / -1;
   }
 
@@ -476,7 +493,7 @@
     margin-left: 0.35rem;
   }
 
-  .item-card:has(.item-header[aria-expanded="true"]) {
+  .item-card.wide {
     border-left-color: #7c5c2e;
     box-shadow: 0 4px 16px rgba(124, 92, 46, 0.18);
     background: #fdf8f2;
@@ -541,6 +558,21 @@
     line-height: 1.5;
   }
 
+  /* ── Expand animation (CSS grid-row) ── */
+  .expand-container {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 300ms ease;
+  }
+
+  .expand-container.open {
+    grid-template-rows: 1fr;
+  }
+
+  .expand-inner {
+    overflow: hidden;
+  }
+
   /* ── Option groups ── */
   .option-groups {
     border-top: 1px solid #f0e8dc;
@@ -553,8 +585,7 @@
     gap: 0.9rem;
   }
 
-  /* 2-column layout only when media is actually rendered (not just data-present) */
-  .option-groups.has-media:has(.item-media :global(.item-media-el)) {
+  .option-groups.has-media {
     display: flex;
     flex-direction: row;
     gap: 1rem;
@@ -577,11 +608,11 @@
 
   /* Narrow screens: fall back to single column */
   @media (max-width: 640px) {
-    .option-groups.has-media:has(.item-media :global(.item-media-el)) {
+    .option-groups.has-media {
       flex-direction: column;
       align-items: stretch;
     }
-    .option-groups.has-media:has(.item-media :global(.item-media-el)) .item-media {
+    .option-groups.has-media .item-media {
       order: -1;
       flex: none;
     }
@@ -668,15 +699,10 @@
 
   /* ── Item media ── */
   /* Default (no has-media parent): full-width banner above options */
-  /* Hide container until CachedMedia renders an actual element */
-  .item-media:not(:has(:global(.item-media-el))) {
-    display: none;
-  }
-
   .item-media {
     margin: -0.75rem -1rem 0.75rem;
     overflow: hidden;
-    background: #1a1412;
+    background: transparent;
   }
 
   :global(.item-media-el) {
