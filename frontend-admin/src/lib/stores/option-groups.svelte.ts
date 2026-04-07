@@ -25,7 +25,7 @@ class OptionGroupStore {
     return group;
   }
 
-  async update(id: number, data: { multi_select?: boolean; required?: boolean }) {
+  async update(id: number, data: { multi_select?: number; required?: number }) {
     await api.patch(`/api/option-groups/${id}`, data);
     await this.load();
   }
