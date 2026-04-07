@@ -53,6 +53,7 @@
     // Single app-wide idle timer
     let isIdle = true;
     let countdownInterval: ReturnType<typeof setInterval> | null = null;
+    let firstTickTimeout: ReturnType<typeof setTimeout> | null = null;
 
     menuSync.onAppVersionChange = () => {
       if (isIdle) location.reload();
@@ -74,12 +75,17 @@
       onWarning: () => {
         warningVisible = true;
         warningSeconds = 5;
-        countdownInterval = setInterval(() => {
-          warningSeconds = Math.max(0, warningSeconds - 1);
-        }, 1000);
+        firstTickTimeout = setTimeout(() => {
+          firstTickTimeout = null;
+          warningSeconds = 4;
+          countdownInterval = setInterval(() => {
+            warningSeconds = Math.max(0, warningSeconds - 1);
+          }, 1000);
+        }, 800);
       },
       onDismiss: () => {
         warningVisible = false;
+        if (firstTickTimeout) { clearTimeout(firstTickTimeout); firstTickTimeout = null; }
         if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
       },
       onActivity: () => {
@@ -88,6 +94,7 @@
       onIdle: () => {
         isIdle = true;
         warningVisible = false;
+        if (firstTickTimeout) { clearTimeout(firstTickTimeout); firstTickTimeout = null; }
         if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
         // Always do the smooth reset first so there's no blink.
         customerStore.reset();
@@ -108,6 +115,7 @@
       stopPolling();
       stopIdle();
       unsubData();
+      if (firstTickTimeout) clearTimeout(firstTickTimeout);
       if (countdownInterval) clearInterval(countdownInterval);
       menuSync.onConnectionChange = null;
       menuSync.onAppVersionChange = null;

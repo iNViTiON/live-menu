@@ -55,7 +55,7 @@
             stroke-dasharray={CIRCUMFERENCE}
             stroke-dashoffset={dashOffset}
             transform="rotate(-90 70 70)"
-            style="transition: stroke-dashoffset 0.9s linear;"
+            style="transition: stroke-dashoffset 0.75s linear;"
           />
         </svg>
         <span class="countdown" aria-live="assertive" aria-atomic="true">{secondsLeft}</span>
