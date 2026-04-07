@@ -96,13 +96,21 @@
         warningVisible = false;
         if (firstTickTimeout) { clearTimeout(firstTickTimeout); firstTickTimeout = null; }
         if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
-        // Always do the smooth reset first so there's no blink.
         customerStore.reset();
-        menuStore.resetToDefault();
-        galleryStore.resetToDefault();
         viewStore.setGallery();
+        // Scroll to top first, then reset language after scroll completes
+        // to avoid the language re-render cancelling the smooth scroll.
         const scrollEl = document.querySelector('.scroll-container');
-        if (scrollEl) scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
+        if (scrollEl && scrollEl.scrollTop > 0) {
+          scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
+          setTimeout(() => {
+            menuStore.resetToDefault();
+            galleryStore.resetToDefault();
+          }, 500);
+        } else {
+          menuStore.resetToDefault();
+          galleryStore.resetToDefault();
+        }
         // Reload after the transition completes if a new app version is waiting.
         if (menuSync.appVersionChanged) {
           setTimeout(() => location.reload(), 500);
@@ -156,6 +164,5 @@
     width: 100%;
     height: 100dvh;
     overflow: hidden;
-    position: relative;
   }
 </style>

@@ -47,6 +47,13 @@
     }
   });
 
+  // Scroll the gallery bar so the active thumb is visible
+  $effect(() => {
+    if (activeId === null || !navEl) return;
+    const thumb = navEl.querySelector(`[data-page-id="${activeId}"]`);
+    thumb?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  });
+
   function scrollToItem(id: number) {
     document.getElementById(`item-${id}`)?.scrollIntoView({ behavior: 'smooth' });
   }
@@ -91,6 +98,7 @@
     <button
       class="thumb-btn"
       class:active={activeId === item.id}
+      data-page-id={item.id}
       onclick={() => scrollToItem(item.id)}
       title={name}
       aria-label={name}
