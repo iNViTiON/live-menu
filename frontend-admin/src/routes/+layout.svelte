@@ -26,8 +26,6 @@
   const currentPath = $derived($page.url.pathname);
 
   const isAuthRoute = $derived(
-    currentPath.startsWith('/admin/login') ||
-    currentPath.startsWith('/admin/register') ||
     currentPath === base + '/login' ||
     currentPath.startsWith(base + '/register')
   );

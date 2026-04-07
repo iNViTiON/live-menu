@@ -63,9 +63,6 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin requests
   if (url.origin !== self.location.origin) return;
 
-  // Don't intercept admin routes — CF Pages serves admin SPA directly
-  if (url.pathname.startsWith('/admin')) return;
-
   // API: cache-then-network (instant cached response + background update)
   if (url.pathname === MENU_API) {
     return event.respondWith(cacheThenNetwork(event, 'menu'));
