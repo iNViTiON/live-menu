@@ -18,8 +18,8 @@
 <style>
   .connection-pill {
     position: fixed;
-    bottom: 1rem;
-    left: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    left: calc(1rem + env(safe-area-inset-left, 0px));
     z-index: 100;
     display: flex;
     align-items: center;

@@ -123,7 +123,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 5rem;
+    min-height: 5rem;
     background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(8px);
     display: flex;
@@ -132,6 +132,7 @@
     overflow-y: hidden;
     gap: 0.5rem;
     padding: 0.4rem 0.5rem;
+    padding-bottom: calc(0.4rem + env(safe-area-inset-bottom, 0px));
     z-index: 50;
     scrollbar-width: none;
     transform: translateY(0);
