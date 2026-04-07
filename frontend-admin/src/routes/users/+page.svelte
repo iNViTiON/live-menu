@@ -63,4 +63,18 @@
     grid-template-columns: 1fr;
     gap: 1.25rem;
   }
+
+  @media (max-width: 768px) {
+    .page {
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+    }
+
+    .section {
+      padding: 0.75rem;
+    }
+  }
 </style>

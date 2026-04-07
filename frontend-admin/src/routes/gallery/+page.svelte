@@ -372,4 +372,36 @@
     font-style: italic;
     padding: 2rem;
   }
+
+  @media (max-width: 768px) {
+    .page {
+      padding: 1rem;
+    }
+
+    .page-header {
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+    }
+
+    .page-row {
+      flex-wrap: wrap;
+    }
+
+    .page-actions {
+      width: 100%;
+      justify-content: flex-end;
+      padding-top: 0.25rem;
+    }
+
+    .btn-expand, .order-btn {
+      min-height: 36px;
+      min-width: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
 </style>

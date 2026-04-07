@@ -188,4 +188,20 @@
   .file-input {
     display: none;
   }
+
+  @media (max-width: 768px) {
+    .media-preview {
+      flex-wrap: wrap;
+    }
+
+    .btn-delete-media {
+      min-height: 36px;
+    }
+
+    .upload-label {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
 </style>

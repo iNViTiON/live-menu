@@ -426,4 +426,62 @@
   .btn-secondary:hover {
     background: #5a6268;
   }
+
+  @media (max-width: 768px) {
+    .passkey-management {
+      max-width: none;
+    }
+
+    .header h3 {
+      font-size: 0.95rem;
+    }
+
+    .passkeys-table {
+      display: block;
+    }
+
+    .passkeys-table thead {
+      display: none;
+    }
+
+    .passkeys-table tbody {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .passkeys-table tbody tr {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem 0.75rem;
+      align-items: center;
+      padding: 0.6rem;
+      border: 1px solid #eee;
+      border-radius: 6px;
+    }
+
+    .passkeys-table td {
+      padding: 0;
+    }
+
+    .passkeys-table td:nth-child(1) {
+      flex: 1;
+      font-weight: 500;
+    }
+
+    .passkeys-table td:nth-child(2) {
+      font-size: 0.78rem;
+      color: #888;
+      width: 100%;
+      order: 3;
+    }
+
+    .copy-row {
+      flex-direction: column;
+    }
+
+    .copy-row .form-input {
+      font-size: 0.82rem;
+    }
+  }
 </style>

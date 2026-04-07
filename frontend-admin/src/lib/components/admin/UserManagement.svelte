@@ -450,4 +450,82 @@
   .btn-danger { background: #dc3545; color: white; }
   .btn-danger:hover:not(:disabled) { background: #c82333; }
   .btn-secondary:disabled, .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  @media (max-width: 768px) {
+    .users-table {
+      display: block;
+    }
+
+    .users-table thead {
+      display: none;
+    }
+
+    .users-table tbody {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .users-table tbody tr {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 0.75rem;
+      align-items: center;
+      padding: 0.75rem;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+
+    .users-table td {
+      padding: 0;
+      font-size: 0.9rem;
+    }
+
+    /* ID column */
+    .users-table td:nth-child(1) {
+      font-size: 0.78rem;
+      color: #999;
+      order: 5;
+    }
+
+    /* Name column */
+    .users-table td:nth-child(2) {
+      flex: 1;
+      min-width: 0;
+      font-weight: 500;
+    }
+
+    /* Role select */
+    .users-table td:nth-child(3) {
+      order: 3;
+    }
+
+    /* Status */
+    .users-table td:nth-child(4) {
+      order: 4;
+    }
+
+    /* Actions */
+    .users-table td:nth-child(5) {
+      order: 2;
+    }
+
+    .action-btn, .btn-delete {
+      min-height: 36px;
+      min-width: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal {
+      margin: 1rem;
+      max-width: calc(100vw - 2rem);
+    }
+
+    .modal-large {
+      max-width: calc(100vw - 2rem);
+    }
+  }
 </style>

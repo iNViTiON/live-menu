@@ -190,4 +190,14 @@
   .btn-secondary:hover {
     background: #5a6268;
   }
+
+  @media (max-width: 768px) {
+    .copy-row {
+      flex-direction: column;
+    }
+
+    .copy-row .form-input {
+      font-size: 0.82rem;
+    }
+  }
 </style>

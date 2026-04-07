@@ -371,7 +371,7 @@
 
   async function toggleFlag(groupId: number, field: 'multi_select' | 'required', currentVal: number) {
     try {
-      await optionGroupStore.update(groupId, { [field]: !currentVal });
+      await optionGroupStore.update(groupId, { [field]: currentVal ? 0 : 1 });
       showToast('Saved');
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Failed', true);
@@ -1487,5 +1487,85 @@
   @keyframes slide-in {
     from { transform: translateY(10px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+  }
+
+  @media (max-width: 768px) {
+    .page {
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+    }
+
+    .tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      margin-bottom: 1rem;
+    }
+
+    .tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-btn {
+      padding: 0.55rem 0.8rem;
+      font-size: 0.82rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .item-row {
+      flex-wrap: wrap;
+    }
+
+    .item-actions {
+      width: 100%;
+      justify-content: flex-end;
+      padding-top: 0.25rem;
+    }
+
+    .btn-icon {
+      min-height: 36px;
+      min-width: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .edit-panel {
+      padding: 0.75rem;
+    }
+
+    .form-input-sm {
+      width: 100%;
+    }
+
+    .form-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .form-row .btn {
+      align-self: flex-start;
+    }
+
+    .mini-row {
+      font-size: 0.85rem;
+    }
+
+    .section-header {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .lang-selector {
+      width: 100%;
+    }
+
+    .lang-select {
+      flex: 1;
+    }
   }
 </style>

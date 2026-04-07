@@ -233,4 +233,72 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+
+  @media (max-width: 768px) {
+    .tokens-table {
+      display: block;
+    }
+
+    .tokens-table thead {
+      display: none;
+    }
+
+    .tokens-table tbody {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .tokens-table tbody tr {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem 0.75rem;
+      align-items: center;
+      padding: 0.6rem;
+      border: 1px solid #eee;
+      border-radius: 6px;
+    }
+
+    .tokens-table td {
+      padding: 0;
+    }
+
+    /* Name */
+    .tokens-table td:nth-child(1) {
+      font-weight: 500;
+      flex: 1;
+    }
+
+    /* Role */
+    .tokens-table td:nth-child(2) {
+      order: 2;
+    }
+
+    /* Expires */
+    .tokens-table td:nth-child(3) {
+      width: 100%;
+      order: 5;
+      font-size: 0.78rem !important;
+      color: #888;
+    }
+
+    /* Time Left */
+    .tokens-table td:nth-child(4) {
+      order: 3;
+      font-size: 0.82rem;
+    }
+
+    /* Actions */
+    .tokens-table td:nth-child(5) {
+      order: 4;
+    }
+
+    .btn-action {
+      min-height: 36px;
+      min-width: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
 </style>

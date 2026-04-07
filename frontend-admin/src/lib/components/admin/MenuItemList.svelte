@@ -310,4 +310,28 @@
     font-style: italic;
     padding: 2rem;
   }
+
+  @media (max-width: 768px) {
+    .item-row {
+      flex-wrap: wrap;
+    }
+
+    .item-actions {
+      width: 100%;
+      justify-content: flex-end;
+      padding-top: 0.25rem;
+    }
+
+    .visibility-toggle, .unavailable-toggle {
+      font-size: 0.8rem;
+    }
+
+    .btn-expand, .order-btn, .btn-delete {
+      min-height: 36px;
+      min-width: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
 </style>

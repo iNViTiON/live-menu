@@ -20,6 +20,18 @@
 
   let { children }: Props = $props();
 
+  let sidebarOpen = $state(false);
+
+  function closeSidebar() {
+    sidebarOpen = false;
+  }
+
+  // Close sidebar on navigation
+  $effect(() => {
+    $page.url.pathname;
+    sidebarOpen = false;
+  });
+
   const isLoading = $derived(authStore.isLoading);
   const isAuthenticated = $derived(authStore.isAuthenticated);
   const isAdmin = $derived(authStore.isAdmin);
@@ -87,7 +99,21 @@
   {@render children()}
 {:else if isAuthenticated}
   <div class="app-shell">
-    <nav class="sidebar">
+    <header class="mobile-header">
+      <button class="hamburger" onclick={() => sidebarOpen = !sidebarOpen} aria-label="Toggle menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+      <span class="mobile-title">Live Menu</span>
+      <span class="role-badge mobile-role">{authStore.user?.role}</span>
+    </header>
+
+    {#if sidebarOpen}
+      <div class="sidebar-overlay" onclick={closeSidebar} role="presentation"></div>
+    {/if}
+
+    <nav class="sidebar" class:open={sidebarOpen}>
       <div class="sidebar-header">
         <span class="logo">Live Menu</span>
         <span class="role-badge">{authStore.user?.role}</span>
@@ -142,6 +168,11 @@
   .app-shell {
     display: flex;
     min-height: 100vh;
+  }
+
+  /* Mobile header - hidden on desktop */
+  .mobile-header {
+    display: none;
   }
 
   .sidebar {
@@ -244,9 +275,93 @@
     background: #f8f9fa;
   }
 
+  .sidebar-overlay {
+    display: none;
+  }
+
   :global(body) {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #333;
+  }
+
+  /* ===== Mobile (<=768px) ===== */
+  @media (max-width: 768px) {
+    .app-shell {
+      flex-direction: column;
+    }
+
+    .mobile-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: #1a1a2e;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .hamburger {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .hamburger-line {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: white;
+      border-radius: 1px;
+    }
+
+    .mobile-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      flex: 1;
+    }
+
+    .mobile-role {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 200;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      width: 260px;
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 150;
+    }
+
+    .nav-links a {
+      padding: 0.9rem 1rem;
+      font-size: 1rem;
+    }
+
+    .logout-btn {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+    }
   }
 </style>

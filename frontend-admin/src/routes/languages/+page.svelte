@@ -518,4 +518,34 @@
     background: white;
   }
 
+  @media (max-width: 768px) {
+    .page {
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+    }
+
+    .add-section {
+      max-width: none;
+    }
+
+    .btn-delete {
+      min-height: 36px;
+      min-width: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .col-key {
+      min-width: 100px;
+    }
+
+    .col-lang {
+      min-width: 100px;
+    }
+  }
+
 </style>

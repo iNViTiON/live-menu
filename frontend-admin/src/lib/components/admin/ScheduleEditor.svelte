@@ -531,4 +531,31 @@
     opacity: 0.6;
     cursor: not-allowed;
   }
+
+  @media (max-width: 768px) {
+    .time-input {
+      width: 5.5rem;
+      font-size: 0.85rem;
+    }
+
+    .rule-header {
+      flex-wrap: wrap;
+    }
+
+    .day-btn {
+      min-width: 2.2rem;
+      min-height: 2.2rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-clear, .btn-delete-rule {
+      min-height: 36px;
+      min-width: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
 </style>
