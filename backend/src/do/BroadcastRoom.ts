@@ -1,4 +1,4 @@
-import { DurableObject } from 'cloudflare:workers';
+import { DurableObject, WebSocketRequestResponsePair } from 'cloudflare:workers';
 import type { VersionVector, VersionVectorMessage, ResourceKey } from '@live-menu/shared';
 import type { Env } from '../types';
 
@@ -7,6 +7,9 @@ export class BroadcastRoom extends DurableObject {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    this.ctx.setWebSocketAutoResponse(
+      new WebSocketRequestResponsePair('ping', 'pong')
+    );
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -17,6 +20,11 @@ export class BroadcastRoom extends DurableObject {
 
       // CRITICAL: Use acceptWebSocket for hibernation
       this.ctx.acceptWebSocket(server);
+
+      const currentAlarm = await this.ctx.storage.getAlarm();
+      if (!currentAlarm) {
+        this.ctx.storage.setAlarm(Date.now() + 120_000); // 2 minutes
+      }
 
       const isPublic = request.headers.get('X-Public-Client') === '1';
 
@@ -90,7 +98,30 @@ export class BroadcastRoom extends DurableObject {
   }
 
   async webSocketClose(_ws: WebSocket, _code: number, _reason: string, _wasClean: boolean) {
-    // no-op
+    if (this.ctx.getWebSockets().length === 0) {
+      this.ctx.storage.deleteAlarm();
+    }
+  }
+
+  async alarm() {
+    const connections = this.ctx.getWebSockets();
+    const now = Date.now();
+    const STALE_MS = 90_000; // 3 missed ping cycles (30s each)
+    let active = 0;
+
+    for (const ws of connections) {
+      const lastPing = this.ctx.getWebSocketAutoResponseTimestamp(ws);
+      if (lastPing && (now - lastPing.getTime()) > STALE_MS) {
+        ws.close(1011, 'Stale connection');
+      } else {
+        active++;
+      }
+    }
+
+    // Re-schedule only if there are active connections
+    if (active > 0) {
+      this.ctx.storage.setAlarm(Date.now() + 120_000);
+    }
   }
 
   async webSocketError(ws: WebSocket, error: Error) {
