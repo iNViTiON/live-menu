@@ -83,6 +83,11 @@ All services use D1 `.batch()` to minimise round-trips for multi-statement opera
 
 `BroadcastRoom` DO (Hibernation API) manages WebSocket connections. Auth-first: client sends `{type:"auth", token}` as first message. On mutations, backend calls `versionVectorService.notifyChange(['menuItem', 'media', ...])` which POSTs to the DO's internal `/update` endpoint, broadcasting version vectors to authenticated clients. Resource keys: `menuItem`, `media`, `language`, `user`, `trait`, `traitGroup`, `option`, `optionGroup`, `setting`, `gallery`.
 
+**WebSocket keepalive (ping/pong)**: Three-layer zombie connection detection, critical for iPadOS kiosks:
+- **DO auto-response**: `setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'))` in the constructor — CF runtime replies "pong" to "ping" text messages without waking the DO from hibernation.
+- **Client heartbeat**: Both frontends send `"ping"` every 30s. If `"pong"` doesn't arrive within 5s, the connection is torn down and reconnected. Raw string protocol (not JSON) to avoid waking the DO.
+- **Server alarm cleanup**: DO alarm every 2 minutes checks `getWebSocketAutoResponseTimestamp()` and closes sockets that haven't pinged in 90s. Alarm self-cancels when no connections remain.
+
 A cron trigger (`scheduled` handler) runs every Sunday at midnight UTC to clean up expired sessions and challenges.
 
 ### Frontend stores
