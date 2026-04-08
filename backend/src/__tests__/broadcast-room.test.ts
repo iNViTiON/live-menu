@@ -134,6 +134,63 @@ describe('BroadcastRoom DO', () => {
     ws.close();
   });
 
+  it('auto-responds "pong" to "ping" text message', async () => {
+    const res = await SELF.fetch('http://localhost/api/public/sync-ws', {
+      headers: { Upgrade: 'websocket' },
+    });
+    const ws = res.webSocket!;
+    ws.accept();
+
+    // Consume the initial version_update
+    await waitForMessage(ws);
+
+    ws.send('ping');
+    const pong = await waitForMessage(ws);
+    expect(pong).toBe('pong');
+
+    ws.close();
+  });
+
+  it('ping messages do not interfere with admin auth flow', async () => {
+    const res = await SELF.fetch('http://localhost/api/sync-ws', {
+      headers: { Upgrade: 'websocket' },
+    });
+    const ws = res.webSocket!;
+    ws.accept();
+
+    // Send ping before auth — should get pong
+    ws.send('ping');
+    const pong = await waitForMessage(ws);
+    expect(pong).toBe('pong');
+
+    // Auth should still work normally
+    ws.send(JSON.stringify({ type: 'auth', token: adminToken }));
+    const msg = await waitForMessage(ws);
+    const data = JSON.parse(msg);
+    expect(data.type).toBe('version_update');
+    expect(data.vector).toBeDefined();
+
+    ws.close();
+  });
+
+  it('responds to multiple consecutive pings', async () => {
+    const res = await SELF.fetch('http://localhost/api/public/sync-ws', {
+      headers: { Upgrade: 'websocket' },
+    });
+    const ws = res.webSocket!;
+    ws.accept();
+
+    await waitForMessage(ws); // consume initial version_update
+
+    ws.send('ping');
+    expect(await waitForMessage(ws)).toBe('pong');
+
+    ws.send('ping');
+    expect(await waitForMessage(ws)).toBe('pong');
+
+    ws.close();
+  });
+
   it('malformed JSON message does not crash the DO', async () => {
     const res = await SELF.fetch('http://localhost/api/sync-ws', {
       headers: { Upgrade: 'websocket' },

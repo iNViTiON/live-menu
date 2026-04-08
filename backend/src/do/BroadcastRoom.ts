@@ -1,4 +1,4 @@
-import { DurableObject, WebSocketRequestResponsePair } from 'cloudflare:workers';
+import { DurableObject } from 'cloudflare:workers';
 import type { VersionVector, VersionVectorMessage, ResourceKey } from '@live-menu/shared';
 import type { Env } from '../types';
 
