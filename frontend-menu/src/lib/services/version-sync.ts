@@ -9,6 +9,10 @@ class MenuVersionSync {
   private localVector: VersionVector = {};
   private reconnectDelay = 1000;
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+  private pingInterval: ReturnType<typeof setInterval> | null = null;
+  private pongTimeout: ReturnType<typeof setTimeout> | null = null;
+  private readonly PING_INTERVAL_MS = 30_000;
+  private readonly PONG_TIMEOUT_MS = 5_000;
 
   connected = false;
   appVersionChanged = false;
@@ -26,11 +30,16 @@ class MenuVersionSync {
         this.reconnectDelay = 1000; // Reset backoff
         this.connected = true;
         if (this.onConnectionChange) this.onConnectionChange(true);
+        this.startPingInterval();
         // Trigger app version check (fire-and-forget backup for deploy:notify)
         fetch('/api/public/check-app-update').catch(() => {});
       };
 
       this.ws.onmessage = (event) => {
+        if (event.data === 'pong') {
+          this.onPong();
+          return;
+        }
         try {
           const msg: VersionVectorMessage = JSON.parse(event.data);
           if (msg.type === 'version_update') {
@@ -70,9 +79,10 @@ class MenuVersionSync {
       };
 
       this.ws.onclose = () => {
+        this.stopPingInterval();
         this.connected = false;
         if (this.onConnectionChange) this.onConnectionChange(false);
-        this.scheduleReconnect();
+        if (this.ws) this.scheduleReconnect();
       };
 
       this.ws.onerror = () => {
@@ -100,7 +110,47 @@ class MenuVersionSync {
     this.reconnectDelay = Math.min(this.reconnectDelay * 2, 30000);
   }
 
+  private startPingInterval() {
+    this.stopPingInterval();
+    this.pingInterval = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send('ping');
+        this.pongTimeout = setTimeout(() => this.handlePongTimeout(), this.PONG_TIMEOUT_MS);
+      }
+    }, this.PING_INTERVAL_MS);
+  }
+
+  private onPong() {
+    if (this.pongTimeout) {
+      clearTimeout(this.pongTimeout);
+      this.pongTimeout = null;
+    }
+  }
+
+  private handlePongTimeout() {
+    console.warn('[MenuSync] Pong timeout — closing zombie connection');
+    this.stopPingInterval();
+    const zombie = this.ws;
+    this.ws = null; // Null first so onclose doesn't double-reconnect
+    this.connected = false;
+    if (this.onConnectionChange) this.onConnectionChange(false);
+    try { zombie?.close(); } catch {}
+    this.scheduleReconnect();
+  }
+
+  private stopPingInterval() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
+    if (this.pongTimeout) {
+      clearTimeout(this.pongTimeout);
+      this.pongTimeout = null;
+    }
+  }
+
   disconnect() {
+    this.stopPingInterval();
     if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
     this.reconnectTimeout = null;
     if (this.ws) {

@@ -14,6 +14,11 @@ class VersionSyncService {
   private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
   private pendingStaleResources = new Set<ResourceKey>();
 
+  private pingInterval: ReturnType<typeof setInterval> | null = null;
+  private pongTimeout: ReturnType<typeof setTimeout> | null = null;
+  private readonly PING_INTERVAL_MS = 30_000;
+  private readonly PONG_TIMEOUT_MS = 5_000;
+
   private reconnectDelay = 1000;
 
   isConnected = $derived(this.ws?.readyState === WebSocket.OPEN);
@@ -54,9 +59,14 @@ class VersionSyncService {
         if (this.ws) {
           this.ws.send(JSON.stringify({ type: 'auth', token }));
         }
+        this.startPingInterval();
       };
 
       this.ws.onmessage = (event) => {
+        if (event.data === 'pong') {
+          this.onPong();
+          return;
+        }
         this.handleMessage(event.data as string);
       };
 
@@ -66,7 +76,8 @@ class VersionSyncService {
 
       this.ws.onclose = () => {
         console.log('[VersionSync] Disconnected, reconnecting...');
-        this.scheduleReconnect();
+        this.stopPingInterval();
+        if (this.ws) this.scheduleReconnect();
       };
     } catch (error) {
       console.error('[VersionSync] Failed to connect:', error);
@@ -161,7 +172,45 @@ class VersionSyncService {
     }
   }
 
+  private startPingInterval() {
+    this.stopPingInterval();
+    this.pingInterval = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send('ping');
+        this.pongTimeout = setTimeout(() => this.handlePongTimeout(), this.PONG_TIMEOUT_MS);
+      }
+    }, this.PING_INTERVAL_MS);
+  }
+
+  private onPong() {
+    if (this.pongTimeout) {
+      clearTimeout(this.pongTimeout);
+      this.pongTimeout = null;
+    }
+  }
+
+  private handlePongTimeout() {
+    console.warn('[VersionSync] Pong timeout — closing zombie connection');
+    this.stopPingInterval();
+    const zombie = this.ws;
+    this.ws = null; // Null first so onclose doesn't double-reconnect ($derived handles isConnected)
+    try { zombie?.close(); } catch {}
+    this.scheduleReconnect();
+  }
+
+  private stopPingInterval() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
+    if (this.pongTimeout) {
+      clearTimeout(this.pongTimeout);
+      this.pongTimeout = null;
+    }
+  }
+
   disconnect() {
+    this.stopPingInterval();
     this.clearReconnectTimeout();
     if (this.debounceTimeout) {
       clearTimeout(this.debounceTimeout);
